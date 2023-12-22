@@ -1,0 +1,16 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "drv_can.h": "c",
+            "chassis_task.h": "c",
+            "exchange.h": "c",
+            "ins_task.h": "c"
+        }
+    },
+    "extensions": {}
+}
