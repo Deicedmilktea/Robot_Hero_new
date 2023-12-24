@@ -4,13 +4,6 @@
             "path": "."
         }
     ],
-    "settings": {
-        "files.associations": {
-            "shoot_task.h": "c",
-            "main.h": "c",
-            "drv_can.h": "c",
-            "pitch_task.h": "c"
-        }
-    },
+    "settings": {},
     "extensions": {}
 }

@@ -56,7 +56,7 @@ void Gimbal_task(void const *pvParameters)
 	for(;;)
 	{
 		error6++;
-		//remote_gimbal_control();  //加上遥控器的控制
+		remote_gimbal_control();  //加上遥控器的控制
 		osDelay(1);
 	}
 }

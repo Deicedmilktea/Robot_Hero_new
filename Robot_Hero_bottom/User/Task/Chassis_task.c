@@ -39,42 +39,6 @@ int16_t chassis_speed_max = 1000;
 
 
 int chassis_mode_flag =0;
-
-//speed mapping
-int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_max){
-	  // 首先将输入值从 [a, b] 映射到 [0, 1] 范围内
-    double normalized_value = (value*1.0 - from_min) / (from_max - from_min);
-    
-    // 然后将标准化后的值映射到 [C, D] 范围内
-    int16_t mapped_value = (int16_t)(to_min + (to_max - to_min) * normalized_value);
-    
-    return mapped_value;
-}
-
-void Calculate_speed()
-{
-	Vx=Speedmapping(rc_ctrl.rc.ch[2],-660,660,-chassis_speed_max,chassis_speed_max);// left and right
-	Vy=Speedmapping(rc_ctrl.rc.ch[3],-660,660,-chassis_speed_max,chassis_speed_max);// front and back
-	Wz=Speedmapping(rc_ctrl.rc.ch[4],-660,660,-chassis_speed_max,chassis_speed_max);// rotate
-
-  int16_t Temp_Vx = Vx;
-  int16_t Temp_Vy = Vy;
-
-  int16_t relative_yaw = 0;
-  relative_yaw = INS.Yaw - INS_top.Yaw;
-  relative_yaw = relative_yaw/57.3f;
-
-  Vx = cos(relative_yaw)*Temp_Vx - sin(relative_yaw)*Temp_Vy;
-  Vy = sin(relative_yaw)*Temp_Vx + cos(relative_yaw)*Temp_Vy;
-}
-
-void RC_move()
-{
-		motor_speed_target[CHAS_LF] =  Vy + Vx - 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_RF] = -Vy + Vx - 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_RB] = -Vy - Vx - 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_LB] =  Vy - Vx - 3*Wz*(rx+ry);
-}
 	
 #define angle_valve 5
 #define angle_weight 55
@@ -120,6 +84,46 @@ static void Chassis_loop_Init()
 	Vy = 0;
 	Wz = 0;
 }
+
+
+//speed mapping
+int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_max){
+	  // 首先将输入值从 [a, b] 映射到 [0, 1] 范围内
+    double normalized_value = (value*1.0 - from_min) / (from_max - from_min);
+    
+    // 然后将标准化后的值映射到 [C, D] 范围内
+    int16_t mapped_value = (int16_t)(to_min + (to_max - to_min) * normalized_value);
+    
+    return mapped_value;
+}
+
+
+void Calculate_speed()
+{
+	Vx=Speedmapping(rc_ctrl.rc.ch[2],-660,660,-chassis_speed_max,chassis_speed_max);// left and right
+	Vy=Speedmapping(rc_ctrl.rc.ch[3],-660,660,-chassis_speed_max,chassis_speed_max);// front and back
+	Wz=Speedmapping(rc_ctrl.rc.ch[4],-660,660,-chassis_speed_max,chassis_speed_max);// rotate
+
+  int16_t Temp_Vx = Vx;
+  int16_t Temp_Vy = Vy;
+
+  int16_t relative_yaw = 0;
+  relative_yaw = INS.Yaw - INS_top.Yaw;
+  relative_yaw = relative_yaw/57.3f;
+
+  Vx = cos(relative_yaw)*Temp_Vx - sin(relative_yaw)*Temp_Vy;
+  Vy = sin(relative_yaw)*Temp_Vx + cos(relative_yaw)*Temp_Vy;
+}
+
+
+void RC_move()
+{
+		motor_speed_target[CHAS_LF] =  Vy + Vx - 3*Wz*(rx+ry);
+    motor_speed_target[CHAS_RF] = -Vy + Vx - 3*Wz*(rx+ry);
+    motor_speed_target[CHAS_RB] = -Vy - Vx - 3*Wz*(rx+ry);
+    motor_speed_target[CHAS_LB] =  Vy - Vx - 3*Wz*(rx+ry);
+}
+
 
 //速度限制函数
   void Motor_Speed_limiting(volatile int16_t *motor_speed,int16_t limit_speed)  

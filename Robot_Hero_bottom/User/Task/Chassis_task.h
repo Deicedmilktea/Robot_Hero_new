@@ -31,6 +31,14 @@ static void Get_Err();
 //参数重置
 static void Chassis_loop_Init(); 
 void Chassis_task(void const *pvParameters);
+
+//speed mapping
+int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_max);
+
+void Calculate_speed();
+
+void RC_move();
+
 void Motor_Speed_limiting(volatile int16_t *motor_speed,int16_t limit_speed);
 void chassis_current_give(void);
 #endif

@@ -19,6 +19,60 @@
         "files": [],
         "folders": [
           {
+            "name": "MDK-ARM",
+            "files": [
+              {
+                "path": "startup_stm32f407xx.s"
+              },
+              {
+                "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
+              }
+            ],
+            "folders": []
+          },
+          {
+            "name": "User",
+            "files": [
+              {
+                "path": "../Src/main.c"
+              },
+              {
+                "path": "../Src/gpio.c"
+              },
+              {
+                "path": "../Src/freertos.c"
+              },
+              {
+                "path": "../Src/can.c"
+              },
+              {
+                "path": "../Src/dma.c"
+              },
+              {
+                "path": "../Src/i2c.c"
+              },
+              {
+                "path": "../Src/spi.c"
+              },
+              {
+                "path": "../Src/tim.c"
+              },
+              {
+                "path": "../Src/usart.c"
+              },
+              {
+                "path": "../Src/stm32f4xx_it.c"
+              },
+              {
+                "path": "../Src/stm32f4xx_hal_msp.c"
+              },
+              {
+                "path": "../Src/stm32f4xx_hal_timebase_tim.c"
+              }
+            ],
+            "folders": []
+          },
+          {
             "name": "Applications",
             "files": [
               {
@@ -59,60 +113,6 @@
               },
               {
                 "path": "../Components/Algorithm/QuaternionEKF.c"
-              }
-            ],
-            "folders": []
-          },
-          {
-            "name": "MDK-ARM",
-            "files": [
-              {
-                "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
-              },
-              {
-                "path": "startup_stm32f407xx.s"
-              }
-            ],
-            "folders": []
-          },
-          {
-            "name": "User",
-            "files": [
-              {
-                "path": "../Src/can.c"
-              },
-              {
-                "path": "../Src/dma.c"
-              },
-              {
-                "path": "../Src/freertos.c"
-              },
-              {
-                "path": "../Src/gpio.c"
-              },
-              {
-                "path": "../Src/i2c.c"
-              },
-              {
-                "path": "../Src/main.c"
-              },
-              {
-                "path": "../Src/spi.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_hal_msp.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_hal_timebase_tim.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_it.c"
-              },
-              {
-                "path": "../Src/tim.c"
-              },
-              {
-                "path": "../Src/usart.c"
               }
             ],
             "folders": []
@@ -208,9 +208,6 @@
             "name": "FreeRTOS",
             "files": [
               {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
-              },
-              {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/croutine.c"
               },
               {
@@ -218,12 +215,6 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/list.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/queue.c"
@@ -236,6 +227,15 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/timers.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               }
             ],
             "folders": []
@@ -253,6 +253,9 @@
           },
           {
             "path": "../User/Task/Shoot_task.c"
+          },
+          {
+            "path": "../User/Task/Shoot_task.h"
           },
           {
             "path": "../User/Task/UI_task.c"
