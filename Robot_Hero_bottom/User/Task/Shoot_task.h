@@ -23,7 +23,7 @@ void shoot_start();
 void shoot_stop();
 
 //拨盘can1发送电流
-void trigger_can1_cmd(int16_t v1);
+void trigger_can2_cmd(int16_t v1);
 
 //PID计算速度并发送电流
 void shoot_current_give();

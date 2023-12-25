@@ -41,6 +41,6 @@ void remote_gimbal_control();
 void detel_calc(fp32 *angle);
 
 /*can1发送电流*/
-void gimbal_can1_cmd(int16_t v3);
+void gimbal_can2_cmd(int16_t v3);
 
 #endif

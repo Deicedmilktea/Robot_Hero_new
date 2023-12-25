@@ -1,7 +1,7 @@
 /*
 **********Shoot_task射击任务**********
 包含对拨盘的控制
-拨盘为3508，ID = 5，CAN1控制, motor_can1[4]
+拨盘为3508，ID = 5，CAN2控制, motor_can2[4]
 遥控器右边拨杆控制，拨到最上面启动 (从上到下分别为132)
 */
 
@@ -11,7 +11,7 @@
 
 shoot_t trigger; //拨盘can1，id = 5
 extern RC_ctrl_t rc_ctrl;
-extern motor_info_t motor_can1[6];
+extern motor_info_t motor_can2[6];
 
 
 void Shoot_task(void const * argument)
@@ -53,7 +53,7 @@ void shoot_loop_init()
 /***************射击模式*****************/
 void shoot_start()
 {
-  trigger.target_speed = 1000;
+  trigger.target_speed = 1500;
 }
 
 
@@ -65,7 +65,7 @@ void shoot_stop()
 
 
 /********************************拨盘can1发送电流***************************/
-void trigger_can1_cmd(int16_t v1)
+void trigger_can2_cmd(int16_t v1)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -86,7 +86,7 @@ void trigger_can1_cmd(int16_t v1)
   tx_data[6] =         NULL;
   tx_data[7] =         NULL;
 
-  HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
+  HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }
 
 
@@ -94,7 +94,7 @@ void trigger_can1_cmd(int16_t v1)
 void shoot_current_give()
 {
     // trigger
-    motor_can1[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, -motor_can1[4].rotor_speed);
-    trigger_can1_cmd(-motor_can1[4].set_current);
+    motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, -motor_can2[4].rotor_speed);
+    trigger_can2_cmd(-motor_can2[4].set_current);
 }
 

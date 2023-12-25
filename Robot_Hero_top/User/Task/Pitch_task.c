@@ -1,6 +1,6 @@
 /*
 *************pitch轴任务**************
-采用3508，ID = 5，CAN2，motor_can2[0]
+采用3508，ID = 7，CAN2，motor_can2[2]
 遥控器控制：右拨杆上下
 */
 
@@ -9,7 +9,7 @@
 #include "rc_potocal.h"
 #include "ins_task.h"
 
-extern motor_info_t motor_can2[4];
+extern motor_info_t motor_can2[3];
 extern RC_ctrl_t rc_ctrl;
 pitch_t pitch;
 float relative_pitch = 0;

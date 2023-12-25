@@ -13,7 +13,7 @@
 #include "drv_can.h"
 pid_struct_t motor_pid_chassis[4];
 pid_struct_t supercap_pid;
-motor_info_t  motor_can1[6];       //can1电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
+motor_info_t  motor_can2[6];       //can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 fp32 chassis_motor_pid [3]={30,0.5,10};   //用的原来的pid
 fp32 superpid[3] = {120,0.1,0};
 volatile int16_t Vx=0,Vy=0,Wz=0;
@@ -35,7 +35,7 @@ double rx=0.2,ry=0.2;
 
 int16_t chassis_mode = 1;//判断底盘状态，用于UI编写
 int16_t shot_mode = 0;
-int16_t chassis_speed_max = 1000;
+int16_t chassis_speed_max = 2000;
 
 
 int chassis_mode_flag =0;
@@ -162,10 +162,10 @@ void chassis_current_give()
         
     for(i=0 ; i<4; i++)
     {
-        motor_can1[i].set_current = pid_calc(&motor_pid_chassis[i], motor_speed_target[i], motor_can1[i].rotor_speed);
+        motor_can2[i].set_current = pid_calc(&motor_pid_chassis[i], motor_speed_target[i], motor_can2[i].rotor_speed);
     }
 		
-    	set_motor_current_can1(0, motor_can1[0].set_current,  motor_can1[1].set_current,  motor_can1[2].set_current, motor_can1[3].set_current);
+    	set_motor_current_can2(motor_can2[0].set_current,  motor_can2[1].set_current,  motor_can2[2].set_current, motor_can2[3].set_current);
 }
 
 

@@ -6,7 +6,8 @@
     ],
     "settings": {
         "files.associations": {
-            "chassis_task.h": "c"
+            "chassis_task.h": "c",
+            "gimbal_task.h": "c"
         }
     },
     "extensions": {}

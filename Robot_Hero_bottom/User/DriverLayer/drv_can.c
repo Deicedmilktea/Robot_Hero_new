@@ -4,8 +4,7 @@ extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl;
 uint16_t can_cnt_1=0;
-extern motor_info_t  motor_can1[6];
-extern motor_info_t  motor_can2[4];
+extern motor_info_t  motor_can2[6];
 INS_t INS_top;
 float powerdata[4];
 uint16_t pPowerdata[8];
@@ -67,23 +66,23 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)//接受中断回
     uint8_t rx_data[8];
 		HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); //receive can1 data
 
-		if ((rx_header.StdId >= 0x201)//201-205
-		 && (rx_header.StdId <= 0x205))                  // 判断标识符，标识符为0x200+ID
-		{
-			uint8_t index = rx_header.StdId - 0x201;       // get motor index by can_id
-			 motor_can1[index].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
-			 motor_can1[index].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
-			 motor_can1[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-			 motor_can1[index].temp           =   rx_data[6];
-		}
+		// if ((rx_header.StdId >= 0x201)//201-205
+		//  && (rx_header.StdId <= 0x205))                  // 判断标识符，标识符为0x200+ID
+		// {
+		// 	uint8_t index = rx_header.StdId - 0x201;       // get motor index by can_id
+		// 	 motor_can1[index].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
+		// 	 motor_can1[index].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
+		// 	 motor_can1[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+		// 	 motor_can1[index].temp           =   rx_data[6];
+		// }
 
-    if(rx_header.StdId==0x209)//gimbal
-		{
-      motor_can1[5].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
-      motor_can1[5].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
-      motor_can1[5].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-      motor_can1[5].temp           =   rx_data[6];
-		}
+    // if(rx_header.StdId==0x209)//gimbal
+		// {
+    //   motor_can1[5].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
+    //   motor_can1[5].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
+    //   motor_can1[5].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+    //   motor_can1[5].temp           =   rx_data[6];
+		// }
 
 		if(rx_header.StdId==0x33)//接收上C传来的遥控器数据
 		{	
@@ -123,12 +122,31 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)//接受中断回
 	if(hcan->Instance == CAN2)
   {
 		error9++;
-    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data2); //receive can2 data
+    uint8_t rx_data[8];
+    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); //receive can2 data
+
+    if ((rx_header.StdId >= 0x201)//201-205
+		 && (rx_header.StdId <= 0x205))                  // 判断标识符，标识符为0x200+ID
+		{
+			uint8_t index = rx_header.StdId - 0x201;       // get motor index by can_id
+			 motor_can2[index].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
+			 motor_can2[index].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
+			 motor_can2[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+			 motor_can2[index].temp           =   rx_data[6];
+		}
+
+    if(rx_header.StdId==0x209)//gimbal
+		{
+      motor_can2[5].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
+      motor_can2[5].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
+      motor_can2[5].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+      motor_can2[5].temp           =   rx_data[6];
+		}
 
 		if(rx_header.StdId==0x211)
 				{
 					extern float powerdata[4];
-					uint16_t *pPowerdata = (uint16_t *)rx_data2;
+					uint16_t *pPowerdata = (uint16_t *)rx_data;
 
 					powerdata[0] = (float)pPowerdata[0]/100.f;//输入电压
 					powerdata[1] = (float)pPowerdata[1]/100.f;//电容电压
@@ -193,5 +211,5 @@ void set_motor_current_can2(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
   tx_data[5] =    (v3)&0xff;
   tx_data[6] = (v4>>8)&0xff;
   tx_data[7] =    (v4)&0xff;
-  HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
+  HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }

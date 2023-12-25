@@ -28,7 +28,7 @@ gimbal_t gimbal_gyro; //gimbal gyro
 fp32 err_yaw_angle;//yaw angle error
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS_top;
-extern motor_info_t  motor_can1[5];
+extern motor_info_t  motor_can2[6];
 
 float gimbal_angle_out = 0;
 float gimbal_speed_out = 0;
@@ -50,7 +50,7 @@ void Gimbal_task(void const *pvParameters)
 	Gimbal_loop_init();
 	gimbal_mode = 1;
 	if(gimbal_mode == 0){
-		gimbal_encoder.target_angle = motor_can1[5].rotor_angle;
+		gimbal_encoder.target_angle = motor_can2[5].rotor_angle;
 	}
 	
 	for(;;)
@@ -76,9 +76,9 @@ void Gimbal_loop_init()
 	gimbal_gyro.pid_angle_value[1] = 0;
 	gimbal_gyro.pid_angle_value[2] = 0;
 
-	gimbal_gyro.pid_speed_value[0] = 300;
-	gimbal_gyro.pid_speed_value[1] = 30;
-	gimbal_gyro.pid_speed_value[2] = 1;
+	gimbal_gyro.pid_speed_value[0] = 250;
+	gimbal_gyro.pid_speed_value[1] = 1;
+	gimbal_gyro.pid_speed_value[2] = 0.1;
 
 	gimbal_encoder.target_angle = 0;
 	gimbal_encoder.target_speed = 0;
@@ -150,12 +150,12 @@ void remote_gimbal_control()
 		{
 			gimbal_encoder.target_angle += 0.02*rc_ctrl.rc.ch[0];
 			detel_calc(&gimbal_encoder.target_angle);
-			err_yaw_angle = gimbal_gyro.target_angle - motor_can1[4].rotor_angle;
+			err_yaw_angle = gimbal_gyro.target_angle - motor_can2[4].rotor_angle;
 			angle_over_zero(err_yaw_angle);
-			gimbal_angle_out = pid_calc(&gimbal_encoder.pid_angle, gimbal_encoder.target_angle, motor_can1[4].rotor_angle); //计算出云台角度
+			gimbal_angle_out = pid_calc(&gimbal_encoder.pid_angle, gimbal_encoder.target_angle, motor_can2[4].rotor_angle); //计算出云台角度
 			gimbal_speed_out = pid_calc(&gimbal_encoder.pid_speed, gimbal_encoder.target_speed, gimbal_angle_out); //计算出云台速度
 
-    		gimbal_can1_cmd(gimbal_speed_out);//给电流
+    		gimbal_can2_cmd(gimbal_speed_out);//给电流
 		}
 		
 		if(gimbal_mode == 1)
@@ -185,7 +185,7 @@ void remote_gimbal_control()
 			gimbal_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.target_speed, gimbal_angle_out);
 
 			// 给电流
-			gimbal_can1_cmd(gimbal_speed_out);//给电流
+			gimbal_can2_cmd(gimbal_speed_out);//给电流
 			// gimbal_can1_cmd(5000);//给电流
 //			CAN_cmd_gimbal(10000);//给电流
 		}
@@ -221,7 +221,7 @@ static void detel_calc(fp32 *angle)
 }
 
 /********************************can1发送电流***************************/
-void gimbal_can1_cmd(int16_t v1)
+void gimbal_can2_cmd(int16_t v1)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -242,5 +242,5 @@ void gimbal_can1_cmd(int16_t v1)
   tx_data[6] =         NULL;
   tx_data[7] =         NULL;
 
-  HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
+  HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }
