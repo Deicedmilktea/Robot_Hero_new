@@ -22,7 +22,7 @@ void Pitch_task(void const * argument)
     for(;;)
     {
         pitch.target_speed = pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
-        pitch_position_judge();
+        //pitch_position_judge();
 		pitch_current_give();
         osDelay(1);
     }
@@ -94,7 +94,7 @@ int16_t pitch_speed_map(int value, int from_min, int from_max, int to_min, int t
 void pitch_position_judge()
 {
     relative_pitch = INS.Roll - INS_bottom.Roll;
-    if(relative_pitch > 0 && relative_pitch < 30){
+    if(relative_pitch > -30 && relative_pitch < 15){
         return;
     }
     else{

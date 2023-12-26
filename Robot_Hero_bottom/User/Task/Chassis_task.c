@@ -20,6 +20,7 @@ volatile int16_t Vx=0,Vy=0,Wz=0;
 int16_t Temp_Vx;
 int16_t Temp_Vy;
 int fllowflag = 0;
+int16_t relative_yaw = 0;
 volatile int16_t motor_speed_target[4];
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
@@ -107,9 +108,9 @@ void Calculate_speed()
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
 
-  int16_t relative_yaw = 0;
+  // int16_t relative_yaw = 0;
   relative_yaw = INS.Yaw - INS_top.Yaw;
-  relative_yaw = relative_yaw/57.3f;
+  relative_yaw = -relative_yaw/57.3f;
 
   Vx = cos(relative_yaw)*Temp_Vx - sin(relative_yaw)*Temp_Vy;
   Vy = sin(relative_yaw)*Temp_Vx + cos(relative_yaw)*Temp_Vy;
@@ -118,10 +119,10 @@ void Calculate_speed()
 
 void RC_move()
 {
-		motor_speed_target[CHAS_LF] =  Vy + Vx - 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_RF] = -Vy + Vx - 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_RB] = -Vy - Vx - 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_LB] =  Vy - Vx - 3*Wz*(rx+ry);
+		motor_speed_target[CHAS_LF] =  Vy + Vx + 3*Wz*(rx+ry);
+    motor_speed_target[CHAS_RF] = -Vy + Vx + 3*Wz*(rx+ry);
+    motor_speed_target[CHAS_RB] = -Vy - Vx + 3*Wz*(rx+ry);
+    motor_speed_target[CHAS_LB] =  Vy - Vx + 3*Wz*(rx+ry);
 }
 
 

@@ -69,6 +69,11 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	
 	temp_remote[0]=rxBuf[16];
 	temp_remote[1]=rxBuf[17];
+
+	INS.Yaw = 100*INS.Yaw; // 使之接收带上小数点
+	INS.Roll = 100*INS.Roll;
+	INS.Pitch = 100*INS.Pitch;
+
 	temp_remote[2]=((int)INS.Yaw>>8) & 0xff;
 	temp_remote[3]=(int)INS.Yaw & 0xff;
 	temp_remote[4]=((int)INS.Roll>>8) & 0xff;

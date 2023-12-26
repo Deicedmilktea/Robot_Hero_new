@@ -13,7 +13,7 @@
 
 shoot_t shoot_motor[2]; //摩擦轮can2，id = 56
 motor_info_t motor_can2[3]; //[2]:pitch
-int16_t friction_max_speed = 2000; //摩擦轮速度
+int16_t friction_max_speed = 8000; //摩擦轮速度
 extern RC_ctrl_t rc_ctrl;
 
 void Shoot_task(void const * argument)
