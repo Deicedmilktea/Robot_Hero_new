@@ -16,13 +16,12 @@ typedef struct
     uint8_t  temp;
 }motor_info_t;
 
-
-typedef enum {
-    CHAS_LF,
-    CHAS_RF,
-    CHAS_RB,
-    CHAS_LB,
-} chassis_motor_cnt_t;
+typedef struct
+{
+    pid_struct_t pid;      // 云台电机speed的pid结构体
+    fp32 pid_value[3];     // 云台电机speed的pid参数
+    fp32 target_speed;     // 云台电机的目标速度
+} chassis_t;
 
 
 //获取imu——Yaw角度差值参数
@@ -35,10 +34,13 @@ void Chassis_task(void const *pvParameters);
 //speed mapping
 int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_max);
 
+//计算速度
 void Calculate_speed();
 
-void RC_move();
-
-void Motor_Speed_limiting(volatile int16_t *motor_speed,int16_t limit_speed);
+//电机电流控制
 void chassis_current_give(void);
+
+//chassis CAN2发送信号
+void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
+
 #endif

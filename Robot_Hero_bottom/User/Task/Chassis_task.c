@@ -11,21 +11,16 @@
 #include "INS_task.h"
 #include "exchange.h"
 #include "drv_can.h"
-pid_struct_t motor_pid_chassis[4];
-pid_struct_t supercap_pid;
 motor_info_t  motor_can2[6];       //can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
-fp32 chassis_motor_pid [3]={30,0.5,10};   //用的原来的pid
-fp32 superpid[3] = {120,0.1,0};
+chassis_t chassis[4];
 volatile int16_t Vx=0,Vy=0,Wz=0;
 int16_t Temp_Vx;
 int16_t Temp_Vy;
 int fllowflag = 0;
 int16_t relative_yaw = 0;
-volatile int16_t motor_speed_target[4];
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern INS_t INS_top;
-extern float powerdata[4];
 extern uint16_t shift_flag;
  
 int error10 = 0;
@@ -51,24 +46,10 @@ void Chassis_task(void const *pvParameters)
 				
     for(;;)
     {   
-				// chassis_mode = rc_ctrl.rc.s[0];//1，3，2
 				Calculate_speed();
-				// if(chassis_mode==1){
-				// 		motor_speed_target[CHAS_LF] =  1000;
-				// 		motor_speed_target[CHAS_RF] =  0;
-				// 		motor_speed_target[CHAS_RB] =  0;
-				// 		motor_speed_target[CHAS_LB] =  0;
-				// }
-				// if(chassis_mode==2){
-				// 		RC_move();
-				// }
-
-				RC_move();
-
 				chassis_current_give();
 				error10++;
         osDelay(1);
-
     }
 
 }
@@ -78,7 +59,14 @@ static void Chassis_loop_Init()
 {
   for (uint8_t i = 0; i < 4; i++)
   {
-    pid_init(&motor_pid_chassis[i], chassis_motor_pid, 6000, 6000);
+    chassis[i].pid_value[0] = 30;
+    chassis[i].pid_value[1] = 0.5;
+    chassis[i].pid_value[2] = 10;
+  }
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    pid_init(&chassis[i].pid, chassis[i].pid_value, 6000, 6000);
   }
 
 	Vx = 0;
@@ -110,66 +98,53 @@ void Calculate_speed()
 
   // int16_t relative_yaw = 0;
   relative_yaw = INS.Yaw - INS_top.Yaw;
-  relative_yaw = -relative_yaw/57.3f;
+  relative_yaw = -relative_yaw/57.3f; // 此处加负是因为旋转角度后，旋转方向相反
 
   Vx = cos(relative_yaw)*Temp_Vx - sin(relative_yaw)*Temp_Vy;
   Vy = sin(relative_yaw)*Temp_Vx + cos(relative_yaw)*Temp_Vy;
+
+  chassis[0].target_speed =  Vy + Vx + 3*Wz*(rx+ry);
+  chassis[1].target_speed = -Vy + Vx + 3*Wz*(rx+ry);
+  chassis[2].target_speed = -Vy - Vx + 3*Wz*(rx+ry);
+  chassis[3].target_speed =  Vy - Vx + 3*Wz*(rx+ry);
 }
 
 
-void RC_move()
-{
-		motor_speed_target[CHAS_LF] =  Vy + Vx + 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_RF] = -Vy + Vx + 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_RB] = -Vy - Vx + 3*Wz*(rx+ry);
-    motor_speed_target[CHAS_LB] =  Vy - Vx + 3*Wz*(rx+ry);
-}
-
-
-//速度限制函数
-  void Motor_Speed_limiting(volatile int16_t *motor_speed,int16_t limit_speed)  
-{
-    uint8_t i=0;
-    int16_t max = 0;
-    int16_t temp =0;
-    int16_t max_speed = limit_speed;
-    fp32 rate=0;
-    for(i = 0; i<4; i++)
-    {
-      temp = (motor_speed[i]>0 )? (motor_speed[i]) : (-motor_speed[i]);//求绝对值
-		
-      if(temp>max)
-        {
-          max = temp;
-        }
-     }	
-	
-    if(max>max_speed)
-    {
-          rate = max_speed*1.0/max;   //*1.0转浮点类型，不然可能会直接得0   *1.0 to floating point type, otherwise it may directly get 0
-          for (i = 0; i < 4; i++)
-					{
-            motor_speed[i] *= rate;
-					}
-
-    }
-
-}
 //电机电流控制
 void chassis_current_give() 
 {
 	
     uint8_t i=0;
-        
+    
     for(i=0 ; i<4; i++)
     {
-        motor_can2[i].set_current = pid_calc(&motor_pid_chassis[i], motor_speed_target[i], motor_can2[i].rotor_speed);
+        motor_can2[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_can2[i].rotor_speed);
     }
 		
-    	set_motor_current_can2(motor_can2[0].set_current,  motor_can2[1].set_current,  motor_can2[2].set_current, motor_can2[3].set_current);
+    	chassis_can2_cmd(motor_can2[0].set_current,  motor_can2[1].set_current,  motor_can2[2].set_current, motor_can2[3].set_current);
 }
 
+//CAN2发送信号
+void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
+{
+  uint32_t send_mail_box;
+  CAN_TxHeaderTypeDef tx_header;
+  uint8_t             tx_data[8];
+  tx_header.StdId = 0x200;
+  tx_header.IDE   = CAN_ID_STD;//标准帧
+  tx_header.RTR   = CAN_RTR_DATA;//数据帧
+  tx_header.DLC   = 8;		//发送数据长度（字节）
 
+	tx_data[0] = (v1>>8)&0xff;	//先发高八位
+  tx_data[1] =    (v1)&0xff;
+  tx_data[2] = (v2>>8)&0xff;
+  tx_data[3] =    (v2)&0xff;
+  tx_data[4] = (v3>>8)&0xff;
+  tx_data[5] =    (v3)&0xff;
+  tx_data[6] = (v4>>8)&0xff;
+  tx_data[7] =    (v4)&0xff;
+  HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
+}
 
 
 
