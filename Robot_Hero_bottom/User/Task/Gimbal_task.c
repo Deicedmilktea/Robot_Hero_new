@@ -41,7 +41,7 @@ fp32 ins_pitch;
 fp32 ins_roll;
 fp32 init_yaw; // 记录yaw初始量
 int Update_yaw_flag = 1;
-fp32 err_yaw_range = 1;
+fp32 err_yaw_range = 0.5;
 
 /********************云台运动task*********************/
 void Gimbal_task(void const *pvParameters)
@@ -72,11 +72,15 @@ void Gimbal_loop_init()
 	gimbal_encoder.pid_speed_value[1] = 0.5;
 	gimbal_encoder.pid_speed_value[2] = 0;
 
-	gimbal_gyro.pid_angle_value[0] = 1;
+	gimbal_gyro.pid_angle_value[0] = 2;
 	gimbal_gyro.pid_angle_value[1] = 0;
 	gimbal_gyro.pid_angle_value[2] = 0;
 
-	gimbal_gyro.pid_speed_value[0] = 250;
+	// gimbal_gyro.pid_speed_value[0] = 250;
+	// gimbal_gyro.pid_speed_value[1] = 1;
+	// gimbal_gyro.pid_speed_value[2] = 0.1;
+
+	gimbal_gyro.pid_speed_value[0] = 100;
 	gimbal_gyro.pid_speed_value[1] = 1;
 	gimbal_gyro.pid_speed_value[2] = 0.1;
 
@@ -187,8 +191,8 @@ void remote_gimbal_control()
 
 		// 给电流
 		gimbal_can2_cmd(gimbal_speed_out); // 给电流
-		// gimbal_can1_cmd(5000);//给电流
-		//			CAN_cmd_gimbal(10000);//给电流
+										   // gimbal_can1_cmd(5000);//给电流
+										   //			CAN_cmd_gimbal(10000);//给电流
 	}
 }
 
