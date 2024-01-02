@@ -52,12 +52,12 @@ void shoot_loop_init()
   // friction_left
   shoot_motor[0].pid_value[0] = 20;
   shoot_motor[0].pid_value[1] = 5;
-  shoot_motor[0].pid_value[2] = 0;
+  shoot_motor[0].pid_value[2] = 1;
 
   // friction_right
   shoot_motor[1].pid_value[0] = 20;
   shoot_motor[1].pid_value[1] = 5;
-  shoot_motor[1].pid_value[2] = 0;
+  shoot_motor[1].pid_value[2] = 1;
 
   // 初始化目标速度
   shoot_motor[0].target_speed = 0;
@@ -71,8 +71,8 @@ void shoot_loop_init()
 /***************射击模式*****************/
 void shoot_start()
 {
-  shoot_motor[0].target_speed = friction_max_speed;
-  shoot_motor[1].target_speed = friction_max_speed;
+  shoot_motor[0].target_speed = 5000;
+  shoot_motor[1].target_speed = 5050;
 }
 
 /***************停止射击模式**************/

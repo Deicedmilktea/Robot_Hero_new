@@ -249,13 +249,7 @@
             "path": "../User/Task/Pitch_task.c"
           },
           {
-            "path": "../User/Task/Pitch_task.h"
-          },
-          {
             "path": "../User/Task/Shoot_task.c"
-          },
-          {
-            "path": "../User/Task/Shoot_task.h"
           },
           {
             "path": "EXCHANGE.c"
