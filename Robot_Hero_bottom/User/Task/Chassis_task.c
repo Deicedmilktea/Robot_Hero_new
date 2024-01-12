@@ -95,10 +95,10 @@ void Calculate_speed()
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
   Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
-  chassis[0].target_speed = Vy + Vx + 3 * Wz * (rx + ry);
-  chassis[1].target_speed = -Vy + Vx + 3 * Wz * (rx + ry);
-  chassis[2].target_speed = -Vy - Vx + 3 * Wz * (rx + ry);
-  chassis[3].target_speed = Vy - Vx + 3 * Wz * (rx + ry);
+  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 }
 
 // 电机电流控制

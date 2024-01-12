@@ -21,6 +21,8 @@ void Pitch_task(void const *argument)
 
     for (;;)
     {
+        // pitch_position_limit();
+        pitch.target_speed = pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
         pitch_position_limit();
         pitch_current_give();
         osDelay(1);
@@ -30,19 +32,13 @@ void Pitch_task(void const *argument)
 /****************初始化****************/
 void pitch_loop_init()
 {
-    pitch.angle_pid_value[0] = 1;
-    pitch.angle_pid_value[1] = 0;
-    pitch.angle_pid_value[2] = 0;
-
-    pitch.speed_pid_value[0] = 10;
+    pitch.speed_pid_value[0] = 1;
     pitch.speed_pid_value[1] = 0;
     pitch.speed_pid_value[2] = 0;
 
-    pitch.target_angle = INS.Roll;
     pitch.target_speed = 0;
     pitch.speed_max = 2000;
 
-    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 100, 100);
     pid_init(&pitch.pid_speed, pitch.speed_pid_value, 100, pitch.speed_max);
 }
 
@@ -74,7 +70,6 @@ void pitch_can2_cmd(int16_t v3)
 /****************PID计算速度并发送电流***************/
 void pitch_current_give()
 {
-    pitch.target_speed = pid_calc(&pitch.pid_angle, pitch.target_angle, INS.Roll);
     motor_can2[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, -motor_can2[2].rotor_speed);
     pitch_can2_cmd(-motor_can2[2].set_current);
 }
@@ -95,12 +90,12 @@ int16_t pitch_speed_map(int value, int from_min, int from_max, int to_min, int t
 void pitch_position_limit()
 {
     relative_pitch = INS.Roll - INS_bottom.Roll;
-    if (relative_pitch > -30 && relative_pitch < 15)
+    if (relative_pitch > 20 && pitch.target_speed > 0)
     {
-        pitch.target_angle += rc_ctrl.rc.ch[1] / 660 * 0.5;
+        pitch.target_speed = 0;
     }
-    else
+    if (relative_pitch < -15 && pitch.target_speed < 0)
     {
-        return;
+        pitch.target_speed = 0;
     }
 }

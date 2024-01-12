@@ -6,11 +6,8 @@
 
 typedef struct
 {
-    pid_struct_t pid_angle;  // angle的pid结构体
     pid_struct_t pid_speed;  // speed的pid结构体
-    fp32 angle_pid_value[3]; // angle的pid参数
     fp32 speed_pid_value[3]; // speed的pid参数
-    fp32 target_angle;       // 目标pitch
     fp32 target_speed;       // 目标速度
     fp32 speed_max;          // 最大速度
 } pitch_t;

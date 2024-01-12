@@ -127,7 +127,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of INSTask */
-  osThreadDef(INSTask, StartINSTask, osPriorityNormal, 0, 1024);
+  osThreadDef(INSTask, StartINSTask, osPriorityHigh, 0, 1024);
   INSTaskHandle = osThreadCreate(osThread(INSTask), NULL);
 
   /* definition and creation of ShootTask */

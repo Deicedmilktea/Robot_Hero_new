@@ -66,7 +66,7 @@ typedef struct
 
 
 //�궨��
-#define MOTOR_MAX_NUM 7		//��������ֽ���?
+#define MOTOR_MAX_NUM 7		//��������ֽ���??
 #define LIMIT_MIN_MAX(x,min,max) (x) = (((x)<=(min))?(min):(((x)>=(max))?(max):(x)))		//Խ���򸳱߽�ֵ
 #define FEEDBACK_ID_BASE      0x201
 #define FEEDBACK_ID_BASE_6020 0x205
