@@ -32,14 +32,14 @@ void Pitch_task(void const *argument)
 /****************初始化****************/
 void pitch_loop_init()
 {
-    pitch.speed_pid_value[0] = 1;
+    pitch.speed_pid_value[0] = 2;
     pitch.speed_pid_value[1] = 0;
     pitch.speed_pid_value[2] = 0;
 
     pitch.target_speed = 0;
-    pitch.speed_max = 2000;
+    pitch.speed_max = 4000;
 
-    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 100, pitch.speed_max);
+    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 2000, 5000);
 }
 
 /********************************can1发送电流***************************/

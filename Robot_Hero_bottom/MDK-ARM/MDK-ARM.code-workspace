@@ -12,7 +12,15 @@
         "files.associations": {
             "chassis_task.h": "c",
             "gimbal_task.h": "c",
-            "drv_can.h": "c"
+            "drv_can.h": "c",
+            "optional": "c",
+            "random": "c",
+            "limits": "c",
+            "new": "c",
+            "*.tcc": "c",
+            "cmath": "c",
+            "utility": "c",
+            "user_lib.h": "c"
         }
     },
     "extensions": {}

@@ -38,21 +38,21 @@ void Shoot_task(void const *argument)
 void shoot_loop_init()
 {
   // trigger
-  trigger.pid_value[0] = 2;
+  trigger.pid_value[0] = 50;
   trigger.pid_value[1] = 1;
-  trigger.pid_value[2] = 0.01;
+  trigger.pid_value[2] = 0.05;
 
   // 初始化目标速度
   trigger.target_speed = 0;
 
   // 初始化PID
-  pid_init(&trigger.pid, trigger.pid_value, 1000, 2000); // trigger
+  pid_init(&trigger.pid, trigger.pid_value, 10000, 10000); // trigger
 }
 
 /***************射击模式*****************/
 void shoot_start()
 {
-  trigger.target_speed = 500;
+  trigger.target_speed = 250;
 }
 
 /***************停止射击模式**************/

@@ -11,6 +11,7 @@
 #include "cmsis_os.h"
 #include "pid.h"
 #include "drv_can.h"
+#include "user_lib.h"
 
 // motor data read
 #define get_motor_measure(ptr, data)                                   \
@@ -41,7 +42,7 @@ fp32 ins_pitch;
 fp32 ins_roll;
 fp32 init_yaw; // 记录yaw初始量
 int Update_yaw_flag = 1;
-fp32 err_yaw_range = 0.5;
+fp32 err_yaw_range = 0.1;
 
 /********************云台运动task*********************/
 void Gimbal_task(void const *pvParameters)
@@ -72,25 +73,25 @@ void Gimbal_loop_init()
 	gimbal_encoder.pid_speed_value[1] = 0.5;
 	gimbal_encoder.pid_speed_value[2] = 0;
 
-	gimbal_gyro.pid_angle_value[0] = 2;
+	gimbal_gyro.pid_angle_value[0] = 80;
 	gimbal_gyro.pid_angle_value[1] = 0;
-	gimbal_gyro.pid_angle_value[2] = 0;
+	gimbal_gyro.pid_angle_value[2] = 65;
 
-	// gimbal_gyro.pid_speed_value[0] = 250;
-	// gimbal_gyro.pid_speed_value[1] = 1;
-	// gimbal_gyro.pid_speed_value[2] = 0.1;
+	gimbal_gyro.pid_speed_value[0] = 10;
+	gimbal_gyro.pid_speed_value[1] = 0;
+	gimbal_gyro.pid_speed_value[2] = 0;
 
-	gimbal_gyro.pid_speed_value[0] = 100;
-	gimbal_gyro.pid_speed_value[1] = 1;
-	gimbal_gyro.pid_speed_value[2] = 0.1;
+	// gimbal_gyro.pid_speed_value[0] = 85;
+	// gimbal_gyro.pid_speed_value[1] = 0;
+	// gimbal_gyro.pid_speed_value[2] = 0;
 
 	gimbal_encoder.target_angle = 0;
 	gimbal_encoder.target_speed = 0;
 
 	pid_init(&gimbal_encoder.pid_angle, gimbal_encoder.pid_angle_value, 500, 8191);
 	pid_init(&gimbal_encoder.pid_speed, gimbal_encoder.pid_speed_value, 100, 3000);
-	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 15000, 180);
-	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 1000, 15000);
+	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 30000, 30000);
+	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 30000, 30000);
 }
 
 // /**********************将目标角度从（-pi, pi）映射到（0, 8091）*************************/
@@ -147,6 +148,18 @@ static void Yaw_read_imu()
 	ins_yaw_update = ins_yaw - init_yaw;
 }
 
+/************************判断数值正负*******************************************/
+// template <typename T>
+// int sign(T val)
+// {
+// 	return (val > T(0)) - (val < T(0));
+// }
+
+// int sign(float val)
+// {
+// 	return (val > 0) - (val < 0);
+// }
+
 /*****************************处理接收遥控器数据控制云台旋转*********************************/
 void remote_gimbal_control()
 {
@@ -167,8 +180,12 @@ void remote_gimbal_control()
 		// 接收Yaw轴imu数据
 		Yaw_read_imu();
 
-		// 接收遥控器数值
-		gimbal_gyro.target_angle -= rc_ctrl.rc.ch[0] / 660 * 0.3; // 遥控器右边左右控制yaw轴电机
+		// // 接收遥控器数值
+		// gimbal_gyro.target_angle -= rc_ctrl.rc.ch[0] / 660 * 0.3; // 遥控器右边左右控制yaw轴电机
+
+		// 使用非线性映射函数调整灵敏度
+		float normalized_input = rc_ctrl.rc.ch[0] / 660.0;
+		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.8) * sign(normalized_input) * 0.3;
 
 		detel_calc(&gimbal_gyro.target_angle);
 

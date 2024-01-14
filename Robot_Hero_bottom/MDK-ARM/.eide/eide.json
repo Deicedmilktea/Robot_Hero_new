@@ -43,6 +43,12 @@
             "name": "Components",
             "files": [
               {
+                "path": "../Components/Algorithm/QuaternionEKF.c"
+              },
+              {
+                "path": "../Components/Controller/controller.c"
+              },
+              {
                 "path": "../Components/Devices/BMI088driver.c"
               },
               {
@@ -53,12 +59,6 @@
               },
               {
                 "path": "../Components/user_lib.c"
-              },
-              {
-                "path": "../Components/Controller/controller.c"
-              },
-              {
-                "path": "../Components/Algorithm/QuaternionEKF.c"
               }
             ],
             "folders": []
@@ -208,6 +208,9 @@
             "name": "FreeRTOS",
             "files": [
               {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
+              },
+              {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/croutine.c"
               },
               {
@@ -215,6 +218,12 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/list.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/queue.c"
@@ -227,15 +236,6 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/timers.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               }
             ],
             "folders": []
