@@ -46,7 +46,7 @@ void shoot_loop_init()
   trigger.target_speed = 0;
 
   // 初始化PID
-  pid_init(&trigger.pid, trigger.pid_value, 10000, 10000); // trigger
+  pid_init(&trigger.pid, trigger.pid_value, 10000, 8000); // trigger
 }
 
 /***************射击模式*****************/
@@ -91,6 +91,6 @@ void shoot_current_give()
 {
   // trigger
   motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, -motor_can2[4].rotor_speed);
-  trigger_can2_cmd(-motor_can2[4].set_current);
+  // trigger_can2_cmd(-motor_can2[4].set_current);
   // trigger_can2_cmd(1000);
 }

@@ -32,7 +32,7 @@ void Pitch_task(void const *argument)
 /****************初始化****************/
 void pitch_loop_init()
 {
-    pitch.speed_pid_value[0] = 2;
+    pitch.speed_pid_value[0] = 3;
     pitch.speed_pid_value[1] = 0;
     pitch.speed_pid_value[2] = 0;
 

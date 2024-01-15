@@ -20,7 +20,8 @@
             "*.tcc": "c",
             "cmath": "c",
             "utility": "c",
-            "user_lib.h": "c"
+            "user_lib.h": "c",
+            "pid.h": "c"
         }
     },
     "extensions": {}
