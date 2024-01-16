@@ -4,6 +4,7 @@
 // 底盘电机结构体
 extern motor_info_t motor_can1[6];
 int16_t Rotate_w;
+extern int16_t vision_yaw;
 
 // IMU
 extern ins_data_t ins_data;
@@ -28,7 +29,6 @@ uint16_t v_flag;
 uint16_t b_flag;
 
 uint8_t temp_remote[8];
-uint8_t temp_imu_angle[3]; // 发送imu数据
 RC_ctrl_t rc_ctrl;
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
 
@@ -84,11 +84,17 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 
 	can_remote(temp_remote, 0x35);
 
-	// temp_imu_angle[0]=ins_data.angle[0]; // yaw
-	// temp_imu_angle[1]=ins_data.angle[1]; // roll
-	// temp_imu_angle[2]=ins_data.angle[2]; // pitch
-
-	// can_imu_angle(temp_imu_angle,0x56); // 向下C板发送imu数据
+	// 发送视觉计算yaw值给下c板
+	vision_yaw = 100 * vision_yaw; // 使之接收带上小数点
+	temp_remote[0] = ((int)vision_yaw >> 8) & 0xff;
+	temp_remote[1] = (int)vision_yaw & 0xff;
+	temp_remote[2] = 0;
+	temp_remote[3] = 0;
+	temp_remote[4] = 0;
+	temp_remote[5] = 0;
+	temp_remote[6] = 0;
+	temp_remote[7] = 0;
+	can_vision(temp_remote, 0x36);
 
 	// Some flag of keyboard
 	w_flag = (rxBuf[14] & 0x01);

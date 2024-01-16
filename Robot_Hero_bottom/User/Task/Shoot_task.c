@@ -91,6 +91,6 @@ void shoot_current_give()
 {
   // trigger
   motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, -motor_can2[4].rotor_speed);
-  // trigger_can2_cmd(-motor_can2[4].set_current);
+  trigger_can2_cmd(-motor_can2[4].set_current);
   // trigger_can2_cmd(1000);
 }

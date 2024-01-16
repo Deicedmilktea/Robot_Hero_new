@@ -50,7 +50,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osThreadId ExchangeTaskHandle;
 /* USER CODE END Variables */
 osThreadId INSTaskHandle;
 osThreadId ShootTaskHandle;
@@ -58,10 +58,10 @@ osThreadId PitchTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void exchange_task();
 /* USER CODE END FunctionPrototypes */
 
-void StartINSTask(void const * argument);
+void StartINSTask(void const *argument);
 void Shoot_task(void const * argument);
 void Pitch_task(void const * argument);
 
@@ -127,7 +127,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of INSTask */
-  osThreadDef(INSTask, StartINSTask, osPriorityHigh, 0, 1024);
+  osThreadDef(INSTask, StartINSTask, osPriorityAboveNormal, 0, 1024);
   INSTaskHandle = osThreadCreate(osThread(INSTask), NULL);
 
   /* definition and creation of ShootTask */
@@ -140,6 +140,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
+  osThreadDef(ExchangeTask, exchange_task, osPriorityNormal, 0, 128);
+  ExchangeTaskHandle = osThreadCreate(osThread(ExchangeTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }

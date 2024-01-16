@@ -11,6 +11,11 @@
 #include "INS_task.h"
 #include "exchange.h"
 #include "drv_can.h"
+
+#define KEY_START_OFFSET 3
+#define KEY_STOP_OFFSET 20
+#define chassis_speed_max 2000
+
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
 volatile int16_t Vx = 0, Vy = 0, Wz = 0;
@@ -34,7 +39,8 @@ double rx = 0.2, ry = 0.2;
 // Save imu data
 
 int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
-int16_t chassis_speed_max = 2000;
+
+static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow;
 
 int chassis_mode_flag = 0;
 
@@ -79,7 +85,7 @@ static void Chassis_loop_Init()
   }
 
   // 底盘跟随云台
-  pid_yaw_angle_value[0] = 1;
+  pid_yaw_angle_value[0] = 2;
   pid_yaw_angle_value[1] = 0;
   pid_yaw_angle_value[2] = 0;
 
@@ -141,7 +147,7 @@ void chassis_mode_top()
 {
   Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
   Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
-  Wz = 1000;
+  Wz = 4000;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -215,4 +221,42 @@ void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
   tx_data[6] = (v4 >> 8) & 0xff;
   tx_data[7] = (v4) & 0xff;
   HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
+}
+
+/*************************** 键盘控制函数 ************************/
+static void key_control(void)
+{
+  if (d_flag)
+    key_y_fast += KEY_START_OFFSET;
+  else
+    key_y_fast -= KEY_STOP_OFFSET;
+  if (a_flag)
+    key_y_slow += KEY_START_OFFSET;
+  else
+    key_y_slow -= KEY_STOP_OFFSET;
+  if (w_flag)
+    key_x_fast += KEY_START_OFFSET;
+  else
+    key_x_fast -= KEY_STOP_OFFSET;
+  if (s_flag)
+    key_x_slow += KEY_START_OFFSET;
+  else
+    key_x_slow -= KEY_STOP_OFFSET;
+
+  if (key_x_fast > chassis_speed_max)
+    key_x_fast = chassis_speed_max;
+  if (key_x_fast < 0)
+    key_x_fast = 0;
+  if (key_x_slow > chassis_speed_max)
+    key_x_slow = chassis_speed_max;
+  if (key_x_slow < 0)
+    key_x_slow = 0;
+  if (key_y_fast > chassis_speed_max)
+    key_y_fast = chassis_speed_max;
+  if (key_y_fast < 0)
+    key_y_fast = 0;
+  if (key_y_slow > chassis_speed_max)
+    key_y_slow = chassis_speed_max;
+  if (key_y_slow < 0)
+    key_y_slow = 0;
 }

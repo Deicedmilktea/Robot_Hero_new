@@ -113,14 +113,14 @@ void can_remote(uint8_t sbus_buf[], uint32_t can_send_id) // 调用can来发送�
   HAL_CAN_AddTxMessage(&hcan1, &tx_header, sbus_buf, (uint32_t *)CAN_TX_MAILBOX0);
 }
 
-void can_imu_angle(uint8_t sbus_buf[], uint8_t can_send_id) // 调用can来发送imu数据
+void can_vision(uint8_t sbus_buf[], uint8_t can_send_id) // 调用can来发送vision数据
 {
   CAN_TxHeaderTypeDef tx_header;
 
   tx_header.StdId = can_send_id;
   tx_header.IDE = CAN_ID_STD;   // 标准帧
   tx_header.RTR = CAN_RTR_DATA; // 数据帧
-  tx_header.DLC = 8;            // 发送数据长度（字节）,只要yaw，roll，pitch的角度
+  tx_header.DLC = 2;            // 发送数据长度（字节）,只要yaw，roll，pitch的角度
 
   HAL_CAN_AddTxMessage(&hcan1, &tx_header, sbus_buf, (uint32_t *)CAN_TX_MAILBOX0);
 }

@@ -14,6 +14,7 @@ extern RC_ctrl_t rc_ctrl;
 pitch_t pitch;
 float relative_pitch = 0;
 extern INS_t INS_bottom;
+extern int16_t vision_pitch;
 
 void Pitch_task(void const *argument)
 {
@@ -21,7 +22,18 @@ void Pitch_task(void const *argument)
 
     for (;;)
     {
-        // pitch_position_limit();
+        relative_pitch = INS.Roll - INS_bottom.Roll;
+
+        // if (rc_ctrl.rc.s[1] == 2)
+        // {
+        //     pitch.target_speed = pid_calc(&pitch.pid_angle, vision_pitch, relative_pitch);
+        // }
+        // else
+        // {
+        //     pitch.target_speed = -pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
+        //     pitch_position_limit();
+        // }
+
         pitch.target_speed = pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
         pitch_position_limit();
         pitch_current_give();
@@ -36,10 +48,15 @@ void pitch_loop_init()
     pitch.speed_pid_value[1] = 0;
     pitch.speed_pid_value[2] = 0;
 
+    pitch.angle_pid_value[0] = 3;
+    pitch.angle_pid_value[1] = 0;
+    pitch.angle_pid_value[2] = 0;
+
     pitch.target_speed = 0;
     pitch.speed_max = 4000;
 
     pid_init(&pitch.pid_speed, pitch.speed_pid_value, 2000, 5000);
+    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 2000, 5000);
 }
 
 /********************************can1发送电流***************************/
@@ -89,7 +106,6 @@ int16_t pitch_speed_map(int value, int from_min, int from_max, int to_min, int t
 /***************判断pitch位置******************/
 void pitch_position_limit()
 {
-    relative_pitch = INS.Roll - INS_bottom.Roll;
     if (relative_pitch > 20 && pitch.target_speed > 0)
     {
         pitch.target_speed = 0;

@@ -3,7 +3,7 @@
 #include "main.h"
 #include "struct_typedef.h"
 #include "rc_potocal.h"
-extern UART_HandleTypeDef huart6;
+// extern UART_HandleTypeDef huart6;
 JUDGE_MODULE_DATA Judge_Hero;
 ext_power_heat_data_t powerd;
 float newpower;

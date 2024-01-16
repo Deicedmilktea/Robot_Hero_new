@@ -41,15 +41,15 @@ void DRV_USART3_IRQHandler(UART_HandleTypeDef *huart)  //在stm32f4xx_it.c文件
 
 void USART6_Init(void)     //开启空闲中断，配置DMA相关参数，使能DMA接收
 {
-	__HAL_UART_CLEAR_IDLEFLAG(&huart6);    //先清楚空闲中断标志位，防止开启中断时立马进入中断
-	__HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);//使能空闲中断
+	// __HAL_UART_CLEAR_IDLEFLAG(&huart6);    //先清楚空闲中断标志位，防止开启中断时立马进入中断
+	// __HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);//使能空闲中断
 
-	SET_BIT(huart6.Instance->CR3, USART_CR3_DMAR); //将串口对应的DMA打开
-	DMAEx_MultiBufferStart_NoIT(huart6.hdmarx, \
-							    (uint32_t)&huart6.Instance->DR, \
-							    (uint32_t)judge_dma_buffer[0], \
-							    (uint32_t)judge_dma_buffer[1], \
-							    USART6_RX_BUF_LEN);  
+	// SET_BIT(huart6.Instance->CR3, USART_CR3_DMAR); //将串口对应的DMA打开
+	// DMAEx_MultiBufferStart_NoIT(huart6.hdmarx, \
+	// 						    (uint32_t)&huart6.Instance->DR, \
+	// 						    (uint32_t)judge_dma_buffer[0], \
+	// 						    (uint32_t)judge_dma_buffer[1], \
+	// 						    USART6_RX_BUF_LEN);  
 }
 
 void DRV_USART6_IRQHandler(UART_HandleTypeDef *huart)  //在stm32f4xx_it.c文件USART6_IRQHandler调用   

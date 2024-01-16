@@ -48,4 +48,7 @@ void chassis_current_give(void);
 // chassis CAN2发送信号
 void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
 
+// 键盘控制函数
+static void key_control(void);
+
 #endif
