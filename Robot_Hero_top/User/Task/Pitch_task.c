@@ -14,7 +14,7 @@ extern RC_ctrl_t rc_ctrl;
 pitch_t pitch;
 float relative_pitch = 0;
 extern INS_t INS_bottom;
-extern int16_t vision_pitch;
+extern float vision_pitch;
 
 void Pitch_task(void const *argument)
 {
@@ -24,17 +24,16 @@ void Pitch_task(void const *argument)
     {
         relative_pitch = INS.Roll - INS_bottom.Roll;
 
-        // if (rc_ctrl.rc.s[1] == 2)
-        // {
-        //     pitch.target_speed = pid_calc(&pitch.pid_angle, vision_pitch, relative_pitch);
-        // }
-        // else
-        // {
-        //     pitch.target_speed = -pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
-        //     pitch_position_limit();
-        // }
+        // 视觉识别
+        if (rc_ctrl.rc.s[1] == 2)
+        {
+            pitch.target_speed = pid_calc(&pitch.pid_angle, vision_pitch, relative_pitch);
+        }
 
-        pitch.target_speed = pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
+        else
+        {
+            pitch.target_speed = -pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
+        }
         pitch_position_limit();
         pitch_current_give();
         osDelay(1);

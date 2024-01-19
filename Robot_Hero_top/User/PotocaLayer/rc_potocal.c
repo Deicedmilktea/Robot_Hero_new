@@ -4,7 +4,8 @@
 // 底盘电机结构体
 extern motor_info_t motor_can1[6];
 int16_t Rotate_w;
-extern int16_t vision_yaw;
+extern float vision_yaw;
+float vision_yaw1 = 0;
 
 // IMU
 extern ins_data_t ins_data;
@@ -66,7 +67,7 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	{
 		temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
 	}
-	can_remote(temp_remote, 0x34);
+	//can_remote(temp_remote, 0x34);
 
 	temp_remote[0] = rxBuf[16];
 	temp_remote[1] = rxBuf[17];
@@ -85,16 +86,16 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	can_remote(temp_remote, 0x35);
 
 	// 发送视觉计算yaw值给下c板
-	vision_yaw = 100 * vision_yaw; // 使之接收带上小数点
-	temp_remote[0] = ((int)vision_yaw >> 8) & 0xff;
-	temp_remote[1] = (int)vision_yaw & 0xff;
+	vision_yaw1 = 100 * vision_yaw; // 使之接收带上小数点
+	temp_remote[0] = ((int)vision_yaw1 >> 8) & 0xff;
+	temp_remote[1] = (int)vision_yaw1 & 0xff;
 	temp_remote[2] = 0;
 	temp_remote[3] = 0;
 	temp_remote[4] = 0;
 	temp_remote[5] = 0;
 	temp_remote[6] = 0;
 	temp_remote[7] = 0;
-	can_vision(temp_remote, 0x36);
+	can_remote(temp_remote, 0x36);
 
 	// Some flag of keyboard
 	w_flag = (rxBuf[14] & 0x01);

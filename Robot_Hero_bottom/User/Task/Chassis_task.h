@@ -39,9 +39,6 @@ void chassis_mode_normal();
 /******************************小陀螺模式*********************************/
 void chassis_mode_top();
 
-/*****************************底盘跟随云台模式*******************************/
-void chassis_mode_follow();
-
 // 电机电流控制
 void chassis_current_give(void);
 
@@ -49,6 +46,6 @@ void chassis_current_give(void);
 void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
 
 // 键盘控制函数
-static void key_control(void);
+void key_control(void);
 
 #endif

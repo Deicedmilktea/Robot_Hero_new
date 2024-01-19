@@ -6,7 +6,7 @@ extern RC_ctrl_t rc_ctrl;
 uint16_t can_cnt_1 = 0;
 extern motor_info_t motor_can2[6];
 INS_t INS_top;
-int16_t vision_yaw;
+float vision_yaw;
 float powerdata[4];
 uint16_t pPowerdata[8];
 
@@ -133,6 +133,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
 
     if (rx_header.StdId == 0x36)
     {
+      canerror++;
       vision_yaw = ((int16_t)((rx_data[0] << 8) | rx_data[1])) / 100;
     }
   }

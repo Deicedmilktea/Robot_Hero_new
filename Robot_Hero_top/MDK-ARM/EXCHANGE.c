@@ -29,6 +29,7 @@ void exchange_task()
         },
     };
     vision_recv_data = VisionInit(&config);
+
     while (1) {
         ins_data.angle[0] = INS.Yaw;
         ins_data.angle[1] = INS.Roll;
