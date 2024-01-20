@@ -57,10 +57,10 @@ void Chassis_task(void const *pvParameters)
       chassis_mode_top();
     }
 
-    // 正常模式
+    // 底盘跟随云台模式
     else
     {
-      chassis_mode_normal();
+      chassis_mode_follow();
     }
 
     chassis_current_give();
@@ -79,7 +79,7 @@ static void Chassis_loop_Init()
   }
 
   // 底盘跟随云台
-  pid_yaw_angle_value[0] = 2;
+  pid_yaw_angle_value[0] = 3;
   pid_yaw_angle_value[1] = 0;
   pid_yaw_angle_value[2] = 0;
 
@@ -147,6 +147,29 @@ void chassis_mode_top()
 
   relative_yaw = INS.Yaw - INS_top.Yaw;
   relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
+
+  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
+  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
+
+  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+}
+
+/*****************************底盘跟随云台模式*******************************/
+void chassis_mode_follow()
+{
+  Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
+  Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
+
+  relative_yaw = INS.Yaw - INS_top.Yaw;
+  int16_t yaw_speed = pid_calc(&pid_yaw_angle, 0, relative_yaw);
+  int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
+  Wz = pid_calc(&pid_yaw_speed, yaw_speed, rotate_w);
+
+  int16_t Temp_Vx = Vx;
+  int16_t Temp_Vy = Vy;
 
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
   Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;

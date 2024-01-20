@@ -39,6 +39,9 @@ void chassis_mode_normal();
 /******************************小陀螺模式*********************************/
 void chassis_mode_top();
 
+/*****************************底盘跟随云台模式*******************************/
+void chassis_mode_follow();
+
 // 电机电流控制
 void chassis_current_give(void);
 

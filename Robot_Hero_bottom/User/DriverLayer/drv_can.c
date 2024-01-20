@@ -6,7 +6,8 @@ extern RC_ctrl_t rc_ctrl;
 uint16_t can_cnt_1 = 0;
 extern motor_info_t motor_can2[6];
 INS_t INS_top;
-float vision_yaw;
+float vision_yaw = 0;
+float yaw_speed = 0;
 float powerdata[4];
 uint16_t pPowerdata[8];
 
@@ -135,6 +136,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     {
       canerror++;
       vision_yaw = ((int16_t)((rx_data[0] << 8) | rx_data[1])) / 100;
+      yaw_speed = ((int16_t)((rx_data[2] << 8) | rx_data[3])) / 100;
     }
   }
 

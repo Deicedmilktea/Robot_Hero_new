@@ -1,7 +1,7 @@
 /*
 *****Gimbal_task云台任务*****
 * 云台电机为6020，ID = 5
-* 云台电机为motor_can1[5]
+* 云台电机为motor_can2[5]
 * 遥控器控制：右拨杆左右
 */
 
@@ -43,6 +43,7 @@ int Update_yaw_flag = 1;
 fp32 err_yaw_range = 0.1;
 
 extern float vision_yaw;
+extern float yaw_speed;
 
 /********************云台运动task*********************/
 void Gimbal_task(void const *pvParameters)
@@ -207,15 +208,9 @@ void gimbal_control()
 	if (gimbal_mode == 1)
 	{
 		// 锁yaw模式
-		if (rc_ctrl.rc.s[1] == 1) // 左拨杆上
+		if (rc_ctrl.rc.s[1] == 1 || rc_ctrl.rc.s[1] == 3) // 左拨杆上或中
 		{
 			gimbal_mode_normal();
-		}
-
-		// 云台跟随
-		else if (rc_ctrl.rc.s[1] == 3) // 左拨杆中
-		{
-			gimbal_mode_follow();
 		}
 
 		// 视觉控制
@@ -236,7 +231,7 @@ void gimbal_mode_follow()
 	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, INS.Yaw, ins_yaw_update);
 
 	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS_top.Gyro[2] * 57.3f);
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, yaw_speed * 57.3f);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out);
@@ -252,7 +247,7 @@ void gimbal_mode_vision()
 	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, vision_yaw, INS_top.Yaw);
 
 	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS_top.Gyro[2] * 57.3f);
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, yaw_speed * 57.3f);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out); // 给电流
@@ -296,8 +291,9 @@ void gimbal_mode_normal()
 	// 云台角度输出
 	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, ins_yaw_update);
 
-	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS_top.Gyro[2] * 57.3f);
+	// // 云台速度输出
+	// gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, yaw_speed * 57.3f);
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, motor_can2[5].rotor_speed);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out);

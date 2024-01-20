@@ -5,6 +5,9 @@
 extern motor_info_t motor_can1[6];
 int16_t Rotate_w;
 extern float vision_yaw;
+float ins_yaw = 0;
+float ins_roll = 0;
+float ins_pitch = 0;
 float vision_yaw1 = 0;
 
 // IMU
@@ -67,21 +70,21 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	{
 		temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
 	}
-	//can_remote(temp_remote, 0x34);
+	// can_remote(temp_remote, 0x34);
 
 	temp_remote[0] = rxBuf[16];
 	temp_remote[1] = rxBuf[17];
 
-	INS.Yaw = 100 * INS.Yaw; // 使之接收带上小数点
-	INS.Roll = 100 * INS.Roll;
-	INS.Pitch = 100 * INS.Pitch;
+	ins_yaw = 100 * INS.Yaw; // 使之接收带上小数点
+	ins_roll = 100 * INS.Roll;
+	ins_pitch = 100 * INS.Pitch;
 
-	temp_remote[2] = ((int)INS.Yaw >> 8) & 0xff;
-	temp_remote[3] = (int)INS.Yaw & 0xff;
-	temp_remote[4] = ((int)INS.Roll >> 8) & 0xff;
-	temp_remote[5] = ((int)INS.Roll) & 0xff;
-	temp_remote[6] = ((int)INS.Pitch >> 8) & 0xff;
-	temp_remote[7] = (int)INS.Pitch & 0xff;
+	temp_remote[2] = ((int)ins_yaw >> 8) & 0xff;
+	temp_remote[3] = (int)ins_yaw & 0xff;
+	temp_remote[4] = ((int)ins_roll >> 8) & 0xff;
+	temp_remote[5] = ((int)ins_roll) & 0xff;
+	temp_remote[6] = ((int)ins_pitch >> 8) & 0xff;
+	temp_remote[7] = (int)ins_pitch & 0xff;
 
 	can_remote(temp_remote, 0x35);
 
@@ -89,8 +92,8 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	vision_yaw1 = 100 * vision_yaw; // 使之接收带上小数点
 	temp_remote[0] = ((int)vision_yaw1 >> 8) & 0xff;
 	temp_remote[1] = (int)vision_yaw1 & 0xff;
-	temp_remote[2] = 0;
-	temp_remote[3] = 0;
+	temp_remote[2] = ((int)INS.Gyro[2] >> 8) & 0xff;
+	temp_remote[3] = (int)INS.Gyro[2] & 0xff;
 	temp_remote[4] = 0;
 	temp_remote[5] = 0;
 	temp_remote[6] = 0;
