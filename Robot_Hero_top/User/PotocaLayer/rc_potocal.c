@@ -10,8 +10,6 @@ float ins_roll = 0;
 float ins_pitch = 0;
 float vision_yaw1 = 0;
 
-// IMU
-extern ins_data_t ins_data;
 // flag for keyboard
 uint16_t w_flag;
 uint16_t s_flag;

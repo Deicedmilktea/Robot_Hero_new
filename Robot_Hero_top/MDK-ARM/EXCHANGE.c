@@ -8,8 +8,6 @@ extern UART_HandleTypeDef huart1;
 
 static Vision_Recv_s *vision_recv_data;
 
-ins_data_t ins_data;
-
 void exchange_task()
 {
     Vision_Init_Config_s config = {
@@ -31,10 +29,6 @@ void exchange_task()
     vision_recv_data = VisionInit(&config);
 
     while (1) {
-        ins_data.angle[0] = INS.Yaw;
-        ins_data.angle[1] = INS.Roll;
-        ins_data.angle[2] = INS.Pitch;
-
         VisionSetAltitude(INS.Yaw, INS.Pitch, INS.Roll);
         VisionSend();
 
