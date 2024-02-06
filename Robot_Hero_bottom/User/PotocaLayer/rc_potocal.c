@@ -6,8 +6,6 @@
 extern motor_info_t motor_can1[6];
 int16_t Rotate_w;
 
-// IMU
-extern ins_data_t ins_data;
 // flag for keyboard
 uint16_t w_flag;
 uint16_t s_flag;

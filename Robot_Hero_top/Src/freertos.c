@@ -55,15 +55,17 @@ osThreadId ExchangeTaskHandle;
 osThreadId INSTaskHandle;
 osThreadId ShootTaskHandle;
 osThreadId PitchTaskHandle;
+osThreadId GimbalTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void exchange_task();
+void exchange_task(void const *argument);
 /* USER CODE END FunctionPrototypes */
 
-void StartINSTask(void const *argument);
+void StartINSTask(void const * argument);
 void Shoot_task(void const * argument);
 void Pitch_task(void const * argument);
+void Gimbal_task(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -79,10 +81,10 @@ static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
 
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize)
 {
-    *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
-    *ppxIdleTaskStackBuffer = &xIdleStack[0];
-    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
-    /* place for user code */
+  *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+  *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  /* place for user code */
 }
 /* USER CODE END GET_IDLE_TASK_MEMORY */
 
@@ -92,10 +94,10 @@ static StackType_t xTimerStack[configTIMER_TASK_STACK_DEPTH];
 
 void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize)
 {
-    *ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
-    *ppxTimerTaskStackBuffer = &xTimerStack[0];
-    *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
-    /* place for user code */
+  *ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
+  *ppxTimerTaskStackBuffer = &xTimerStack[0];
+  *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+  /* place for user code */
 }
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
@@ -110,24 +112,24 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-    /* add mutexes, ... */
+  /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-    /* add semaphores, ... */
+  /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-    /* start timers, add new ones, ... */
+  /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-    /* add queues, ... */
+  /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of INSTask */
-  osThreadDef(INSTask, StartINSTask, osPriorityAboveNormal, 0, 1024);
+  osThreadDef(INSTask, StartINSTask, osPriorityHigh, 0, 1024);
   INSTaskHandle = osThreadCreate(osThread(INSTask), NULL);
 
   /* definition and creation of ShootTask */
@@ -138,8 +140,12 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(PitchTask, Pitch_task, osPriorityNormal, 0, 128);
   PitchTaskHandle = osThreadCreate(osThread(PitchTask), NULL);
 
+  /* definition and creation of GimbalTask */
+  osThreadDef(GimbalTask, Gimbal_task, osPriorityHigh, 0, 128);
+  GimbalTaskHandle = osThreadCreate(osThread(GimbalTask), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
-    /* add threads, ... */
+  /* add threads, ... */
   osThreadDef(ExchangeTask, exchange_task, osPriorityNormal, 0, 128);
   ExchangeTaskHandle = osThreadCreate(osThread(ExchangeTask), NULL);
   /* USER CODE END RTOS_THREADS */
@@ -156,28 +162,28 @@ void MX_FREERTOS_Init(void) {
 void StartINSTask(void const * argument)
 {
   /* USER CODE BEGIN StartINSTask */
-    INS_Init();
-    /* Infinite loop */
-    for (;;)
-    {
-        INS_Task();
-        osDelay(1);
-    }
+  INS_Init();
+  /* Infinite loop */
+  for (;;)
+  {
+    INS_Task();
+    osDelay(1);
+  }
   /* USER CODE END StartINSTask */
 }
 
 /* USER CODE BEGIN Header_Shoot_task */
 /**
-* @brief Function implementing the ShootTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the ShootTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_Shoot_task */
 __weak void Shoot_task(void const * argument)
 {
   /* USER CODE BEGIN Shoot_task */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     osDelay(1);
   }
@@ -186,32 +192,50 @@ __weak void Shoot_task(void const * argument)
 
 /* USER CODE BEGIN Header_Pitch_task */
 /**
-* @brief Function implementing the PitchTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the PitchTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_Pitch_task */
 __weak void Pitch_task(void const * argument)
 {
   /* USER CODE BEGIN Pitch_task */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     osDelay(1);
   }
   /* USER CODE END Pitch_task */
 }
 
-/* Private application code --------------------------------------------------*/
-/* USER CODE BEGIN Application */
-void StartDefaultTask(void const * argument)
+/* USER CODE BEGIN Header_Gimbal_task */
+/**
+* @brief Function implementing the GimbalTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Gimbal_task */
+__weak void Gimbal_task(void const * argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-	HAL_GPIO_WritePin(GPIOH,GPIO_PIN_11,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOH,GPIO_PIN_10,GPIO_PIN_SET);
-	uint8_t TIM1_flag = 1;
+  /* USER CODE BEGIN Gimbal_task */
   /* Infinite loop */
   for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END Gimbal_task */
+}
+
+/* Private application code --------------------------------------------------*/
+/* USER CODE BEGIN Application */
+void StartDefaultTask(void const *argument)
+{
+  /* USER CODE BEGIN StartDefaultTask */
+  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_10, GPIO_PIN_SET);
+  uint8_t TIM1_flag = 1;
+  /* Infinite loop */
+  for (;;)
   {
     osDelay(1);
   }

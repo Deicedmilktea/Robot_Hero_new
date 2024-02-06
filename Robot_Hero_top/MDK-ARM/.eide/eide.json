@@ -252,6 +252,9 @@
         "name": "RTOS TASK",
         "files": [
           {
+            "path": "../User/Task/Gimbal_task.c"
+          },
+          {
             "path": "../User/Task/Pitch_task.c"
           },
           {

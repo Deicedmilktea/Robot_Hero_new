@@ -1,7 +1,7 @@
 /*
 *****Gimbal_task云台任务*****
-* 云台电机为6020，ID = 5
-* 云台电机为motor_can2[5]
+* 云台电机为6020，ID = 4
+* 云台电机为motor_can2[3]
 * 遥控器控制：右拨杆左右
 */
 
@@ -27,8 +27,8 @@ gimbal_t gimbal_encoder; // gimbal encoder
 gimbal_t gimbal_gyro;	 // gimbal gyro
 fp32 err_yaw_angle;		 // yaw angle error
 extern RC_ctrl_t rc_ctrl;
-extern INS_t INS_top;
-extern motor_info_t motor_can2[6];
+extern INS_t INS;
+extern motor_info_t motor_can2[4];
 
 int gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
 int error6 = 0;
@@ -43,7 +43,6 @@ int Update_yaw_flag = 1;
 fp32 err_yaw_range = 0.1;
 
 extern float vision_yaw;
-extern float yaw_speed;
 
 /********************云台运动task*********************/
 void Gimbal_task(void const *pvParameters)
@@ -52,7 +51,7 @@ void Gimbal_task(void const *pvParameters)
 	gimbal_mode = 1;
 	if (gimbal_mode == 0)
 	{
-		gimbal_encoder.target_angle = motor_can2[5].rotor_angle;
+		gimbal_encoder.target_angle = motor_can2[3].rotor_angle;
 	}
 
 	for (;;)
@@ -162,9 +161,9 @@ void angle_over_zero(float err)
 static void Yaw_read_imu()
 {
 	// 三个角度值读取
-	ins_yaw = INS_top.Yaw;
-	ins_pitch = INS_top.Pitch;
-	ins_roll = INS_top.Roll;
+	ins_yaw = INS.Yaw;
+	ins_pitch = INS.Pitch;
+	ins_roll = INS.Roll;
 
 	// 记录初始位置
 	if (Update_yaw_flag)
@@ -197,7 +196,7 @@ void gimbal_control()
 	{
 		gimbal_encoder.target_angle += 0.02 * rc_ctrl.rc.ch[0];
 		detel_calc(&gimbal_encoder.target_angle);
-		err_yaw_angle = gimbal_gyro.target_angle - motor_can2[4].rotor_angle;
+		err_yaw_angle = gimbal_gyro.target_angle - motor_can2[3].rotor_angle;
 		angle_over_zero(err_yaw_angle);
 		gimbal_encoder.pid_angle_out = pid_calc(&gimbal_encoder.pid_angle, gimbal_encoder.target_angle, motor_can2[4].rotor_angle);	 // 计算出云台角度
 		gimbal_encoder.pid_speed_out = pid_calc(&gimbal_encoder.pid_speed, gimbal_encoder.pid_angle_out, motor_can2[4].rotor_speed); // 计算出云台速度
@@ -230,8 +229,8 @@ void gimbal_mode_follow()
 	// 角度输出
 	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, INS.Yaw, ins_yaw_update);
 
-	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, yaw_speed * 57.3f);
+	// 云台速度输出,使用陀螺仪的速度
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out);
@@ -244,10 +243,10 @@ void gimbal_mode_vision()
 	Yaw_read_imu();
 
 	// 云台角度输出
-	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, vision_yaw, INS_top.Yaw);
+	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, vision_yaw, INS.Yaw);
 
 	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, yaw_speed * 57.3f);
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out); // 给电流
@@ -291,9 +290,9 @@ void gimbal_mode_normal()
 	// 云台角度输出
 	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, ins_yaw_update);
 
-	// // 云台速度输出
-	// gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, yaw_speed * 57.3f);
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, motor_can2[5].rotor_speed);
+	// 云台速度输出
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
+	// gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, motor_can2[5].rotor_speed);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out);
@@ -330,27 +329,27 @@ static void detel_calc(fp32 *angle)
 	}
 }
 
-/********************************can1发送电流***************************/
-void gimbal_can2_cmd(int16_t v1)
+/********************************can2发送电流***************************/
+void gimbal_can2_cmd(int16_t v4)
 {
 	uint32_t send_mail_box;
 	CAN_TxHeaderTypeDef tx_header;
 	uint8_t tx_data[8];
 
-	tx_header.StdId = 0x2FF;
+	tx_header.StdId = 0x1FF;
 	tx_header.IDE = CAN_ID_STD;	  // 标准帧
 	tx_header.RTR = CAN_RTR_DATA; // 数据帧
 
 	tx_header.DLC = 8; // 发送数据长度（字节）
 
-	tx_data[0] = (v1 >> 8) & 0xff;
-	tx_data[1] = (v1) & 0xff;
+	tx_data[0] = NULL;
+	tx_data[1] = NULL;
 	tx_data[2] = NULL;
 	tx_data[3] = NULL;
 	tx_data[4] = NULL;
 	tx_data[5] = NULL;
-	tx_data[6] = NULL;
-	tx_data[7] = NULL;
+	tx_data[6] = (v4 >> 8) & 0xff;
+	tx_data[7] = (v4) & 0xff;
 
 	HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }

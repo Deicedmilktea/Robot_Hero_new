@@ -8,7 +8,7 @@ extern UART_HandleTypeDef huart1;
 
 static Vision_Recv_s *vision_recv_data;
 
-void exchange_task()
+void exchange_task(void const *argument)
 {
     Vision_Init_Config_s config = {
         .recv_config = {

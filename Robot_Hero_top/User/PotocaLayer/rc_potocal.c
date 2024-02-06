@@ -5,10 +5,14 @@
 extern motor_info_t motor_can1[6];
 int16_t Rotate_w;
 extern float vision_yaw;
-float ins_yaw = 0;
-float ins_roll = 0;
-float ins_pitch = 0;
+extern float vision_Vx;
+extern float vision_Vy;
+float yaw = 0;
+// float ins_roll = 0;
+// float ins_pitch = 0;
 float vision_yaw1 = 0;
+float vision_Vx1 = 0;
+float vision_Vy1 = 0;
 
 // flag for keyboard
 uint16_t w_flag;
@@ -68,35 +72,42 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	{
 		temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
 	}
-	// can_remote(temp_remote, 0x34);
+	can_remote(temp_remote, 0x34);
 
 	temp_remote[0] = rxBuf[16];
 	temp_remote[1] = rxBuf[17];
 
-	ins_yaw = 100 * INS.Yaw; // 使之接收带上小数点
-	ins_roll = 100 * INS.Roll;
-	ins_pitch = 100 * INS.Pitch;
+	yaw = 100 * INS.Yaw; // 使之接收带上小数点
+	// ins_roll = 100 * INS.Roll;
+	// ins_pitch = 100 * INS.Pitch;
+	vision_Vx1 = 100 * vision_Vx; // 使之接收带上小数点
+	vision_Vy1 = 100 * vision_Vy; // 使之接收带上小数点
 
-	temp_remote[2] = ((int)ins_yaw >> 8) & 0xff;
-	temp_remote[3] = (int)ins_yaw & 0xff;
-	temp_remote[4] = ((int)ins_roll >> 8) & 0xff;
-	temp_remote[5] = ((int)ins_roll) & 0xff;
-	temp_remote[6] = ((int)ins_pitch >> 8) & 0xff;
-	temp_remote[7] = (int)ins_pitch & 0xff;
+	temp_remote[2] = ((int)yaw >> 8) & 0xff;
+	temp_remote[3] = (int)yaw & 0xff;
+	// temp_remote[4] = ((int)ins_roll >> 8) & 0xff;
+	// temp_remote[5] = ((int)ins_roll) & 0xff;
+	// temp_remote[6] = ((int)ins_pitch >> 8) & 0xff;
+	// temp_remote[7] = (int)ins_pitch & 0xff;
+	// 导航反馈的Vx, Vy
+	temp_remote[4] = ((int)vision_Vx1 >> 8) & 0xff;
+	temp_remote[5] = ((int)vision_Vx1) & 0xff;
+	temp_remote[6] = ((int)vision_Vy1 >> 8) & 0xff;
+	temp_remote[7] = (int)vision_Vy1 & 0xff;
 
 	can_remote(temp_remote, 0x35);
 
-	// 发送视觉计算yaw值给下c板
-	vision_yaw1 = 100 * vision_yaw; // 使之接收带上小数点
-	temp_remote[0] = ((int)vision_yaw1 >> 8) & 0xff;
-	temp_remote[1] = (int)vision_yaw1 & 0xff;
-	temp_remote[2] = ((int)INS.Gyro[2] >> 8) & 0xff;
-	temp_remote[3] = (int)INS.Gyro[2] & 0xff;
-	temp_remote[4] = 0;
-	temp_remote[5] = 0;
-	temp_remote[6] = 0;
-	temp_remote[7] = 0;
-	can_remote(temp_remote, 0x36);
+	// // 发送视觉计算yaw值给下c板
+	// vision_yaw1 = 100 * vision_yaw; // 使之接收带上小数点
+	// temp_remote[0] = ((int)vision_yaw1 >> 8) & 0xff;
+	// temp_remote[1] = (int)vision_yaw1 & 0xff;
+	// temp_remote[2] = ((int)INS.Gyro[2] >> 8) & 0xff;
+	// temp_remote[3] = (int)INS.Gyro[2] & 0xff;
+	// temp_remote[4] = 0;
+	// temp_remote[5] = 0;
+	// temp_remote[6] = 0;
+	// temp_remote[7] = 0;
+	// can_remote(temp_remote, 0x36);
 
 	// Some flag of keyboard
 	w_flag = (rxBuf[14] & 0x01);

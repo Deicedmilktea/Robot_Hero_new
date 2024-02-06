@@ -31,7 +31,6 @@
 #include "INS_task.h"
 #include "exchange.h"
 #include "Chassis_task.h"
-#include "Gimbal_task.h"
 #include "super_cap.h"
 #include "UI_task.h"
 #include "stm32f4xx_it.h"
@@ -61,7 +60,6 @@ osThreadId UI_taskHandle;
 /* USER CODE END Variables */
 osThreadId INSTaskHandle;
 osThreadId ChassisTaskHandle;
-osThreadId GimbalTaskHandle;
 osThreadId ShootTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,7 +69,6 @@ osThreadId ShootTaskHandle;
 
 void StartINSTask(void const * argument);
 void Chassis_task(void const * argument);
-void Gimbal_task(void const * argument);
 void Shoot_task(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -143,10 +140,6 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(ChassisTask, Chassis_task, osPriorityHigh, 0, 256);
   ChassisTaskHandle = osThreadCreate(osThread(ChassisTask), NULL);
 
-  /* definition and creation of GimbalTask */
-  osThreadDef(GimbalTask, Gimbal_task, osPriorityRealtime, 0, 256);
-  GimbalTaskHandle = osThreadCreate(osThread(GimbalTask), NULL);
-
   /* definition and creation of ShootTask */
   osThreadDef(ShootTask, Shoot_task, osPriorityHigh, 0, 128);
   ShootTaskHandle = osThreadCreate(osThread(ShootTask), NULL);
@@ -193,24 +186,6 @@ __weak void Chassis_task(void const * argument)
     osDelay(1);
   }
   /* USER CODE END Chassis_task */
-}
-
-/* USER CODE BEGIN Header_Gimbal_task */
-/**
-* @brief Function implementing the GimbalTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_Gimbal_task */
-__weak void Gimbal_task(void const * argument)
-{
-  /* USER CODE BEGIN Gimbal_task */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END Gimbal_task */
 }
 
 /* USER CODE BEGIN Header_Shoot_task */

@@ -1,8 +1,10 @@
 #include "miniPC_process.h"
 #include "string.h"
 
-float vision_yaw;
-float vision_pitch;
+float vision_yaw = 0;
+float vision_pitch = 0;
+float vision_Vx = 0;
+float vision_Vy = 0;
 
 static Vision_Instance *vision_instance; // 用于和视觉通信的串口实例
 

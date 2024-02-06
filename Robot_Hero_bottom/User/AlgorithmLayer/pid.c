@@ -1,4 +1,3 @@
-
 #include "pid.h"
 #include "main.h"
 
@@ -14,7 +13,7 @@
     }                        \
   }
 
-#include "RTE_Components.h" // Component selection
+// #include "RTE_Components.h" // Component selection
 void pid_init(pid_struct_t *pid, float value[3], float i_max, float out_max)
 {
   pid->kp = value[0];

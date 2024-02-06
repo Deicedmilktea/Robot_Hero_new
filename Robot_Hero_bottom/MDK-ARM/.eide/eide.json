@@ -249,9 +249,6 @@
             "path": "../User/Task/Chassis_task.c"
           },
           {
-            "path": "../User/Task/Gimbal_task.c"
-          },
-          {
             "path": "../User/Task/Shoot_task.c"
           },
           {
