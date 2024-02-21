@@ -29,7 +29,7 @@ void Shoot_task(void const *argument)
       shoot_stop();
     }
 
-    shoot_current_give();
+    // shoot_current_give();
     osDelay(1);
   }
 }

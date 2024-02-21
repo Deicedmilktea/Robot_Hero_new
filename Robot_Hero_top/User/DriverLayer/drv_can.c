@@ -89,7 +89,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     }
 
     // yaw
-    if ((rx_header.StdId >= 0x208))
+    if ((rx_header.StdId == 0x208))
     {
       motor_can2[3].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
       motor_can2[3].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);

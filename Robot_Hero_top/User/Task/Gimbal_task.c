@@ -119,8 +119,8 @@ void Gimbal_loop_init()
 
 	pid_init(&gimbal_encoder.pid_angle, gimbal_encoder.pid_angle_value, 500, 8191);
 	pid_init(&gimbal_encoder.pid_speed, gimbal_encoder.pid_speed_value, 100, 3000);
-	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 10000, 30000);
-	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 10000, 30000);
+	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 10000, 10000);
+	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 10000, 10000);
 }
 
 // /**********************将目标角度从（-pi, pi）映射到（0, 8091）*************************/
@@ -351,5 +351,5 @@ void gimbal_can2_cmd(int16_t v4)
 	tx_data[6] = (v4 >> 8) & 0xff;
 	tx_data[7] = (v4) & 0xff;
 
-	HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
 }

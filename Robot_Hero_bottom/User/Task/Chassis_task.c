@@ -23,6 +23,7 @@ int16_t Temp_Vx;
 int16_t Temp_Vy;
 int fllowflag = 0;
 float relative_yaw = 0;
+int yaw_correction_flag = 1; // yaw值校正标志
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern INS_t INS_top;
@@ -51,6 +52,9 @@ void Chassis_task(void const *pvParameters)
 
   for (;;)
   {
+    // 校正yaw值
+    yaw_correct();
+
     // 左拨杆拨到上，小陀螺模式
     if (rc_ctrl.rc.s[1] == 1)
     {
@@ -63,7 +67,7 @@ void Chassis_task(void const *pvParameters)
       chassis_mode_follow();
     }
 
-    chassis_current_give();
+    // chassis_current_give();
     error10++;
     osDelay(1);
   }
@@ -79,11 +83,11 @@ static void Chassis_loop_Init()
   }
 
   // 底盘跟随云台
-  pid_yaw_angle_value[0] = 3;
+  pid_yaw_angle_value[0] = 1;
   pid_yaw_angle_value[1] = 0;
   pid_yaw_angle_value[2] = 0;
 
-  pid_yaw_speed_value[0] = 10;
+  pid_yaw_speed_value[0] = 3;
   pid_yaw_speed_value[1] = 0;
   pid_yaw_speed_value[2] = 0;
 
@@ -140,7 +144,7 @@ void chassis_mode_top()
 {
   Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
   Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
-  Wz = 4000;
+  Wz = 1000;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -166,7 +170,15 @@ void chassis_mode_follow()
   relative_yaw = INS.Yaw - INS_top.Yaw;
   int16_t yaw_speed = pid_calc(&pid_yaw_angle, 0, relative_yaw);
   int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
-  Wz = pid_calc(&pid_yaw_speed, yaw_speed, rotate_w);
+  // 消除静态旋转
+  if (relative_yaw > -2 && relative_yaw < 2)
+  {
+    Wz = 0;
+  }
+  else
+  {
+    Wz = pid_calc(&pid_yaw_speed, yaw_speed, rotate_w);
+  }
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -214,6 +226,18 @@ void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
   tx_data[6] = (v4 >> 8) & 0xff;
   tx_data[7] = (v4) & 0xff;
   HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
+}
+
+/*************************yaw值校正*******************************/
+void yaw_correct()
+{
+  // 只执行一次
+  if (yaw_correction_flag)
+  {
+    yaw_correction_flag = 0;
+    INS.yaw_init = INS.Yaw;
+  }
+  INS.yaw_update = INS.Yaw - INS.yaw_init;
 }
 
 /*************************** 键盘控制函数 ************************/

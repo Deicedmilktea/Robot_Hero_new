@@ -27,8 +27,8 @@ typedef struct
 {
     float q[4]; // 四元数估计值
 
-    float Gyro[3];  // 角速度
-    float Accel[3]; // 加速度
+    float Gyro[3];          // 角速度
+    float Accel[3];         // 加速度
     float MotionAccel_b[3]; // 机体坐标加速度
     float MotionAccel_n[3]; // 绝对系加速度
 
@@ -46,13 +46,14 @@ typedef struct
     float Roll;
     float Pitch;
     float Yaw;
+    float yaw_init;   // 初始化yaw的初始值
+    float yaw_update; // 使用这个得到真正的yaw值
     float YawTotalAngle;
 } INS_t;
 
-
 /**
  * @brief 用于修正安装误差的参数,demo中可无视
- * 
+ *
  */
 typedef struct
 {

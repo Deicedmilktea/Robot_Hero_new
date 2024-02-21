@@ -67,10 +67,10 @@
             "name": "MDK-ARM",
             "files": [
               {
-                "path": "startup_stm32f407xx.s"
+                "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
               },
               {
-                "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
+                "path": "startup_stm32f407xx.s"
               }
             ],
             "folders": []

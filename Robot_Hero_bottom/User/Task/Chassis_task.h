@@ -42,6 +42,9 @@ void chassis_mode_top();
 /*****************************底盘跟随云台模式*******************************/
 void chassis_mode_follow();
 
+/*************************yaw值校正*******************************/
+void yaw_correct();
+
 // 电机电流控制
 void chassis_current_give(void);
 
