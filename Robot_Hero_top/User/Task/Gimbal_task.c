@@ -82,6 +82,15 @@ void Gimbal_loop_init()
 	// gimbal_gyro.pid_speed_value[1] = 0;
 	// gimbal_gyro.pid_speed_value[2] = 2;
 
+	// // normal
+	// gimbal_gyro.pid_angle_value[0] = 350;
+	// gimbal_gyro.pid_angle_value[1] = 0.05;
+	// gimbal_gyro.pid_angle_value[2] = 800;
+
+	// gimbal_gyro.pid_speed_value[0] = 2.5;
+	// gimbal_gyro.pid_speed_value[1] = 0;
+	// gimbal_gyro.pid_speed_value[2] = 2;
+
 	// normal
 	gimbal_gyro.pid_angle_value[0] = 350;
 	gimbal_gyro.pid_angle_value[1] = 0.05;
@@ -90,15 +99,6 @@ void Gimbal_loop_init()
 	gimbal_gyro.pid_speed_value[0] = 2.5;
 	gimbal_gyro.pid_speed_value[1] = 0;
 	gimbal_gyro.pid_speed_value[2] = 2;
-
-	// // normal
-	// gimbal_gyro.pid_angle_value[0] = 600;
-	// gimbal_gyro.pid_angle_value[1] = 0;
-	// gimbal_gyro.pid_angle_value[2] = 0;
-
-	// gimbal_gyro.pid_speed_value[0] = 0.5;
-	// gimbal_gyro.pid_speed_value[1] = 0;
-	// gimbal_gyro.pid_speed_value[2] = 0;
 
 	// // shoot
 	// gimbal_gyro.pid_angle_value[0] = 40;

@@ -1,5 +1,8 @@
 #include "drv_can.h"
 #include "ins_task.h"
+
+#define RC_CH_VALUE_OFFSET ((uint16_t)1024)
+
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl;
@@ -88,13 +91,17 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
 
     if (rx_header.StdId == 0x33) // 接收上C传来的遥控器数据
     {
-      rc_ctrl.rc.ch[0] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff) - 1024;                                      //!< Channel 0  ÖÐÖµÎª1024£¬×î´óÖµ1684£¬×îÐ¡Öµ364£¬²¨¶¯·¶Î§£º660
-      rc_ctrl.rc.ch[1] = ((((rx_data[1] >> 3) & 0xff) | (rx_data[2] << 5)) & 0x07ff) - 1024;                      //!< Channel 1
-      rc_ctrl.rc.ch[2] = ((((rx_data[2] >> 6) & 0xff) | (rx_data[3] << 2) | (rx_data[4] << 10)) & 0x07ff) - 1024; //!< Channel 2
-      rc_ctrl.rc.ch[3] = ((((rx_data[4] >> 1) & 0xff) | (rx_data[5] << 7)) & 0x07ff) - 1024;                      //!< Channel 3
-      rc_ctrl.rc.s[0] = ((rx_data[5] >> 4) & 0x0003);                                                             //!< Switch left£¡£¡£¡ÕâÄáÂêÊÇÓÒ
-      rc_ctrl.rc.s[1] = ((rx_data[5] >> 4) & 0x000C) >> 2;                                                        //!< Switch right£¡£¡£¡Õâ²ÅÊÇ×ó
-      rc_ctrl.mouse.x = rx_data[6] | (rx_data[7] << 8);                                                           //!< Mouse X axis
+      rc_ctrl.rc.ch[0] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff);                                      //!< Channel 0  ÖÐÖµÎª1024£¬×î´óÖµ1684£¬×îÐ¡Öµ364£¬²¨¶¯·¶Î§£º660
+      rc_ctrl.rc.ch[1] = ((((rx_data[1] >> 3) & 0xff) | (rx_data[2] << 5)) & 0x07ff);                      //!< Channel 1
+      rc_ctrl.rc.ch[2] = ((((rx_data[2] >> 6) & 0xff) | (rx_data[3] << 2) | (rx_data[4] << 10)) & 0x07ff); //!< Channel 2
+      rc_ctrl.rc.ch[3] = ((((rx_data[4] >> 1) & 0xff) | (rx_data[5] << 7)) & 0x07ff);                      //!< Channel 3
+      rc_ctrl.rc.s[0] = ((rx_data[5] >> 4) & 0x0003);                                                      //!< Switch left£¡£¡£¡ÕâÄáÂêÊÇÓÒ
+      rc_ctrl.rc.s[1] = ((rx_data[5] >> 4) & 0x000C) >> 2;                                                 //!< Switch right£¡£¡£¡Õâ²ÅÊÇ×ó
+      rc_ctrl.mouse.x = rx_data[6] | (rx_data[7] << 8);                                                    //!< Mouse X axis
+      rc_ctrl.rc.ch[0] -= RC_CH_VALUE_OFFSET;
+      rc_ctrl.rc.ch[1] -= RC_CH_VALUE_OFFSET;
+      rc_ctrl.rc.ch[2] -= RC_CH_VALUE_OFFSET;
+      rc_ctrl.rc.ch[3] -= RC_CH_VALUE_OFFSET;
     }
 
     if (rx_header.StdId == 0x34) // 接收上C传来的遥控器数据
@@ -128,7 +135,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
 
     if (rx_header.StdId == 0x35)
     {
-      rc_ctrl.rc.ch[4] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff) - 1024;
+      rc_ctrl.rc.ch[4] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff) - RC_CH_VALUE_OFFSET;
       INS_top.Yaw = ((int16_t)((rx_data[2] << 8) | rx_data[3])) / 100.0f; // yaw
       // INS_top.Roll = ((int16_t)((rx_data[4] << 8) | rx_data[5])) / 100;  // roll（roll和pitch根据c放置位置不同可能交换）
       // INS_top.Pitch = ((int16_t)((rx_data[6] << 8) | rx_data[7])) / 100; // pitch

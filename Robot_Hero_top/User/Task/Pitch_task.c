@@ -9,7 +9,7 @@
 #include "rc_potocal.h"
 #include "ins_task.h"
 
-extern motor_info_t motor_can2[3];
+extern motor_info_t motor_can2[4];
 extern RC_ctrl_t rc_ctrl;
 pitch_t pitch;
 float relative_pitch = 0;
@@ -86,8 +86,8 @@ void pitch_can2_cmd(int16_t v3)
 /****************PID计算速度并发送电流***************/
 void pitch_current_give()
 {
-    motor_can2[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, -motor_can2[2].rotor_speed);
-    pitch_can2_cmd(-motor_can2[2].set_current);
+    motor_can2[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
+    pitch_can2_cmd(motor_can2[2].set_current);
 }
 
 /*************pitch速度映射********************/
@@ -105,11 +105,11 @@ int16_t pitch_speed_map(int value, int from_min, int from_max, int to_min, int t
 /***************判断pitch位置******************/
 void pitch_position_limit()
 {
-    if (relative_pitch > 20 && pitch.target_speed > 0)
+    if (relative_pitch > 20 && pitch.target_speed < 0) // pitch.target_speed正负与3508旋转方向有关
     {
         pitch.target_speed = 0;
     }
-    if (relative_pitch < -15 && pitch.target_speed < 0)
+    if (relative_pitch < -15 && pitch.target_speed > 0)
     {
         pitch.target_speed = 0;
     }

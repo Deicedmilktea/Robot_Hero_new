@@ -67,7 +67,7 @@ void Chassis_task(void const *pvParameters)
       chassis_mode_follow();
     }
 
-    // chassis_current_give();
+    chassis_current_give();
     error10++;
     osDelay(1);
   }
@@ -87,7 +87,7 @@ static void Chassis_loop_Init()
   pid_yaw_angle_value[1] = 0;
   pid_yaw_angle_value[2] = 0;
 
-  pid_yaw_speed_value[0] = 3;
+  pid_yaw_speed_value[0] = 10;
   pid_yaw_speed_value[1] = 0;
   pid_yaw_speed_value[2] = 0;
 
@@ -167,7 +167,7 @@ void chassis_mode_follow()
   Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
   Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
 
-  relative_yaw = INS.Yaw - INS_top.Yaw;
+  relative_yaw = INS.yaw_update - INS_top.Yaw;
   int16_t yaw_speed = pid_calc(&pid_yaw_angle, 0, relative_yaw);
   int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
   // 消除静态旋转
@@ -183,13 +183,18 @@ void chassis_mode_follow()
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
 
-  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
-  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
+  Vx = cos(-relative_yaw / 57.3f) * Temp_Vx - sin(-relative_yaw / 57.3f) * Temp_Vy;
+  Vy = sin(-relative_yaw / 57.3f) * Temp_Vx + cos(-relative_yaw / 57.3f) * Temp_Vy;
 
   chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
   chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+
+  // chassis[0].target_speed = 0;
+  // chassis[1].target_speed = 0;
+  // chassis[2].target_speed = 0;
+  // chassis[3].target_speed = 0;
 }
 
 /***************************电机电流控制****************************/
