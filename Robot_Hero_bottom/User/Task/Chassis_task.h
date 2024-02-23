@@ -31,7 +31,7 @@ static void Chassis_loop_Init();
 void Chassis_task(void const *pvParameters);
 
 // speed mapping
-int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_max);
+int16_t mapping(int value, int from_min, int from_max, int to_min, int to_max);
 
 /***************************************正常运动模式************************************/
 void chassis_mode_normal();
@@ -41,6 +41,9 @@ void chassis_mode_top();
 
 /*****************************底盘跟随云台模式*******************************/
 void chassis_mode_follow();
+
+/***************************************视觉运动模式************************************/
+void chassis_mode_vision();
 
 /*************************yaw值校正*******************************/
 void yaw_correct();

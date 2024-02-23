@@ -32,7 +32,7 @@ void Pitch_task(void const *argument)
 
         else
         {
-            pitch.target_speed = -pitch_speed_map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
+            pitch.target_speed = -map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
         }
         pitch_position_limit();
         pitch_current_give();
@@ -91,7 +91,7 @@ void pitch_current_give()
 }
 
 /*************pitch速度映射********************/
-int16_t pitch_speed_map(int value, int from_min, int from_max, int to_min, int to_max)
+int16_t map(int value, int from_min, int from_max, int to_min, int to_max)
 {
     // 首先将输入值从 [a, b] 映射到 [0, 1] 范围内
     double normalized_value = (value * 1.0 - from_min) / (from_max - from_min);

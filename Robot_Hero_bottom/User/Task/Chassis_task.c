@@ -14,24 +14,28 @@
 
 #define KEY_START_OFFSET 3
 #define KEY_STOP_OFFSET 20
-#define chassis_speed_max 2000
+#define CHASSIS_SPEED_MAX 2000
+#define CHASSIS_TOP_SPEED 1000
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
 volatile int16_t Vx = 0, Vy = 0, Wz = 0;
-int16_t Temp_Vx;
-int16_t Temp_Vy;
 int fllowflag = 0;
 float relative_yaw = 0;
 int yaw_correction_flag = 1; // yaw值校正标志
+
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern INS_t INS_top;
 extern uint16_t shift_flag;
-pid_struct_t pid_yaw_angle;
-pid_struct_t pid_yaw_speed;
-float pid_yaw_angle_value[3];
-float pid_yaw_speed_value[3];
+extern float vision_Vx;
+extern float vision_Vy;
+
+// 底盘跟随云台计算
+static pid_struct_t pid_yaw_angle;
+static pid_struct_t pid_yaw_speed;
+static float pid_yaw_angle_value[3];
+static float pid_yaw_speed_value[3];
 
 int error10 = 0;
 fp32 speed10 = 0;
@@ -105,8 +109,8 @@ static void Chassis_loop_Init()
   Wz = 0;
 }
 
-/**********************************speed mapping****************************************/
-int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_max)
+/**********************************mapping****************************************/
+int16_t mapping(int value, int from_min, int from_max, int to_min, int to_max)
 {
   // 首先将输入值从 [a, b] 映射到 [0, 1] 范围内
   double normalized_value = (value * 1.0 - from_min) / (from_max - from_min);
@@ -120,14 +124,14 @@ int16_t Speedmapping(int value, int from_min, int from_max, int to_min, int to_m
 /***************************************正常运动模式************************************/
 void chassis_mode_normal()
 {
-  Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
-  Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
-  Wz = Speedmapping(rc_ctrl.rc.ch[4], -660, 660, -chassis_speed_max, chassis_speed_max); // rotate
+  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // left and right
+  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // front and back
+  Wz = mapping(rc_ctrl.rc.ch[4], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // rotate
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
 
-  relative_yaw = INS.Yaw - INS_top.Yaw;
+  relative_yaw = INS.yaw_update - INS_top.Yaw;
   relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
 
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
@@ -142,14 +146,46 @@ void chassis_mode_normal()
 /******************************小陀螺模式*********************************/
 void chassis_mode_top()
 {
-  Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
-  Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
-  Wz = 1000;
+  // remote control
+  if (!w_flag && !s_flag && !a_flag && !d_flag)
+  {
+    Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // left and right
+    Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // front and back
+  }
+  // keyboard control
+  else
+  {
+    if (w_flag)
+      Vy += KEY_START_OFFSET;
+    else if (s_flag)
+      Vy -= KEY_STOP_OFFSET;
+    else
+      Vy = 0;
+
+    if (Vy > CHASSIS_SPEED_MAX)
+      Vy = CHASSIS_SPEED_MAX;
+    if (Vy < -CHASSIS_SPEED_MAX)
+      Vy = -CHASSIS_SPEED_MAX;
+
+    if (a_flag)
+      Vx -= KEY_STOP_OFFSET;
+    else if (d_flag)
+      Vx += KEY_START_OFFSET;
+    else
+      Vx = 0;
+
+    if (Vx > CHASSIS_SPEED_MAX)
+      Vx = CHASSIS_SPEED_MAX;
+    if (Vx < -CHASSIS_SPEED_MAX)
+      Vx = -CHASSIS_SPEED_MAX;
+  }
+
+  Wz = CHASSIS_TOP_SPEED;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
 
-  relative_yaw = INS.Yaw - INS_top.Yaw;
+  relative_yaw = INS.yaw_update - INS_top.Yaw;
   relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
 
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
@@ -164,11 +200,42 @@ void chassis_mode_top()
 /*****************************底盘跟随云台模式*******************************/
 void chassis_mode_follow()
 {
-  Vx = Speedmapping(rc_ctrl.rc.ch[2], -660, 660, -chassis_speed_max, chassis_speed_max); // left and right
-  Vy = Speedmapping(rc_ctrl.rc.ch[3], -660, 660, -chassis_speed_max, chassis_speed_max); // front and back
+  // remote control
+  if (!w_flag && !s_flag && !a_flag && !d_flag)
+  {
+    Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // left and right
+    Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // front and back
+  }
+  // keyboard control
+  else
+  {
+    if (w_flag)
+      Vy += KEY_START_OFFSET;
+    else if (s_flag)
+      Vy -= KEY_STOP_OFFSET;
+    else
+      Vy = 0;
+
+    if (Vy > CHASSIS_SPEED_MAX)
+      Vy = CHASSIS_SPEED_MAX;
+    if (Vy < -CHASSIS_SPEED_MAX)
+      Vy = -CHASSIS_SPEED_MAX;
+
+    if (a_flag)
+      Vx -= KEY_STOP_OFFSET;
+    else if (d_flag)
+      Vx += KEY_START_OFFSET;
+    else
+      Vx = 0;
+
+    if (Vx > CHASSIS_SPEED_MAX)
+      Vx = CHASSIS_SPEED_MAX;
+    if (Vx < -CHASSIS_SPEED_MAX)
+      Vx = -CHASSIS_SPEED_MAX;
+  }
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
-  int16_t yaw_speed = pid_calc(&pid_yaw_angle, 0, relative_yaw);
+  int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, 0, relative_yaw);
   int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
   // 消除静态旋转
   if (relative_yaw > -2 && relative_yaw < 2)
@@ -182,9 +249,9 @@ void chassis_mode_follow()
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
-
-  Vx = cos(-relative_yaw / 57.3f) * Temp_Vx - sin(-relative_yaw / 57.3f) * Temp_Vy;
-  Vy = sin(-relative_yaw / 57.3f) * Temp_Vx + cos(-relative_yaw / 57.3f) * Temp_Vy;
+  relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
+  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
+  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
   chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
@@ -197,7 +264,26 @@ void chassis_mode_follow()
   // chassis[3].target_speed = 0;
 }
 
-/***************************电机电流控制****************************/
+/*************************** 视觉运动模式 ****************************/
+void chassis_mode_vision()
+{
+  int16_t Temp_Vx = vision_Vx;
+  int16_t Temp_Vy = vision_Vy;
+  // Wz = mapping(rc_ctrl.rc.ch[4], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // rotate
+
+  relative_yaw = INS.yaw_update - INS_top.Yaw;
+  relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
+
+  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
+  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
+
+  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+}
+
+/*************************** 电机电流控制 ****************************/
 void chassis_current_give()
 {
 
@@ -211,7 +297,7 @@ void chassis_current_give()
   chassis_can2_cmd(motor_can2[0].set_current, motor_can2[1].set_current, motor_can2[2].set_current, motor_can2[3].set_current);
 }
 
-/***********************************CAN2发送信号************************/
+/**************************** CAN2发送信号 *****************************/
 void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
 {
   uint32_t send_mail_box;
@@ -233,7 +319,7 @@ void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
   HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }
 
-/*************************yaw值校正*******************************/
+/************************* yaw值校正 *******************************/
 void yaw_correct()
 {
   // 只执行一次
@@ -265,20 +351,20 @@ static void key_control(void)
   else
     key_x_slow -= KEY_STOP_OFFSET;
 
-  if (key_x_fast > chassis_speed_max)
-    key_x_fast = chassis_speed_max;
+  if (key_x_fast > CHASSIS_SPEED_MAX)
+    key_x_fast = CHASSIS_SPEED_MAX;
   if (key_x_fast < 0)
     key_x_fast = 0;
-  if (key_x_slow > chassis_speed_max)
-    key_x_slow = chassis_speed_max;
+  if (key_x_slow > CHASSIS_SPEED_MAX)
+    key_x_slow = CHASSIS_SPEED_MAX;
   if (key_x_slow < 0)
     key_x_slow = 0;
-  if (key_y_fast > chassis_speed_max)
-    key_y_fast = chassis_speed_max;
+  if (key_y_fast > CHASSIS_SPEED_MAX)
+    key_y_fast = CHASSIS_SPEED_MAX;
   if (key_y_fast < 0)
     key_y_fast = 0;
-  if (key_y_slow > chassis_speed_max)
-    key_y_slow = chassis_speed_max;
+  if (key_y_slow > CHASSIS_SPEED_MAX)
+    key_y_slow = CHASSIS_SPEED_MAX;
   if (key_y_slow < 0)
     key_y_slow = 0;
 }
