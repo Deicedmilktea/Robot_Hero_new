@@ -11,9 +11,9 @@
 #include "main.h"
 #include "rc_potocal.h"
 
-shoot_t shoot_motor[2];            // 摩擦轮can2，id = 56
-motor_info_t motor_can2[4];        //[2]:pitch,[3]:yaw
-int16_t friction_max_speed = 10000; // 摩擦轮速度
+shoot_t shoot_motor[2];             // 摩擦轮can2，id = 56
+motor_info_t motor_can2[4];         //[2]:pitch,[3]:yaw
+int16_t friction_max_speed = 30000; // 摩擦轮速度
 extern RC_ctrl_t rc_ctrl;
 
 void Shoot_task(void const *argument)
@@ -74,8 +74,8 @@ void shoot_start()
 {
   // shoot_motor[0].target_speed = 7000;
   // shoot_motor[1].target_speed = 7100;
-  shoot_motor[0].target_speed = 11000;
-  shoot_motor[1].target_speed = 11100;
+  shoot_motor[0].target_speed = 20000;
+  shoot_motor[1].target_speed = 20000;
 }
 
 /***************停止射击模式**************/

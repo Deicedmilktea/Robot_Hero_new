@@ -92,7 +92,7 @@ void Gimbal_loop_init()
 	// gimbal_gyro.pid_speed_value[2] = 2;
 
 	// normal
-	gimbal_gyro.pid_angle_value[0] = 350;
+	gimbal_gyro.pid_angle_value[0] = 1050;
 	gimbal_gyro.pid_angle_value[1] = 0.05;
 	gimbal_gyro.pid_angle_value[2] = 800;
 
@@ -129,7 +129,7 @@ void Gimbal_loop_init()
 // 	return (cur_angle + pi) * 8191/(2 * pi);
 // }
 
-/******************************************角度过零处理********************************/
+/************************************ 角度过零处理 ********************************/
 void angle_over_zero(float err)
 {
 	if (gimbal_mode == 0)
