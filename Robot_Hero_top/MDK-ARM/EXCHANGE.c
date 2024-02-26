@@ -4,7 +4,7 @@
 #include "miniPC_process.h"
 
 extern INS_t INS;
-extern UART_HandleTypeDef huart1;
+// extern UART_HandleTypeDef huart1;
 
 static Vision_Recv_s *vision_recv_data;
 

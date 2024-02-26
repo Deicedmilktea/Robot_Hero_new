@@ -263,7 +263,7 @@ void gimbal_mode_normal()
 
 	// 使用非线性映射函数调整灵敏度
 	float normalized_input = rc_ctrl.rc.ch[0] / 660.0;
-	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.9) * sign(normalized_input) * 0.3;
+	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 	// if (rc_ctrl.rc.ch[0] > 0)
 	// {
 	// 	gimbal_gyro.target_angle -= 0.2;

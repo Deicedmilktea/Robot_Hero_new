@@ -69,11 +69,11 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	}
 	can_remote(temp_remote, 0x33);
 
-	for (int i = 8; i <= 15; i++)
-	{
-		temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
-	}
-	can_remote(temp_remote, 0x34);
+	// for (int i = 8; i <= 15; i++)
+	// {
+	// 	temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+	// }
+	// can_remote(temp_remote, 0x34);
 
 	temp_remote[0] = rxBuf[16];
 	temp_remote[1] = rxBuf[17];
