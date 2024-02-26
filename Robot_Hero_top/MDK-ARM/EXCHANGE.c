@@ -4,7 +4,6 @@
 #include "miniPC_process.h"
 
 extern INS_t INS;
-// extern UART_HandleTypeDef huart1;
 
 static Vision_Recv_s *vision_recv_data;
 
@@ -29,7 +28,7 @@ void exchange_task(void const *argument)
     vision_recv_data = VisionInit(&config);
 
     while (1) {
-        VisionSetAltitude(INS.Yaw, INS.Pitch, INS.Roll);
+        VisionSetAltitude(INS.Yaw, INS.Roll, INS.Pitch); // 此处C板由于放置位置的关系， Roll 和 Pitch 对调
         VisionSend();
 
         osDelay(1);

@@ -27,14 +27,25 @@ void Pitch_task(void const *argument)
         // 视觉识别
         if (rc_ctrl.rc.s[1] == 2)
         {
-            pitch.target_speed = pid_calc(&pitch.pid_angle, vision_pitch, relative_pitch);
+            if (vision_pitch > 20) // pitch.target_speed正负与3508旋转方向有关
+            {
+                vision_pitch = 20;
+            }
+            if (vision_pitch < -15)
+            {
+                vision_pitch = -15;
+            }
+            pitch.target_speed = -pid_calc(&pitch.vision_pid_angle, vision_pitch, INS.Roll);
+
+            // target_speed 的计算必须加上负号（想要符合给正值抬头，负值低头的话），与3508的旋转方向相关，否则pitch会疯转
         }
 
         else
         {
             pitch.target_speed = -map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
+            pitch_position_limit();
         }
-        pitch_position_limit();
+
         pitch_current_give();
         osDelay(1);
     }
@@ -51,11 +62,21 @@ void pitch_loop_init()
     pitch.angle_pid_value[1] = 0;
     pitch.angle_pid_value[2] = 0;
 
+    pitch.vision_speed_pid_value[0] = 20;
+    pitch.vision_speed_pid_value[1] = 0;
+    pitch.vision_speed_pid_value[2] = 0;
+
+    pitch.vision_angle_pid_value[0] = 20;
+    pitch.vision_angle_pid_value[1] = 0;
+    pitch.vision_angle_pid_value[2] = 0;
+
     pitch.target_speed = 0;
     pitch.speed_max = 4000;
 
-    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 2000, 5000);
-    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 2000, 5000);
+    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 1000, 4000);
+    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 1000, 4000);
+    pid_init(&pitch.vision_pid_speed, pitch.vision_speed_pid_value, 1000, 4000);
+    pid_init(&pitch.vision_pid_angle, pitch.vision_angle_pid_value, 1000, 4000);
 }
 
 /********************************can1发送电流***************************/
@@ -86,7 +107,16 @@ void pitch_can2_cmd(int16_t v3)
 /****************PID计算速度并发送电流***************/
 void pitch_current_give()
 {
-    motor_can2[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
+    if (rc_ctrl.rc.s[1] == 2)
+    {
+        motor_can2[2].set_current = pid_calc(&pitch.vision_pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
+    }
+
+    else
+    {
+        motor_can2[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
+    }
+
     pitch_can2_cmd(motor_can2[2].set_current);
 }
 
