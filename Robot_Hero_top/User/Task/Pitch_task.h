@@ -16,6 +16,8 @@ typedef struct
     fp32 vision_angle_pid_value[3]; // vision_angle的pid参数
     fp32 target_speed;              // 目标速度
     fp32 speed_max;                 // 最大速度
+    fp32 vision_remote_pitch;       // 视觉模式下的遥控器微调
+    fp32 vision_target_pitch;       // 视觉模式下的目标pitch
 } pitch_t;
 
 void Pitch_task(void const *argument);

@@ -27,15 +27,20 @@ void Pitch_task(void const *argument)
         // 视觉识别
         if (rc_ctrl.rc.s[1] == 2)
         {
-            if (vision_pitch > 20) // pitch.target_speed正负与3508旋转方向有关
+            // 视觉模式下的遥控器微调
+            pitch.vision_remote_pitch += rc_ctrl.rc.ch[1] / 660.0 * 0.1;
+            pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
+
+            if (pitch.vision_target_pitch > 20)
             {
-                vision_pitch = 20;
+                pitch.vision_target_pitch = 20;
             }
-            if (vision_pitch < -15)
+            if (pitch.vision_target_pitch < -15)
             {
-                vision_pitch = -15;
+                pitch.vision_target_pitch = -15;
             }
-            pitch.target_speed = -pid_calc(&pitch.vision_pid_angle, vision_pitch, INS.Roll);
+
+            pitch.target_speed = -pid_calc(&pitch.vision_pid_angle, pitch.vision_target_pitch, INS.Roll);
 
             // target_speed 的计算必须加上负号（想要符合给正值抬头，负值低头的话），与3508的旋转方向相关，否则pitch会疯转
         }
@@ -66,7 +71,7 @@ void pitch_loop_init()
     pitch.vision_speed_pid_value[1] = 0;
     pitch.vision_speed_pid_value[2] = 0;
 
-    pitch.vision_angle_pid_value[0] = 20;
+    pitch.vision_angle_pid_value[0] = 400;
     pitch.vision_angle_pid_value[1] = 0;
     pitch.vision_angle_pid_value[2] = 0;
 
