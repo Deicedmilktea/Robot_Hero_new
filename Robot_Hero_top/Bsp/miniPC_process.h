@@ -14,45 +14,51 @@
 
 #include "stdint.h"
 #include "bsp_usart.h"
+#include "stdbool.h"
 
 #define VISION_RECV_HEADER 0xA5u // 视觉接收数据帧头
 #define VISION_SEND_HEADER 0x5Au // 视觉发送数据帧头
-#define VISION_SEND_TAIL   0xAAu // 视觉发送数据帧尾
+#define VISION_SEND_TAIL 0xAAu   // 视觉发送数据帧尾
 
-#define VISION_RECV_SIZE   12u // 当前为固定值,12字节
-#define VISION_SEND_SIZE   19u
+#define VISION_RECV_SIZE 12u // 当前为固定值,12字节
+#define VISION_SEND_SIZE 19u
 
 // #pragma pack(1) // 1字节对齐
 
 /* 是否追踪 */
-typedef enum {
+typedef enum
+{
     VISION_NO_SHOOTING = 0u,
-    VISION_SHOOTING    = 1u,
+    VISION_SHOOTING = 1u,
 } VISION_SHOOTING_e;
 
 /* 是否重置追踪 */
-typedef enum {
-    VISION_RESET_TRACKER_NO  = 0u,
+typedef enum
+{
+    VISION_RESET_TRACKER_NO = 0u,
     VISION_RESET_TRACKER_YES = 1u,
 } VISION_RESET_TRACKER_e;
 
 /* 目标ID */
-typedef enum {
+typedef enum
+{
     VISION_OUTPOST = 0u,
-    VISION_GUARD   = 6u,
-    VISION_BASE    = 7u,
+    VISION_GUARD = 6u,
+    VISION_BASE = 7u,
 } VISION_ID_e;
 
 /* 装甲板数量 */
-typedef enum {
+typedef enum
+{
     VISION_ARMORS_NUM_BALANCE = 2u,
     VISION_ARMORS_NUM_OUTPOST = 3u,
-    VISION_ARMORS_NUM_NORMAL  = 4u,
+    VISION_ARMORS_NUM_NORMAL = 4u,
 } VISION_ARMORS_NUM_e;
 
 /* 敌方装甲板颜色 */
-typedef enum {
-    VISION_DETECT_COLOR_RED  = 0u,
+typedef enum
+{
+    VISION_DETECT_COLOR_RED = 0u,
     VISION_DETECT_COLOR_BLUE = 1u,
 } VISION_DETECT_COLOR_e;
 
@@ -84,6 +90,7 @@ typedef struct
 typedef struct
 {
     uint8_t header;
+    bool is_tracking;
     float yaw;
     float pitch;
     uint16_t checksum;

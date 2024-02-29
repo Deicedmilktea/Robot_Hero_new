@@ -12,6 +12,7 @@
 #include "pid.h"
 #include "drv_can.h"
 #include "user_lib.h"
+#include "stdbool.h"
 
 // motor data read
 #define get_motor_measure(ptr, data)                                   \
@@ -29,6 +30,7 @@ fp32 err_yaw_angle;		 // yaw angle error
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern motor_info_t motor_can2[4];
+extern bool vision_is_tracking;
 
 int gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
 int error6 = 0;
@@ -242,15 +244,17 @@ void gimbal_mode_vision()
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
 
-	// 视觉模式中加入遥控器的微调
-	// 使用非线性映射函数调整灵敏度
-	float normalized_input = rc_ctrl.rc.ch[0] / 660.0;
-	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.99) * sign(normalized_input) * 0.1;
-	gimbal_gyro.target_angle += vision_yaw;
-	detel_calc(&gimbal_gyro.target_angle);
+	// // 视觉模式中加入遥控器的微调
+	// // 使用非线性映射函数调整灵敏度
+	// float normalized_input = rc_ctrl.rc.ch[0] / 660.0 * 5; // 最大微调角度限制为5°
+	// gimbal_gyro.target_angle = vision_yaw - normalized_input;
+	// detel_calc(&gimbal_gyro.target_angle);
 
+	// // 云台角度输出
+	// gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.Yaw);
+	// if (vision_is_tracking)
 	// 云台角度输出
-	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.Yaw);
+	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, vision_yaw, INS.Yaw);
 
 	// 云台速度输出
 	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);

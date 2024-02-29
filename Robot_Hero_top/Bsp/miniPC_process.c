@@ -3,6 +3,7 @@
 
 float vision_yaw = 0;
 float vision_pitch = 0;
+bool vision_is_tracking = false;
 
 static Vision_Instance *vision_instance; // 用于和视觉通信的串口实例
 
@@ -16,6 +17,7 @@ static Vision_Instance *vision_instance; // 用于和视觉通信的串口实例
 static void RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
 {
     /* 使用memcpy接收浮点型小数 */
+    memcpy(&recv->is_tracking, &rx_buff[1], 1);
     memcpy(&recv->yaw, &rx_buff[2], 4);
     memcpy(&recv->pitch, &rx_buff[6], 4);
 
@@ -34,6 +36,7 @@ static void DecodeVision(void)
         // 读取视觉数据
         RecvProcess(vision_instance->recv_data, vision_instance->usart->recv_buff);
 
+        vision_is_tracking = vision_instance->recv_data->is_tracking;
         vision_yaw = vision_instance->recv_data->yaw;
         vision_pitch = vision_instance->recv_data->pitch;
     }
