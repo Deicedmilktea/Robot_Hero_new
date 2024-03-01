@@ -18,9 +18,9 @@ typedef struct
 
 typedef struct
 {
-    pid_struct_t pid;  // 云台电机speed的pid结构体
-    fp32 pid_value[3]; // 云台电机speed的pid参数
-    fp32 target_speed; // 云台电机的目标速度
+    pid_struct_t pid;     // 云台电机speed的pid结构体
+    fp32 pid_value[3];    // 云台电机speed的pid参数
+    int16_t target_speed; // 云台电机的目标速度
 } chassis_t;
 
 // 获取imu——Yaw角度差值参数

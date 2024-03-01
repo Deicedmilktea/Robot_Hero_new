@@ -23,11 +23,14 @@ volatile int16_t Vx = 0, Vy = 0, Wz = 0;
 int fllowflag = 0;
 float relative_yaw = 0;
 int yaw_correction_flag = 1; // yaw值校正标志
+float Hero_chassis_power = 0;
+float Hero_chassis_power_buffer = 60.f;
 
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern INS_t INS_top;
 extern uint16_t shift_flag;
+extern float newpower;
 
 // 底盘跟随云台计算
 static pid_struct_t pid_yaw_angle;
@@ -44,6 +47,20 @@ double rx = 0.2, ry = 0.2;
 int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
 
 int chassis_mode_flag = 0;
+
+// 功率限制算法的变量定义
+float Watch_Power_Max;                                                // 限制值
+float Watch_Power;                                                    // 实时功率
+float Watch_Buffer;                                                   // 缓冲能量值
+double Chassis_pidout;                                                // 输出值
+double Chassis_pidout_target;                                         // 目标值
+static double Scaling1 = 0, Scaling2 = 0, Scaling3 = 0, Scaling4 = 0; // 比例
+float Klimit = 1;                                                     // 限制值
+float Plimit = 0;                                                     // 约束比例
+float Chassis_pidout_max;                                             // 输出值限制
+
+static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed);
+static void Chassis_Power_Limit(double Chassis_pidout_target_limit);
 
 void Chassis_task(void const *pvParameters)
 {
@@ -193,7 +210,7 @@ void chassis_mode_top()
   chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 }
 
-/*****************************底盘跟随云台模式*******************************/
+/***************************** 底盘跟随云台模式 *******************************/
 void chassis_mode_follow()
 {
   // remote control
@@ -249,15 +266,12 @@ void chassis_mode_follow()
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
   Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
-  // chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
-  // chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
-  // chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
-  // chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 
-  chassis[0].target_speed = 0;
-  chassis[1].target_speed = 0;
-  chassis[2].target_speed = 0;
-  chassis[3].target_speed = 0;
+  // chassis[0].target_speed
 }
 
 /*************************** 视觉运动模式 ****************************/
@@ -282,14 +296,14 @@ void chassis_mode_vision()
 /*************************** 电机电流控制 ****************************/
 void chassis_current_give()
 {
-
   uint8_t i = 0;
 
   for (i = 0; i < 4; i++)
   {
+    // chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, CHASSIS_SPEED_MAX);
     motor_can2[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_can2[i].rotor_speed);
   }
-
+  // Chassis_Power_Limit(4 * CHASSIS_SPEED_MAX);
   chassis_can2_cmd(motor_can2[0].set_current, motor_can2[1].set_current, motor_can2[2].set_current, motor_can2[3].set_current);
 }
 
@@ -325,4 +339,99 @@ void yaw_correct()
     INS.yaw_init = INS.Yaw;
   }
   INS.yaw_update = INS.Yaw - INS.yaw_init;
+}
+
+static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
+{
+  Hero_chassis_power = newpower;
+  // 819.2/A，假设最大功率为120W，那么能够通过的最大电流为5A，取一个保守值：800.0 * 5 = 4000
+  Watch_Power_Max = Klimit;
+  Watch_Power = Hero_chassis_power;
+  Watch_Buffer = Hero_chassis_power_buffer; // 限制值，功率值，缓冲能量值，初始值是1，0，0
+  // get_chassis_power_and_buffer(&Power, &Power_Buffer, &Power_Max);//通过裁判系统和编码器值获取（限制值，实时功率，实时缓冲能量）
+
+  Chassis_pidout_max = 61536; // 32768，40，960			15384 * 4，取了4个3508电机最大电流的一个保守值
+
+  if (Watch_Power > 600)
+  {
+    for (uint8_t i = 0; i < 4; i++)
+    {
+      chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, 4096); // 限制最大速度 ;//5*4*24;先以最大电流启动，后平滑改变，不知道为啥一开始用的Power>960,可以观测下这个值，看看能不能压榨缓冲功率
+    }
+  }
+  else
+  {
+    Chassis_pidout = (fabs(chassis[0].target_speed - motor_can2[0].rotor_speed) +
+                      fabs(chassis[1].target_speed - motor_can2[1].rotor_speed) +
+                      fabs(chassis[2].target_speed - motor_can2[2].rotor_speed) +
+                      fabs(chassis[3].target_speed - motor_can2[3].rotor_speed)); // fabs是求绝对值，这里获取了4个轮子的差值求和
+
+    //	Chassis_pidout_target = fabs(motor_speed_target[0]) + fabs(motor_speed_target[1]) + fabs(motor_speed_target[2]) + fabs(motor_speed_target[3]);
+
+    /*期望滞后占比环，增益个体加速度*/
+    if (Chassis_pidout)
+    {
+      Scaling1 = (chassis[0].target_speed - motor_can2[0].rotor_speed) / Chassis_pidout;
+      Scaling2 = (chassis[1].target_speed - motor_can2[1].rotor_speed) / Chassis_pidout;
+      Scaling3 = (chassis[2].target_speed - motor_can2[2].rotor_speed) / Chassis_pidout;
+      Scaling4 = (chassis[3].target_speed - motor_can2[3].rotor_speed) / Chassis_pidout; // 求比例，4个scaling求和为1
+    }
+    else
+    {
+      Scaling1 = 0.25, Scaling2 = 0.25, Scaling3 = 0.25, Scaling4 = 0.25;
+    }
+
+    /*功率满输出占比环，车总增益加速度*/
+    //		if(Chassis_pidout_target) Klimit=Chassis_pidout/Chassis_pidout_target;	//375*4 = 1500
+    //		else{Klimit = 0;}
+    Klimit = Chassis_pidout / Chassis_pidout_target_limit;
+
+    if (Klimit > 1)
+      Klimit = 1;
+    else if (Klimit < -1)
+      Klimit = -1; // 限制绝对值不能超过1，也就是Chassis_pidout一定要小于某个速度值，不能超调
+
+    /*缓冲能量占比环，总体约束*/
+    if (Watch_Buffer < 50 && Watch_Buffer >= 40)
+      Plimit = 0.9; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
+    else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
+      Plimit = 0.75;
+    else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
+      Plimit = 0.5;
+    else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
+      Plimit = 0.25;
+    else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
+      Plimit = 0.125;
+    else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
+      Plimit = 0.05;
+    else
+    {
+      Plimit = 1;
+    }
+
+    motor_can2[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
+    motor_can2[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
+    motor_can2[2].set_current = Scaling3 * (Chassis_pidout_max * Klimit) * Plimit;
+    motor_can2[3].set_current = Scaling4 * (Chassis_pidout_max * Klimit) * Plimit; /*同比缩放电流*/
+  }
+}
+
+static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed)
+{
+  int16_t max = 0;
+  int16_t temp = 0;
+  int16_t max_speed = limit_speed;
+  fp32 rate = 0;
+
+  temp = (motor_speed > 0) ? (motor_speed) : (-motor_speed); // 求绝对值
+
+  if (temp > max)
+    max = temp;
+
+  if (max > max_speed)
+  {
+    rate = max_speed * 1.0 / max; //*1.0转浮点类型，不然可能会直接得0   *1.0 to floating point type, otherwise it may directly get 0
+    motor_speed *= rate;
+  }
+  return motor_speed;
 }

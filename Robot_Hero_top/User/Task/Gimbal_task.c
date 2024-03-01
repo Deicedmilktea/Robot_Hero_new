@@ -265,7 +265,7 @@ void gimbal_mode_normal()
 	// gimbal_gyro.target_angle -= rc_ctrl.rc.ch[0] / 660 * 0.3; // 遥控器右边左右控制yaw轴电机
 
 	// 使用非线性映射函数调整灵敏度
-	float normalized_input = rc_ctrl.rc.ch[0] / 660.0 + rc_ctrl.mouse.x / 16384;
+	float normalized_input = rc_ctrl.rc.ch[0] / 660.0 + rc_ctrl.mouse.x / 16384.0f * 20;
 	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 
 	// if (rc_ctrl.rc.ch[0] > 0)

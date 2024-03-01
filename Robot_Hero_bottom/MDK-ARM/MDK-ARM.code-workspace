@@ -21,7 +21,8 @@
             "cmath": "c",
             "utility": "c",
             "user_lib.h": "c",
-            "pid.h": "c"
+            "pid.h": "c",
+            "judge.h": "c"
         }
     },
     "extensions": {}
