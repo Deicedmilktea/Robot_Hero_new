@@ -20,7 +20,7 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     // 遥控器右边拨到上，电机启动
-    if (rc_ctrl.rc.s[0] == 1)
+    if (rc_ctrl.rc.s[0] == 1 || press_left == 1)
     {
       shoot_start();
     }

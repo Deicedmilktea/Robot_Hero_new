@@ -63,18 +63,21 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	rc_ctrl.rc.ch[3] -= RC_CH_VALUE_OFFSET;
 	rc_ctrl.rc.ch[4] -= RC_CH_VALUE_OFFSET;
 
+	// 遥控器数据
 	for (int i = 0; i <= 7; i++)
 	{
 		temp_remote[i] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
 	}
 	can_remote(temp_remote, 0x33);
 
-	// for (int i = 8; i <= 15; i++)
-	// {
-	// 	temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
-	// }
-	// can_remote(temp_remote, 0x34);
+	// 键鼠数据
+	for (int i = 8; i <= 15; i++)
+	{
+		temp_remote[i - 8] = rxBuf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+	}
+	can_remote(temp_remote, 0x34);
 
+	// 零碎数据（yaw）
 	temp_remote[0] = rxBuf[16];
 	temp_remote[1] = rxBuf[17];
 
@@ -84,8 +87,8 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	// vision_Vx1 = 100 * vision_Vx; // 使之接收带上小数点
 	// vision_Vy1 = 100 * vision_Vy; // 使之接收带上小数点
 
-	temp_remote[2] = ((int)yaw >> 8) & 0xff;
-	temp_remote[3] = (int)yaw & 0xff;
+	temp_remote[2] = ((int16_t)yaw >> 8) & 0xff;
+	temp_remote[3] = (int16_t)yaw & 0xff;
 	// temp_remote[4] = ((int)ins_roll >> 8) & 0xff;
 	// temp_remote[5] = ((int)ins_roll) & 0xff;
 	// temp_remote[6] = ((int)ins_pitch >> 8) & 0xff;
@@ -97,18 +100,6 @@ void USART3_rxDataHandler(uint8_t *rxBuf)
 	temp_remote[7] = 0;
 
 	can_remote(temp_remote, 0x35);
-
-	// // 发送视觉计算yaw值给下c板
-	// vision_yaw1 = 100 * vision_yaw; // 使之接收带上小数点
-	// temp_remote[0] = ((int)vision_yaw1 >> 8) & 0xff;
-	// temp_remote[1] = (int)vision_yaw1 & 0xff;
-	// temp_remote[2] = ((int)INS.Gyro[2] >> 8) & 0xff;
-	// temp_remote[3] = (int)INS.Gyro[2] & 0xff;
-	// temp_remote[4] = 0;
-	// temp_remote[5] = 0;
-	// temp_remote[6] = 0;
-	// temp_remote[7] = 0;
-	// can_remote(temp_remote, 0x36);
 
 	// Some flag of keyboard
 	w_flag = (rxBuf[14] & 0x01);

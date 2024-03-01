@@ -5,12 +5,12 @@
 
 typedef struct
 {
-    pid_struct_t pid;            // 摩擦轮speed的pid结构体
-    fp32 pid_value[3];           // 摩擦轮speed的pid参数
-    fp32 target_speed;           // 摩擦轮的目标速度
+    pid_struct_t pid;  // 摩擦轮speed的pid结构体
+    fp32 pid_value[3]; // 摩擦轮speed的pid参数
+    fp32 target_speed; // 摩擦轮的目标速度
 } shoot_t;
 
-void Shoot_task(void const * argument);
+void Shoot_task(void const *argument);
 
 // 初始化
 void shoot_loop_init();
@@ -24,7 +24,10 @@ void shoot_stop();
 // can2发送电流
 void shoot_can2_cmd(int16_t v1, int16_t v2);
 
-//PID计算速度并发送电流
+// PID计算速度并发送电流
 void shoot_current_give();
+
+// 读取键鼠是否开启摩擦轮
+void read_friction();
 
 #endif

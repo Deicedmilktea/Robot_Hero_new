@@ -25,10 +25,10 @@ void Pitch_task(void const *argument)
         relative_pitch = INS.Roll - INS_bottom.Roll;
 
         // 视觉识别
-        if (rc_ctrl.rc.s[1] == 2)
+        if (rc_ctrl.rc.s[1] == 2 || press_right == 1)
         {
             // 视觉模式下的遥控器微调
-            pitch.vision_remote_pitch += rc_ctrl.rc.ch[1] / 660.0 * 0.1;
+            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[1] / 660.0 + rc_ctrl.mouse.y / 16384) * 0.1;
             pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
 
             if (pitch.vision_target_pitch > 20)
@@ -47,7 +47,7 @@ void Pitch_task(void const *argument)
 
         else
         {
-            pitch.target_speed = -map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max);
+            pitch.target_speed = -(map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max) + map(rc_ctrl.mouse.y, -16384, 16384, -pitch.speed_max, pitch.speed_max));
             pitch_position_limit();
         }
 

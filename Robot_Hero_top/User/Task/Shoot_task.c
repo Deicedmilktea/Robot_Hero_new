@@ -14,6 +14,8 @@
 shoot_t shoot_motor[2];             // 摩擦轮can2，id = 56
 motor_info_t motor_can2[4];         //[2]:pitch,[3]:yaw
 int16_t friction_max_speed = 30000; // 摩擦轮速度
+uint8_t friction_flag = 0;          // 开启摩擦轮的标志
+
 extern RC_ctrl_t rc_ctrl;
 
 void Shoot_task(void const *argument)
@@ -22,8 +24,11 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+    // 读取键鼠是否开启摩擦轮
+    read_friction();
+
     // 遥控器右边拨到上和中，电机启动
-    if (rc_ctrl.rc.s[0] == 1 || rc_ctrl.rc.s[0] == 3)
+    if (rc_ctrl.rc.s[0] == 1 || rc_ctrl.rc.s[0] == 3 || friction_flag == 1)
     {
       shoot_start();
     }
@@ -69,7 +74,7 @@ void shoot_loop_init()
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, friction_max_speed); // friction_left
 }
 
-/***************射击模式*****************/
+/*************** 射击模式 *****************/
 void shoot_start()
 {
   // shoot_motor[0].target_speed = 7000;
@@ -78,11 +83,22 @@ void shoot_start()
   shoot_motor[1].target_speed = 20000;
 }
 
-/***************停止射击模式**************/
+/*************** 停止射击模式 **************/
 void shoot_stop()
 {
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
+}
+
+/*************** 读取键鼠是否开启摩擦轮 **************/
+void read_friction()
+{
+  // 开启摩擦轮
+  if (q_flag)
+    friction_flag = 1;
+  // 关闭摩擦轮
+  if (e_flag)
+    friction_flag = 0;
 }
 
 /********************************摩擦轮can2发送电流***************************/

@@ -1,4 +1,5 @@
 #include "struct_typedef.h"
+#include "cmsis_os.h"
 #include "exchange.h"
 #include "ins_task.h"
 #include "miniPC_process.h"

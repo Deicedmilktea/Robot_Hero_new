@@ -12,7 +12,7 @@
 #include "exchange.h"
 #include "drv_can.h"
 
-#define KEY_START_OFFSET 3
+#define KEY_START_OFFSET 10
 #define KEY_STOP_OFFSET 20
 #define CHASSIS_SPEED_MAX 2000
 #define CHASSIS_TOP_SPEED 1000
@@ -28,8 +28,6 @@ extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern INS_t INS_top;
 extern uint16_t shift_flag;
-extern float vision_Vx;
-extern float vision_Vy;
 
 // 底盘跟随云台计算
 static pid_struct_t pid_yaw_angle;
@@ -45,8 +43,6 @@ double rx = 0.2, ry = 0.2;
 
 int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
 
-static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow;
-
 int chassis_mode_flag = 0;
 
 void Chassis_task(void const *pvParameters)
@@ -60,7 +56,7 @@ void Chassis_task(void const *pvParameters)
     yaw_correct();
 
     // 左拨杆拨到上，小陀螺模式
-    if (rc_ctrl.rc.s[1] == 1)
+    if (rc_ctrl.rc.s[1] == 1 || shift_flag == 1)
     {
       chassis_mode_top();
     }
@@ -267,15 +263,15 @@ void chassis_mode_follow()
 /*************************** 视觉运动模式 ****************************/
 void chassis_mode_vision()
 {
-  int16_t Temp_Vx = vision_Vx;
-  int16_t Temp_Vy = vision_Vy;
+  // int16_t Temp_Vx = vision_Vx;
+  // int16_t Temp_Vy = vision_Vy;
   // Wz = mapping(rc_ctrl.rc.ch[4], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // rotate
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
   relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
 
-  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
-  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
+  // Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
+  // Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
   chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
@@ -329,42 +325,4 @@ void yaw_correct()
     INS.yaw_init = INS.Yaw;
   }
   INS.yaw_update = INS.Yaw - INS.yaw_init;
-}
-
-/*************************** 键盘控制函数 ************************/
-static void key_control(void)
-{
-  if (d_flag)
-    key_y_fast += KEY_START_OFFSET;
-  else
-    key_y_fast -= KEY_STOP_OFFSET;
-  if (a_flag)
-    key_y_slow += KEY_START_OFFSET;
-  else
-    key_y_slow -= KEY_STOP_OFFSET;
-  if (w_flag)
-    key_x_fast += KEY_START_OFFSET;
-  else
-    key_x_fast -= KEY_STOP_OFFSET;
-  if (s_flag)
-    key_x_slow += KEY_START_OFFSET;
-  else
-    key_x_slow -= KEY_STOP_OFFSET;
-
-  if (key_x_fast > CHASSIS_SPEED_MAX)
-    key_x_fast = CHASSIS_SPEED_MAX;
-  if (key_x_fast < 0)
-    key_x_fast = 0;
-  if (key_x_slow > CHASSIS_SPEED_MAX)
-    key_x_slow = CHASSIS_SPEED_MAX;
-  if (key_x_slow < 0)
-    key_x_slow = 0;
-  if (key_y_fast > CHASSIS_SPEED_MAX)
-    key_y_fast = CHASSIS_SPEED_MAX;
-  if (key_y_fast < 0)
-    key_y_fast = 0;
-  if (key_y_slow > CHASSIS_SPEED_MAX)
-    key_y_slow = CHASSIS_SPEED_MAX;
-  if (key_y_slow < 0)
-    key_y_slow = 0;
 }

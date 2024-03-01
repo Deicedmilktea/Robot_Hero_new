@@ -71,24 +71,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can1 data
 
-    // if ((rx_header.StdId >= 0x201)//201-205
-    //  && (rx_header.StdId <= 0x205))                  // 判断标识符，标识符为0x200+ID
-    // {
-    // 	uint8_t index = rx_header.StdId - 0x201;       // get motor index by can_id
-    // 	 motor_can1[index].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
-    // 	 motor_can1[index].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
-    // 	 motor_can1[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-    // 	 motor_can1[index].temp           =   rx_data[6];
-    // }
-
-    // if(rx_header.StdId==0x209)//gimbal
-    // {
-    //   motor_can1[5].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
-    //   motor_can1[5].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
-    //   motor_can1[5].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-    //   motor_can1[5].temp           =   rx_data[6];
-    // }
-
     if (rx_header.StdId == 0x33) // 接收上C传来的遥控器数据
     {
       rc_ctrl.rc.ch[0] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff);                                      //!< Channel 0  ÖÐÖµÎª1024£¬×î´óÖµ1684£¬×îÐ¡Öµ364£¬²¨¶¯·¶Î§£º660
@@ -142,13 +124,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       // vision_Vx = ((int16_t)((rx_data[4] << 8) | rx_data[5])) / 100; // 导航所需Vx
       // vision_Vy = ((int16_t)((rx_data[6] << 8) | rx_data[7])) / 100; // 导航所需Vy
     }
-
-    // if (rx_header.StdId == 0x36)
-    // {
-    //   canerror++;
-    //   vision_yaw = ((int16_t)((rx_data[0] << 8) | rx_data[1])) / 100;
-    //   yaw_speed = ((int16_t)((rx_data[2] << 8) | rx_data[3])) / 100;
-    // }
   }
 
   // can2电机信息接收
