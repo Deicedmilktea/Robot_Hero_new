@@ -14,7 +14,8 @@
 
 #define KEY_START_OFFSET 10
 #define KEY_STOP_OFFSET 20
-#define CHASSIS_SPEED_MAX 2000
+#define KEY_MAX 3000
+#define CHASSIS_SPEED_MAX 3000
 #define CHASSIS_TOP_SPEED 1000
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
@@ -25,6 +26,10 @@ float relative_yaw = 0;
 int yaw_correction_flag = 1; // yaw值校正标志
 float Hero_chassis_power = 0;
 float Hero_chassis_power_buffer = 60.f;
+static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz; // 键盘控制变量
+double rx = 0.2, ry = 0.2;
+int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
+int chassis_mode_flag = 0;
 
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
@@ -38,16 +43,6 @@ static pid_struct_t pid_yaw_speed;
 static float pid_yaw_angle_value[3];
 static float pid_yaw_speed_value[3];
 
-int error10 = 0;
-fp32 speed10 = 0;
-
-double rx = 0.2, ry = 0.2;
-// Save imu data
-
-int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
-
-int chassis_mode_flag = 0;
-
 // 功率限制算法的变量定义
 float Watch_Power_Max;                                                // 限制值
 float Watch_Power;                                                    // 实时功率
@@ -60,7 +55,10 @@ float Plimit = 0;                                                     // 约束�
 float Chassis_pidout_max;                                             // 输出值限制
 
 static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed);
+
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit);
+
+static void key_control(void);
 
 void Chassis_task(void const *pvParameters)
 {
@@ -73,19 +71,27 @@ void Chassis_task(void const *pvParameters)
     yaw_correct();
 
     // 左拨杆拨到上，小陀螺模式
-    if (rc_ctrl.rc.s[1] == 1 || shift_flag == 1)
+    // if (shift_flag)
+    if (rc_ctrl.rc.s[1] == 1)
     {
       chassis_mode_top();
     }
 
     // 底盘跟随云台模式
+    else if (rc_ctrl.rc.s[1] == 3)
+    {
+      key_control();
+      // chassis_mode_follow();
+      chassis_mode_normal();
+    }
+
     else
     {
-      chassis_mode_follow();
+      key_control();
+      chassis_mode_normal();
     }
 
     chassis_current_give();
-    error10++;
     osDelay(1);
   }
 }
@@ -137,9 +143,9 @@ int16_t mapping(int value, int from_min, int from_max, int to_min, int to_max)
 /***************************************正常运动模式************************************/
 void chassis_mode_normal()
 {
-  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // left and right
-  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // front and back
-  Wz = mapping(rc_ctrl.rc.ch[4], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // rotate
+  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_x_fast - key_x_slow; // left and right
+  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_y_fast - key_y_slow; // front and back
+  Wz = key_Wz;                                                                                                // rotate
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -159,40 +165,8 @@ void chassis_mode_normal()
 /******************************小陀螺模式*********************************/
 void chassis_mode_top()
 {
-  // remote control
-  if (!w_flag && !s_flag && !a_flag && !d_flag)
-  {
-    Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // left and right
-    Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // front and back
-  }
-  // keyboard control
-  else
-  {
-    if (w_flag)
-      Vy += KEY_START_OFFSET;
-    else if (s_flag)
-      Vy -= KEY_STOP_OFFSET;
-    else
-      Vy = 0;
-
-    if (Vy > CHASSIS_SPEED_MAX)
-      Vy = CHASSIS_SPEED_MAX;
-    if (Vy < -CHASSIS_SPEED_MAX)
-      Vy = -CHASSIS_SPEED_MAX;
-
-    if (a_flag)
-      Vx -= KEY_STOP_OFFSET;
-    else if (d_flag)
-      Vx += KEY_START_OFFSET;
-    else
-      Vx = 0;
-
-    if (Vx > CHASSIS_SPEED_MAX)
-      Vx = CHASSIS_SPEED_MAX;
-    if (Vx < -CHASSIS_SPEED_MAX)
-      Vx = -CHASSIS_SPEED_MAX;
-  }
-
+  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_x_fast - key_x_slow; // left and right
+  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_y_fast - key_y_slow; // front and back
   Wz = CHASSIS_TOP_SPEED;
 
   int16_t Temp_Vx = Vx;
@@ -208,44 +182,18 @@ void chassis_mode_top()
   chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
   chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+
+  // chassis[0].target_speed = 0;
+  // chassis[1].target_speed = 0;
+  // chassis[2].target_speed = 0;
+  // chassis[3].target_speed = 0;
 }
 
 /***************************** 底盘跟随云台模式 *******************************/
 void chassis_mode_follow()
 {
-  // remote control
-  if (!w_flag && !s_flag && !a_flag && !d_flag)
-  {
-    Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // left and right
-    Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // front and back
-  }
-  // keyboard control
-  else
-  {
-    if (w_flag)
-      Vy += KEY_START_OFFSET;
-    else if (s_flag)
-      Vy -= KEY_STOP_OFFSET;
-    else
-      Vy = 0;
-
-    if (Vy > CHASSIS_SPEED_MAX)
-      Vy = CHASSIS_SPEED_MAX;
-    if (Vy < -CHASSIS_SPEED_MAX)
-      Vy = -CHASSIS_SPEED_MAX;
-
-    if (a_flag)
-      Vx -= KEY_STOP_OFFSET;
-    else if (d_flag)
-      Vx += KEY_START_OFFSET;
-    else
-      Vx = 0;
-
-    if (Vx > CHASSIS_SPEED_MAX)
-      Vx = CHASSIS_SPEED_MAX;
-    if (Vx < -CHASSIS_SPEED_MAX)
-      Vx = -CHASSIS_SPEED_MAX;
-  }
+  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_x_fast - key_x_slow; // left and right
+  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_y_fast - key_y_slow; // front and back
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
   int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, 0, relative_yaw);
@@ -270,8 +218,6 @@ void chassis_mode_follow()
   chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
   chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
-
-  // chassis[0].target_speed
 }
 
 /*************************** 视觉运动模式 ****************************/
@@ -300,10 +246,10 @@ void chassis_current_give()
 
   for (i = 0; i < 4; i++)
   {
-    // chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, CHASSIS_SPEED_MAX);
+    chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, CHASSIS_SPEED_MAX);
     motor_can2[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_can2[i].rotor_speed);
   }
-  // Chassis_Power_Limit(4 * CHASSIS_SPEED_MAX);
+  Chassis_Power_Limit(4 * CHASSIS_SPEED_MAX);
   chassis_can2_cmd(motor_can2[0].set_current, motor_can2[1].set_current, motor_can2[2].set_current, motor_can2[3].set_current);
 }
 
@@ -434,4 +380,53 @@ static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_
     motor_speed *= rate;
   }
   return motor_speed;
+}
+
+static void key_control(void)
+{
+  if (d_flag)
+    key_x_fast += KEY_START_OFFSET;
+  else
+    key_x_fast -= KEY_STOP_OFFSET;
+
+  if (a_flag)
+    key_x_slow += KEY_START_OFFSET;
+  else
+    key_x_slow -= KEY_STOP_OFFSET;
+
+  if (w_flag)
+    key_y_fast += KEY_START_OFFSET;
+  else
+    key_y_fast -= KEY_STOP_OFFSET;
+
+  if (s_flag)
+    key_y_slow += KEY_START_OFFSET;
+  else
+    key_y_slow -= KEY_STOP_OFFSET;
+
+  if (shift_flag)
+    key_Wz += KEY_START_OFFSET;
+  else
+    key_Wz -= KEY_STOP_OFFSET;
+
+  if (key_x_fast > KEY_MAX)
+    key_x_fast = KEY_MAX;
+  if (key_x_fast < 0)
+    key_x_fast = 0;
+  if (key_x_slow > KEY_MAX)
+    key_x_slow = KEY_MAX;
+  if (key_x_slow < 0)
+    key_x_slow = 0;
+  if (key_y_fast > KEY_MAX)
+    key_y_fast = KEY_MAX;
+  if (key_y_fast < 0)
+    key_y_fast = 0;
+  if (key_y_slow > KEY_MAX)
+    key_y_slow = KEY_MAX;
+  if (key_y_slow < 0)
+    key_y_slow = 0;
+  if (key_Wz > KEY_MAX)
+    key_Wz = KEY_MAX;
+  if (key_Wz < 0)
+    key_Wz = 0;
 }
