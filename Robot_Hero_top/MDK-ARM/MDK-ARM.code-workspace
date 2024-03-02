@@ -13,7 +13,8 @@
             "minipc_process.h": "c",
             "drv_can.h": "c",
             "pitch_task.h": "c",
-            "shoot_task.h": "c"
+            "shoot_task.h": "c",
+            "gimbal_task.h": "c"
         }
     },
     "extensions": {}

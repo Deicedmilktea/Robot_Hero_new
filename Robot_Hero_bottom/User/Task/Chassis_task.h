@@ -23,11 +23,9 @@ typedef struct
     int16_t target_speed; // 云台电机的目标速度
 } chassis_t;
 
-// 获取imu——Yaw角度差值参数
-static void Get_Err();
-
 // 参数重置
 static void Chassis_loop_Init();
+
 void Chassis_task(void const *pvParameters);
 
 // speed mapping

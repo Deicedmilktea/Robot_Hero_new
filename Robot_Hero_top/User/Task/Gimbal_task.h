@@ -5,8 +5,6 @@
 #include "pid.h"
 #include "main.h"
 
-#define pi 3.1415926
-
 typedef struct
 {
     motor_info_t motor_info; // 电机信息结构体
@@ -23,9 +21,6 @@ typedef struct
 void Gimbal_task(void const *pvParameters);
 
 void Gimbal_loop_init();
-
-// /*将目标角度从（-pi, pi）映射到（0, 8091）*/
-// float angle_map(float cur_angle);
 
 /*角度过零处理*/
 void angle_over_zero(float err);

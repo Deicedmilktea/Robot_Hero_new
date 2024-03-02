@@ -28,7 +28,7 @@ void Pitch_task(void const *argument)
         if (rc_ctrl.rc.s[1] == 2 || press_right == 1)
         {
             // 视觉模式下的遥控器微调
-            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[1] / 660.0 - rc_ctrl.mouse.y / 16384.0f * 20) * 0.1;
+            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[1] / 660.0f - rc_ctrl.mouse.y / 16384.0f * 20) * 0.1;
             pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
 
             if (pitch.vision_target_pitch > 20)
@@ -47,7 +47,7 @@ void Pitch_task(void const *argument)
 
         else
         {
-            pitch.target_speed = -(map(rc_ctrl.rc.ch[1], -660, 660, -pitch.speed_max, pitch.speed_max) - 20 * map(rc_ctrl.mouse.y, -16384, 16384, -pitch.speed_max, pitch.speed_max));
+            pitch.target_speed = -(rc_ctrl.rc.ch[1] / 660.0f * pitch.speed_max - 20 * rc_ctrl.mouse.y / 16384.0f * pitch.speed_max);
             pitch_position_limit();
         }
 
@@ -123,18 +123,6 @@ void pitch_current_give()
     }
 
     pitch_can2_cmd(motor_can2[2].set_current);
-}
-
-/*************pitch速度映射********************/
-int16_t map(int value, int from_min, int from_max, int to_min, int to_max)
-{
-    // 首先将输入值从 [a, b] 映射到 [0, 1] 范围内
-    double normalized_value = (value * 1.0 - from_min) / (from_max - from_min);
-
-    // 然后将标准化后的值映射到 [C, D] 范围内
-    int16_t mapped_value = (int16_t)(to_min + (to_max - to_min) * normalized_value);
-
-    return mapped_value;
 }
 
 /***************判断pitch位置******************/

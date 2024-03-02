@@ -14,9 +14,7 @@
 
 #define KEY_START_OFFSET 10
 #define KEY_STOP_OFFSET 20
-#define KEY_MAX 3000
 #define CHASSIS_SPEED_MAX 3000
-#define CHASSIS_TOP_SPEED 1000
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
@@ -30,6 +28,8 @@ static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz; // 键盘
 double rx = 0.2, ry = 0.2;
 int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
 int chassis_mode_flag = 0;
+static float init_relative_yaw = 0;
+static uint8_t cycle = 0; // do while循环一次的条件
 
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
@@ -74,14 +74,14 @@ void Chassis_task(void const *pvParameters)
     // if (shift_flag)
     if (rc_ctrl.rc.s[1] == 1)
     {
-      chassis_mode_top();
+      key_control();
+      chassis_mode_follow();
     }
 
     // 底盘跟随云台模式
     else if (rc_ctrl.rc.s[1] == 3)
     {
       key_control();
-      // chassis_mode_follow();
       chassis_mode_normal();
     }
 
@@ -143,9 +143,9 @@ int16_t mapping(int value, int from_min, int from_max, int to_min, int to_max)
 /***************************************正常运动模式************************************/
 void chassis_mode_normal()
 {
-  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_x_fast - key_x_slow; // left and right
-  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_y_fast - key_y_slow; // front and back
-  Wz = key_Wz;                                                                                                // rotate
+  Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+  Wz = rc_ctrl.rc.ch[4] / 660.0f * CHASSIS_SPEED_MAX + key_Wz;                  // rotate
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -160,14 +160,16 @@ void chassis_mode_normal()
   chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
   chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+
+  cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 }
 
 /******************************小陀螺模式*********************************/
 void chassis_mode_top()
 {
-  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_x_fast - key_x_slow; // left and right
-  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_y_fast - key_y_slow; // front and back
-  Wz = CHASSIS_TOP_SPEED;
+  Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+  Wz = key_Wz;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -192,11 +194,18 @@ void chassis_mode_top()
 /***************************** 底盘跟随云台模式 *******************************/
 void chassis_mode_follow()
 {
-  Vx = mapping(rc_ctrl.rc.ch[2], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_x_fast - key_x_slow; // left and right
-  Vy = mapping(rc_ctrl.rc.ch[3], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX) + key_y_fast - key_y_slow; // front and back
+  Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+
+  // 切换模式的时候循环一次，计算 yaw 的差值，防止出现在切换模式的时候底盘突然一转
+  if (cycle)
+  {
+    cycle = 0;
+    init_relative_yaw = INS.yaw_update - INS_top.Yaw;
+  }
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
-  int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, 0, relative_yaw);
+  int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, init_relative_yaw, relative_yaw);
   int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
   // 消除静态旋转
   if (relative_yaw > -2 && relative_yaw < 2)
@@ -409,24 +418,24 @@ static void key_control(void)
   else
     key_Wz -= KEY_STOP_OFFSET;
 
-  if (key_x_fast > KEY_MAX)
-    key_x_fast = KEY_MAX;
+  if (key_x_fast > CHASSIS_SPEED_MAX)
+    key_x_fast = CHASSIS_SPEED_MAX;
   if (key_x_fast < 0)
     key_x_fast = 0;
-  if (key_x_slow > KEY_MAX)
-    key_x_slow = KEY_MAX;
+  if (key_x_slow > CHASSIS_SPEED_MAX)
+    key_x_slow = CHASSIS_SPEED_MAX;
   if (key_x_slow < 0)
     key_x_slow = 0;
-  if (key_y_fast > KEY_MAX)
-    key_y_fast = KEY_MAX;
+  if (key_y_fast > CHASSIS_SPEED_MAX)
+    key_y_fast = CHASSIS_SPEED_MAX;
   if (key_y_fast < 0)
     key_y_fast = 0;
-  if (key_y_slow > KEY_MAX)
-    key_y_slow = KEY_MAX;
+  if (key_y_slow > CHASSIS_SPEED_MAX)
+    key_y_slow = CHASSIS_SPEED_MAX;
   if (key_y_slow < 0)
     key_y_slow = 0;
-  if (key_Wz > KEY_MAX)
-    key_Wz = KEY_MAX;
+  if (key_Wz > CHASSIS_SPEED_MAX)
+    key_Wz = CHASSIS_SPEED_MAX;
   if (key_Wz < 0)
     key_Wz = 0;
 }

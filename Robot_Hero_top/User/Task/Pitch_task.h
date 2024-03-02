@@ -31,9 +31,6 @@ void pitch_can2_cmd(int16_t v3);
 // PID计算速度并发送电流
 void pitch_current_give();
 
-// pitch速度映射
-int16_t map(int value, int from_min, int from_max, int to_min, int to_max);
-
 // 判断pitch位置
 void pitch_position_limit();
 
