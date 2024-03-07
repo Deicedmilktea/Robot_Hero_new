@@ -15,18 +15,18 @@
 #define KEY_START_OFFSET 10
 #define KEY_STOP_OFFSET 20
 #define CHASSIS_SPEED_MAX 3000
+#define FOLLOW_WEIGHT 20
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
 volatile int16_t Vx = 0, Vy = 0, Wz = 0;
-int fllowflag = 0;
+float rx = 0.2, ry = 0.2;
 float relative_yaw = 0;
 int yaw_correction_flag = 1; // yaw值校正标志
 float Hero_chassis_power = 0;
 float Hero_chassis_power_buffer = 60.f;
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz; // 键盘控制变量
-double rx = 0.2, ry = 0.2;
-int16_t chassis_mode = 1; // 判断底盘状态，用于UI编写
+uint8_t chassis_mode = 0;                                              // 判断底盘状态，用于UI编写
 int chassis_mode_flag = 0;
 static float init_relative_yaw = 0;
 static uint8_t cycle = 0; // do while循环一次的条件
@@ -54,10 +54,40 @@ float Klimit = 1;                                                     // 限制�
 float Plimit = 0;                                                     // 约束比例
 float Chassis_pidout_max;                                             // 输出值限制
 
+// 读取键鼠数据控制底盘模式
+static void read_keyboard(void);
+
+// 参数重置
+static void Chassis_loop_Init();
+
+// 正常运动模式
+static void chassis_mode_normal();
+
+// 小陀螺模式
+static void chassis_mode_top();
+
+// 底盘跟随云台模式
+static void chassis_mode_follow();
+
+// 视觉运动模式
+static void chassis_mode_vision();
+
+// yaw值校正
+static void yaw_correct();
+
+// 电机电流控制
+static void chassis_current_give(void);
+
+// chassis CAN2发送信号
+static void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
+
+// 速度限制
 static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed);
 
+// 功率限制
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit);
 
+// 键鼠控制
 static void key_control(void);
 
 void Chassis_task(void const *pvParameters)
@@ -69,17 +99,18 @@ void Chassis_task(void const *pvParameters)
   {
     // 校正yaw值
     yaw_correct();
+    // 底盘模式读取
+    read_keyboard();
 
-    // 左拨杆拨到上，小陀螺模式
-    // if (shift_flag)
-    if (rc_ctrl.rc.s[1] == 1)
+    // 底盘跟随云台模式，左拨杆拨到上 || r键触发
+    if (rc_ctrl.rc.s[1] == 1 || chassis_mode == 1)
     {
       key_control();
       chassis_mode_follow();
     }
 
-    // 底盘跟随云台模式
-    else if (rc_ctrl.rc.s[1] == 3)
+    // 正常运动模式，左拨杆拨到中 || f键触发
+    else if (rc_ctrl.rc.s[1] == 3 || chassis_mode == 2)
     {
       key_control();
       chassis_mode_normal();
@@ -120,28 +151,25 @@ static void Chassis_loop_Init()
   }
 
   // 底盘跟随云台
-  pid_init(&pid_yaw_angle, pid_yaw_angle_value, 6000, 1000);
-  pid_init(&pid_yaw_speed, pid_yaw_speed_value, 6000, 2000);
+  pid_init(&pid_yaw_angle, pid_yaw_angle_value, 6000, 2000);
+  pid_init(&pid_yaw_speed, pid_yaw_speed_value, 6000, 4000);
 
   Vx = 0;
   Vy = 0;
   Wz = 0;
 }
 
-/**********************************mapping****************************************/
-int16_t mapping(int value, int from_min, int from_max, int to_min, int to_max)
+/****************************** 读取键鼠数据控制底盘模式 ****************************/
+static void read_keyboard(void)
 {
-  // 首先将输入值从 [a, b] 映射到 [0, 1] 范围内
-  double normalized_value = (value * 1.0 - from_min) / (from_max - from_min);
-
-  // 然后将标准化后的值映射到 [C, D] 范围内
-  int16_t mapped_value = (int16_t)(to_min + (to_max - to_min) * normalized_value);
-
-  return mapped_value;
+  if (r_flag)
+    chassis_mode = 1;
+  else if (f_flag)
+    chassis_mode = 2;
 }
 
-/***************************************正常运动模式************************************/
-void chassis_mode_normal()
+/*************************************** 正常运动模式 ************************************/
+static void chassis_mode_normal()
 {
   Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
@@ -164,8 +192,8 @@ void chassis_mode_normal()
   cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 }
 
-/******************************小陀螺模式*********************************/
-void chassis_mode_top()
+/****************************** 小陀螺模式 *********************************/
+static void chassis_mode_top()
 {
   Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
@@ -192,7 +220,7 @@ void chassis_mode_top()
 }
 
 /***************************** 底盘跟随云台模式 *******************************/
-void chassis_mode_follow()
+static void chassis_mode_follow()
 {
   Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
@@ -205,8 +233,8 @@ void chassis_mode_follow()
   }
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
-  int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, init_relative_yaw, relative_yaw);
-  int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
+  // int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, init_relative_yaw, relative_yaw);
+  // int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
   // 消除静态旋转
   if (relative_yaw > -2 && relative_yaw < 2)
   {
@@ -214,7 +242,8 @@ void chassis_mode_follow()
   }
   else
   {
-    Wz = pid_calc(&pid_yaw_speed, yaw_speed, rotate_w);
+    // Wz = pid_calc(&pid_yaw_speed, yaw_speed, rotate_w);
+    Wz = relative_yaw * FOLLOW_WEIGHT;
   }
 
   int16_t Temp_Vx = Vx;
@@ -230,7 +259,7 @@ void chassis_mode_follow()
 }
 
 /*************************** 视觉运动模式 ****************************/
-void chassis_mode_vision()
+static void chassis_mode_vision()
 {
   // int16_t Temp_Vx = vision_Vx;
   // int16_t Temp_Vy = vision_Vy;
@@ -249,7 +278,7 @@ void chassis_mode_vision()
 }
 
 /*************************** 电机电流控制 ****************************/
-void chassis_current_give()
+static void chassis_current_give()
 {
   uint8_t i = 0;
 
@@ -263,7 +292,7 @@ void chassis_current_give()
 }
 
 /**************************** CAN2发送信号 *****************************/
-void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
+static void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -285,7 +314,7 @@ void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
 }
 
 /************************* yaw值校正 *******************************/
-void yaw_correct()
+static void yaw_correct()
 {
   // 只执行一次
   if (yaw_correction_flag)

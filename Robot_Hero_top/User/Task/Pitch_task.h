@@ -22,16 +22,4 @@ typedef struct
 
 void Pitch_task(void const *argument);
 
-// 初始化
-void pitch_loop_init();
-
-/*can1发送电流*/
-void pitch_can2_cmd(int16_t v3);
-
-// PID计算速度并发送电流
-void pitch_current_give();
-
-// 判断pitch位置
-void pitch_position_limit();
-
 #endif

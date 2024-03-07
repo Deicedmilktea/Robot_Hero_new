@@ -22,7 +22,9 @@
             "utility": "c",
             "user_lib.h": "c",
             "pid.h": "c",
-            "judge.h": "c"
+            "judge.h": "c",
+            "cmsis_os.h": "c",
+            "shoot_task.h": "c"
         }
     },
     "extensions": {}

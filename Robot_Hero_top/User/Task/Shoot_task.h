@@ -12,22 +12,4 @@ typedef struct
 
 void Shoot_task(void const *argument);
 
-// 初始化
-void shoot_loop_init();
-
-// 射击模式
-void shoot_start();
-
-// 停止射击模式
-void shoot_stop();
-
-// can2发送电流
-void shoot_can2_cmd(int16_t v1, int16_t v2);
-
-// PID计算速度并发送电流
-void shoot_current_give();
-
-// 读取键鼠是否开启摩擦轮
-void read_friction();
-
 #endif

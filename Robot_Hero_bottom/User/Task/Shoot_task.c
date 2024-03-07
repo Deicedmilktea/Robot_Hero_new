@@ -13,6 +13,21 @@ shoot_t trigger; // 拨盘can1，id = 5
 extern RC_ctrl_t rc_ctrl;
 extern motor_info_t motor_can2[6];
 
+// 初始化
+static void shoot_loop_init();
+
+// 射击模式
+static void shoot_start();
+
+// 停止射击模式
+static void shoot_stop();
+
+// 拨盘can1发送电流
+static void trigger_can2_cmd(int16_t v1);
+
+// PID计算速度并发送电流
+static void shoot_current_give();
+
 void Shoot_task(void const *argument)
 {
   shoot_loop_init();
@@ -35,7 +50,7 @@ void Shoot_task(void const *argument)
 }
 
 /***************初始化***************/
-void shoot_loop_init()
+static void shoot_loop_init()
 {
   // trigger
   trigger.pid_value[0] = 50;
@@ -50,19 +65,19 @@ void shoot_loop_init()
 }
 
 /***************射击模式*****************/
-void shoot_start()
+static void shoot_start()
 {
   trigger.target_speed = 250;
 }
 
 /***************停止射击模式**************/
-void shoot_stop()
+static void shoot_stop()
 {
   trigger.target_speed = 0;
 }
 
 /********************************拨盘can1发送电流***************************/
-void trigger_can2_cmd(int16_t v1)
+static void trigger_can2_cmd(int16_t v1)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -87,10 +102,9 @@ void trigger_can2_cmd(int16_t v1)
 }
 
 /********************************PID计算速度并发送电流****************************/
-void shoot_current_give()
+static void shoot_current_give()
 {
   // trigger
   motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, -motor_can2[4].rotor_speed);
   trigger_can2_cmd(-motor_can2[4].set_current);
-  // trigger_can2_cmd(1000);
 }

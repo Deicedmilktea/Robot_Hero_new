@@ -23,36 +23,6 @@ typedef struct
     int16_t target_speed; // 云台电机的目标速度
 } chassis_t;
 
-// 参数重置
-static void Chassis_loop_Init();
-
 void Chassis_task(void const *pvParameters);
-
-// speed mapping
-int16_t mapping(int value, int from_min, int from_max, int to_min, int to_max);
-
-/***************************************正常运动模式************************************/
-void chassis_mode_normal();
-
-/******************************小陀螺模式*********************************/
-void chassis_mode_top();
-
-/*****************************底盘跟随云台模式*******************************/
-void chassis_mode_follow();
-
-/***************************************视觉运动模式************************************/
-void chassis_mode_vision();
-
-/*************************yaw值校正*******************************/
-void yaw_correct();
-
-// 电机电流控制
-void chassis_current_give(void);
-
-// chassis CAN2发送信号
-void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
-
-// 键盘控制函数
-void key_control(void);
 
 #endif

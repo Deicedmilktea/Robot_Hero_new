@@ -13,10 +13,28 @@
 
 shoot_t shoot_motor[2];             // 摩擦轮can2，id = 56
 motor_info_t motor_can2[4];         //[2]:pitch,[3]:yaw
-int16_t friction_max_speed = 30000; // 摩擦轮速度
+int16_t friction_max_speed = 20000; // 摩擦轮速度
 uint8_t friction_flag = 0;          // 开启摩擦轮的标志
 
 extern RC_ctrl_t rc_ctrl;
+
+// 初始化
+static void shoot_loop_init();
+
+// 射击模式
+static void shoot_start();
+
+// 停止射击模式
+static void shoot_stop();
+
+// can2发送电流
+static void shoot_can2_cmd(int16_t v1, int16_t v2);
+
+// PID计算速度并发送电流
+static void shoot_current_give();
+
+// 读取键鼠是否开启摩擦轮
+static void read_keyboard();
 
 void Shoot_task(void const *argument)
 {
@@ -25,7 +43,7 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     // 读取键鼠是否开启摩擦轮
-    read_friction();
+    read_keyboard();
 
     // 遥控器右边拨到上和中，电机启动
     if (rc_ctrl.rc.s[0] == 1 || rc_ctrl.rc.s[0] == 3 || friction_flag == 1)
@@ -53,7 +71,7 @@ void Shoot_task(void const *argument)
 }
 
 /***************初始化***************/
-void shoot_loop_init()
+static void shoot_loop_init()
 {
   // friction_left
   shoot_motor[0].pid_value[0] = 20;
@@ -75,23 +93,23 @@ void shoot_loop_init()
 }
 
 /*************** 射击模式 *****************/
-void shoot_start()
+static void shoot_start()
 {
   // shoot_motor[0].target_speed = 7000;
   // shoot_motor[1].target_speed = 7100;
-  shoot_motor[0].target_speed = 20000;
-  shoot_motor[1].target_speed = 20000;
+  shoot_motor[0].target_speed = 9000;
+  shoot_motor[1].target_speed = 9000;
 }
 
 /*************** 停止射击模式 **************/
-void shoot_stop()
+static void shoot_stop()
 {
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
 }
 
 /*************** 读取键鼠是否开启摩擦轮 **************/
-void read_friction()
+static void read_keyboard()
 {
   // 开启摩擦轮
   if (q_flag)
@@ -102,7 +120,7 @@ void read_friction()
 }
 
 /********************************摩擦轮can2发送电流***************************/
-void shoot_can2_cmd(int16_t v1, int16_t v2)
+static void shoot_can2_cmd(int16_t v1, int16_t v2)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -127,7 +145,7 @@ void shoot_can2_cmd(int16_t v1, int16_t v2)
 }
 
 /********************************PID计算速度并发送电流****************************/
-void shoot_current_give()
+static void shoot_current_give()
 {
 
   motor_can2[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_can2[0].rotor_speed);

@@ -27,14 +27,9 @@
 gimbal_t gimbal_encoder; // gimbal encoder
 gimbal_t gimbal_gyro;	 // gimbal gyro
 fp32 err_yaw_angle;		 // yaw angle error
-extern RC_ctrl_t rc_ctrl;
-extern INS_t INS;
-extern motor_info_t motor_can2[4];
-extern bool vision_is_tracking;
+uint8_t gimbal_mode = 0;	 // 记录模式，0为编码器，1为陀螺仪
 
-int gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
-int error6 = 0;
-
+// yaw_correct
 fp32 ins_yaw;
 fp32 ins_yaw_update = 0;
 fp32 Driftring_yaw = 0;
@@ -43,9 +38,34 @@ fp32 ins_roll;
 fp32 init_yaw; // 记录yaw初始量
 int Update_yaw_flag = 1;
 
+extern RC_ctrl_t rc_ctrl;
+extern INS_t INS;
+extern motor_info_t motor_can2[4];
+extern bool vision_is_tracking;
 extern float vision_yaw;
 
-/********************云台运动task*********************/
+// 初始化
+static void Gimbal_loop_init();
+
+// 角度过零处理
+static void angle_over_zero(float err);
+
+// 控制云台旋转
+static void gimbal_control();
+
+// 角度范围限制
+static void detel_calc(fp32 *angle);
+
+// can1发送电流
+static void gimbal_can2_cmd(int16_t v4);
+
+// 视觉控制
+static void gimbal_mode_vision();
+
+// 锁yaw
+static void gimbal_mode_normal();
+
+// 云台运动task
 void Gimbal_task(void const *pvParameters)
 {
 	Gimbal_loop_init();
@@ -58,13 +78,12 @@ void Gimbal_task(void const *pvParameters)
 
 	for (;;)
 	{
-		error6++;
 		gimbal_control();
 		osDelay(1);
 	}
 }
 
-void Gimbal_loop_init()
+static void Gimbal_loop_init()
 {
 	// Kp, Ki, Kd
 	gimbal_encoder.pid_angle_value[0] = 5;
@@ -126,7 +145,7 @@ void Gimbal_loop_init()
 }
 
 /************************************ 角度过零处理 ********************************/
-void angle_over_zero(float err)
+static void angle_over_zero(float err)
 {
 	if (gimbal_mode == 0)
 	{
@@ -174,7 +193,7 @@ static void Yaw_read_imu()
 }
 
 /***************************** 处理接收遥控器数据控制云台旋转 *********************************/
-void gimbal_control()
+static void gimbal_control()
 {
 	if (gimbal_mode == 0)
 	{
@@ -191,7 +210,7 @@ void gimbal_control()
 	if (gimbal_mode == 1)
 	{
 		// 视觉控制
-		if (rc_ctrl.rc.s[1] == 2 || press_right == 1) // 左拨杆下
+		if (rc_ctrl.rc.s[1] == 2 || press_right == 1) // 左拨杆下 || 按住右键
 		{
 			gimbal_mode_vision();
 		}
@@ -205,7 +224,7 @@ void gimbal_control()
 }
 
 /**************************** 视觉控制 **********************************/
-void gimbal_mode_vision()
+static void gimbal_mode_vision()
 {
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
@@ -238,7 +257,7 @@ void gimbal_mode_vision()
 }
 
 /**************************** 锁yaw **********************************/
-void gimbal_mode_normal()
+static void gimbal_mode_normal()
 {
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
@@ -297,7 +316,7 @@ static void detel_calc(fp32 *angle)
 }
 
 /********************************can2发送电流***************************/
-void gimbal_can2_cmd(int16_t v4)
+static void gimbal_can2_cmd(int16_t v4)
 {
 	uint32_t send_mail_box;
 	CAN_TxHeaderTypeDef tx_header;

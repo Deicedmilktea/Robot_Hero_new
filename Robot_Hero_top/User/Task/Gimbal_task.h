@@ -20,30 +20,4 @@ typedef struct
 
 void Gimbal_task(void const *pvParameters);
 
-void Gimbal_loop_init();
-
-/*角度过零处理*/
-void angle_over_zero(float err);
-
-/*接收陀螺仪数据转化给电机*/
-void gyro_receive();
-
-/*控制云台旋转*/
-void gimbal_control();
-
-/*角度范围限制*/
-void detel_calc(fp32 *angle);
-
-/*can1发送电流*/
-void gimbal_can2_cmd(int16_t v3);
-
-/****************************云台跟随**********************************/
-void gimbal_mode_follow();
-
-/****************************视觉控制**********************************/
-void gimbal_mode_vision();
-
-/****************************锁yaw**********************************/
-void gimbal_mode_normal();
-
 #endif
