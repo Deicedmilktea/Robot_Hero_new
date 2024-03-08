@@ -15,7 +15,8 @@
 #define KEY_START_OFFSET 10
 #define KEY_STOP_OFFSET 20
 #define CHASSIS_SPEED_MAX 3000
-#define FOLLOW_WEIGHT 20
+#define FOLLOW_WEIGHT 80
+#define WZ_MAX 3000
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
@@ -89,6 +90,9 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit);
 
 // 键鼠控制
 static void key_control(void);
+
+// 角度范围限制
+static void detel_calc(fp32 *angle);
 
 void Chassis_task(void const *pvParameters)
 {
@@ -233,17 +237,20 @@ static void chassis_mode_follow()
   }
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
-  // int16_t yaw_speed = pid_calc_a(&pid_yaw_angle, init_relative_yaw, relative_yaw);
-  // int16_t rotate_w = (motor_can2[0].rotor_speed + motor_can2[1].rotor_speed + motor_can2[2].rotor_speed + motor_can2[3].rotor_speed) / (4 * 19);
   // 消除静态旋转
-  if (relative_yaw > -2 && relative_yaw < 2)
+  if (relative_yaw > -5 && relative_yaw < 5)
   {
     Wz = 0;
   }
   else
   {
-    // Wz = pid_calc(&pid_yaw_speed, yaw_speed, rotate_w);
-    Wz = relative_yaw * FOLLOW_WEIGHT;
+    detel_calc(&relative_yaw);
+    Wz = -relative_yaw * FOLLOW_WEIGHT;
+    
+    if (Wz > WZ_MAX)
+      Wz = WZ_MAX;
+    if (Wz < -WZ_MAX)
+      Wz = -WZ_MAX;
   }
 
   int16_t Temp_Vx = Vx;
@@ -467,4 +474,19 @@ static void key_control(void)
     key_Wz = CHASSIS_SPEED_MAX;
   if (key_Wz < 0)
     key_Wz = 0;
+}
+
+static void detel_calc(fp32 *angle)
+{
+  // 如果角度大于180度，则减去360度
+  if (*angle > 180)
+  {
+    *angle -= 360;
+  }
+
+  // 如果角度小于-180度，则加上360度
+  else if (*angle < -180)
+  {
+    *angle += 360;
+  }
 }
