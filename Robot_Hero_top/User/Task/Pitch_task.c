@@ -40,7 +40,7 @@ void Pitch_task(void const *argument)
         if (rc_ctrl.rc.s[1] == 2 || press_right == 1)
         {
             // 视觉模式下的遥控器微调
-            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[1] / 660.0f - rc_ctrl.mouse.y / 16384.0f * 20) * 0.1;
+            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[1] / 660.0f - rc_ctrl.mouse.y / 16384.0f * 50) * 0.1;
             pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
 
             if (pitch.vision_target_pitch > 20)

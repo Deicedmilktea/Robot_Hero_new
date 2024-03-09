@@ -214,6 +214,9 @@
             "name": "FreeRTOS",
             "files": [
               {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
+              },
+              {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/croutine.c"
               },
               {
@@ -221,6 +224,12 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/list.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/queue.c"
@@ -233,15 +242,6 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/timers.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               }
             ],
             "folders": []

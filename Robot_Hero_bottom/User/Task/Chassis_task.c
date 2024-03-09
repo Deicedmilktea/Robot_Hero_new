@@ -236,7 +236,7 @@ static void chassis_mode_follow()
     init_relative_yaw = INS.yaw_update - INS_top.Yaw;
   }
 
-  relative_yaw = INS.yaw_update - INS_top.Yaw;
+  relative_yaw = INS.yaw_update - INS_top.Yaw - init_relative_yaw;
   // 消除静态旋转
   if (relative_yaw > -5 && relative_yaw < 5)
   {

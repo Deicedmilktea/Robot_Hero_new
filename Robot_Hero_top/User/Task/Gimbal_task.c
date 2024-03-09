@@ -30,13 +30,8 @@ fp32 err_yaw_angle;		 // yaw angle error
 uint8_t gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
 
 // yaw_correct
-fp32 ins_yaw;
-fp32 ins_yaw_update = 0;
-fp32 Driftring_yaw = 0;
-fp32 ins_pitch;
-fp32 ins_roll;
-fp32 init_yaw; // 记录yaw初始量
 int Update_yaw_flag = 1;
+float imu_err_yaw = 0; // 记录yaw飘移的数值便于进行校正
 
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
@@ -113,7 +108,7 @@ static void Gimbal_loop_init()
 	// gimbal_gyro.pid_speed_value[2] = 2;
 
 	// normal
-	gimbal_gyro.pid_angle_value[0] = 1050;
+	gimbal_gyro.pid_angle_value[0] = 350;
 	gimbal_gyro.pid_angle_value[1] = 0.05;
 	gimbal_gyro.pid_angle_value[2] = 800;
 
@@ -175,21 +170,23 @@ static void angle_over_zero(float err)
 /************************************读取yaw轴imu数据**************************************/
 static void Yaw_read_imu()
 {
-	// 三个角度值读取
-	ins_yaw = INS.Yaw;
-	ins_pitch = INS.Pitch;
-	ins_roll = INS.Roll;
-
 	// 记录初始位置
 	if (Update_yaw_flag)
 	{
 		Update_yaw_flag = 0; // 只进入一次
-		init_yaw = ins_yaw - 0.0f;
-		gimbal_gyro.target_angle = init_yaw;
+		INS.yaw_init = INS.Yaw - 0.0f;
+		gimbal_gyro.target_angle = INS.yaw_init;
 	}
 
+	// 顺时针旋转，陀螺仪飘 -90°/min
+	// 解决yaw偏移，完成校正
+	if (rc_ctrl.rc.ch[0] > 50 || rc_ctrl.mouse.x > 1500)
+		imu_err_yaw += 0.0015f;
+	if ((rc_ctrl.rc.ch[0] < -50 || rc_ctrl.mouse.x < -1500))
+		imu_err_yaw -= 0.0015f;
+
 	// 校正
-	ins_yaw_update = ins_yaw - init_yaw;
+	INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }
 
 /***************************** 处理接收遥控器数据控制云台旋转 *********************************/
@@ -263,7 +260,7 @@ static void gimbal_mode_normal()
 	Yaw_read_imu();
 
 	// 使用非线性映射函数调整灵敏度
-	float normalized_input = rc_ctrl.rc.ch[0] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 20;
+	float normalized_input = rc_ctrl.rc.ch[0] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 80;
 	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 
 	detel_calc(&gimbal_gyro.target_angle);
@@ -275,7 +272,7 @@ static void gimbal_mode_normal()
 	// }
 
 	// 云台角度输出
-	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, ins_yaw_update);
+	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.yaw_update);
 
 	// 云台速度输出
 	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
