@@ -23,20 +23,20 @@ chassis_t chassis[4];
 volatile int16_t Vx = 0, Vy = 0, Wz = 0;
 float rx = 0.2, ry = 0.2;
 float relative_yaw = 0;
-int yaw_correction_flag = 1; // yaw值校正标志
-float Hero_chassis_power = 0;
-float Hero_chassis_power_buffer = 60.f;
+int yaw_correction_flag = 1;                                           // yaw值校正标志
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz; // 键盘控制变量
 uint8_t chassis_mode = 0;                                              // 判断底盘状态，用于UI编写
 int chassis_mode_flag = 0;
 static float init_relative_yaw = 0;
 static uint8_t cycle = 0; // do while循环一次的条件
+float imu_err_yaw = 0;    // 记录yaw飘移的数值便于进行校正
 
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
 extern INS_t INS_top;
 extern uint16_t shift_flag;
-extern float newpower;
+extern float Hero_chassis_power;
+extern uint16_t Hero_chassis_power_buffer;
 
 // 底盘跟随云台计算
 static pid_struct_t pid_yaw_angle;
@@ -246,7 +246,7 @@ static void chassis_mode_follow()
   {
     detel_calc(&relative_yaw);
     Wz = -relative_yaw * FOLLOW_WEIGHT;
-    
+
     if (Wz > WZ_MAX)
       Wz = WZ_MAX;
     if (Wz < -WZ_MAX)
@@ -329,12 +329,17 @@ static void yaw_correct()
     yaw_correction_flag = 0;
     INS.yaw_init = INS.Yaw;
   }
-  INS.yaw_update = INS.Yaw - INS.yaw_init;
+  // // 解决yaw偏移，完成校正
+  // if (Wz > 100)
+  //   imu_err_yaw -= 0.002f;
+  // if (Wz < -100)
+  //   imu_err_yaw += 0.002f;
+
+  INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }
 
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
 {
-  Hero_chassis_power = newpower;
   // 819.2/A，假设最大功率为120W，那么能够通过的最大电流为5A，取一个保守值：800.0 * 5 = 4000
   Watch_Power_Max = Klimit;
   Watch_Power = Hero_chassis_power;

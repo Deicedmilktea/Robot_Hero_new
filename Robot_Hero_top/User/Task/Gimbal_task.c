@@ -27,7 +27,7 @@
 gimbal_t gimbal_encoder; // gimbal encoder
 gimbal_t gimbal_gyro;	 // gimbal gyro
 fp32 err_yaw_angle;		 // yaw angle error
-uint8_t gimbal_mode = 0;	 // 记录模式，0为编码器，1为陀螺仪
+uint8_t gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
 
 // yaw_correct
 fp32 ins_yaw;

@@ -115,19 +115,18 @@ void INS_Task(void)
     }
 
     count++;
-		
-		temp_imu_angle[0]=((int)INS.Yaw>>8) & 0xff; // yaw
-		temp_imu_angle[1]=(int)INS.Yaw & 0xff;
-		temp_imu_angle[2]=((int)INS.Roll>>8) & 0xff; // roll
-		temp_imu_angle[3]=(int)INS.Roll & 0xff;
-		temp_imu_angle[4]=((int)INS.Pitch>>8) & 0xff; // pitch
-		temp_imu_angle[5]=(int)INS.Pitch & 0xff;
-		temp_imu_angle[6]=0;
-		temp_imu_angle[7]=0;
 
-		can_remote(temp_imu_angle,0x55);
+    temp_imu_angle[0] = ((int16_t)INS.yaw_update >> 8) & 0xff; // yaw
+    temp_imu_angle[1] = (int16_t)INS.yaw_update & 0xff;
+    temp_imu_angle[2] = ((int16_t)INS.Roll >> 8) & 0xff; // roll
+    temp_imu_angle[3] = (int16_t)INS.Roll & 0xff;
+    temp_imu_angle[4] = ((int16_t)INS.Pitch >> 8) & 0xff; // pitch
+    temp_imu_angle[5] = (int16_t)INS.Pitch & 0xff;
+    temp_imu_angle[6] = 0;
+    temp_imu_angle[7] = 0;
+
+    can_remote(temp_imu_angle, 0x55);
 }
-
 
 /**
  * @brief          Transform 3dvector from BodyFrame to EarthFrame
@@ -243,7 +242,7 @@ static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[
 
 /**
  * @brief 温度控制
- * 
+ *
  */
 void IMU_Temperature_Ctrl(void)
 {

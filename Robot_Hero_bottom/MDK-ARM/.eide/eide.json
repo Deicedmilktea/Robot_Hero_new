@@ -252,6 +252,9 @@
             "path": "../User/Task/Shoot_task.c"
           },
           {
+            "path": "../User/Task/Supercap_task.c"
+          },
+          {
             "path": "../User/Task/UI_task.c"
           },
           {

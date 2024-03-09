@@ -282,9 +282,6 @@
             "path": "../User/DriverLayer/drv_usart.c"
           },
           {
-            "path": "../User/PotocaLayer/judge.c"
-          },
-          {
             "path": "../User/PotocaLayer/rc_potocal.c"
           }
         ],

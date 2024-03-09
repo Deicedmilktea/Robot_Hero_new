@@ -74,14 +74,14 @@ void Shoot_task(void const *argument)
 static void shoot_loop_init()
 {
   // friction_left
-  shoot_motor[0].pid_value[0] = 20;
-  shoot_motor[0].pid_value[1] = 5;
-  shoot_motor[0].pid_value[2] = 1;
+  shoot_motor[0].pid_value[0] = 10;
+  shoot_motor[0].pid_value[1] = 0;
+  shoot_motor[0].pid_value[2] = 0;
 
   // friction_right
-  shoot_motor[1].pid_value[0] = 20;
-  shoot_motor[1].pid_value[1] = 5;
-  shoot_motor[1].pid_value[2] = 1;
+  shoot_motor[1].pid_value[0] = 10;
+  shoot_motor[1].pid_value[1] = 0;
+  shoot_motor[1].pid_value[2] = 0;
 
   // 初始化目标速度
   shoot_motor[0].target_speed = 0;
@@ -97,8 +97,8 @@ static void shoot_start()
 {
   // shoot_motor[0].target_speed = 7000;
   // shoot_motor[1].target_speed = 7100;
-  shoot_motor[0].target_speed = 9000;
-  shoot_motor[1].target_speed = 9000;
+  shoot_motor[0].target_speed = 5900;
+  shoot_motor[1].target_speed = 5900;
 }
 
 /*************** 停止射击模式 **************/

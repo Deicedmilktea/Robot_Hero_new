@@ -1,1 +1,0 @@
-void super_cap(void const * argument);

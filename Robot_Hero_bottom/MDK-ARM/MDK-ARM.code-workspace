@@ -24,8 +24,12 @@
             "pid.h": "c",
             "judge.h": "c",
             "cmsis_os.h": "c",
-            "shoot_task.h": "c"
-        }
+            "shoot_task.h": "c",
+            "supercap_task.h": "c",
+            "drv_usart.h": "c",
+            "usart.h": "c"
+        },
+        "cortex-debug.variableUseNaturalFormat": true
     },
     "extensions": {}
 }

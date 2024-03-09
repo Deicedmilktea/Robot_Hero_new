@@ -2,7 +2,6 @@
 #include "main.h"
 
 #include "rc_potocal.h"
-#include "judge.h"
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
 extern DMA_HandleTypeDef hdma_usart6_rx;
@@ -112,7 +111,7 @@ static void dma_m0_rxcplt_callback(DMA_HandleTypeDef *hdma)
 	else if (hdma == huart6.hdmarx)
 	{
 		hdma->Instance->CR |= (uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory1
-		JUDGE_Receive(judge_dma_buffer[0], judge_receive_length);
+		// JUDGE_Receive(judge_dma_buffer[0], judge_receive_length);
 	}
 }
 
@@ -128,7 +127,7 @@ static void dma_m1_rxcplt_callback(DMA_HandleTypeDef *hdma)
 	else if (hdma == huart6.hdmarx)
 	{
 		hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
-		JUDGE_Receive(judge_dma_buffer[1], judge_receive_length);
+		// JUDGE_Receive(judge_dma_buffer[1], judge_receive_length);
 	}
 }
 
