@@ -59,7 +59,7 @@ void Pitch_task(void const *argument)
 
         else
         {
-            pitch.target_speed = -(rc_ctrl.rc.ch[1] / 660.0f * pitch.speed_max - 20 * rc_ctrl.mouse.y / 16384.0f * pitch.speed_max);
+            pitch.target_speed = -(rc_ctrl.rc.ch[1] / 660.0f * pitch.speed_max - 80 * rc_ctrl.mouse.y / 16384.0f * pitch.speed_max);
             pitch_position_limit();
         }
 

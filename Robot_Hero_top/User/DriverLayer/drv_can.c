@@ -64,12 +64,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can1 data
 
-    if (rx_header.StdId == 0x55) // 接收下C板传来的IMU数据
-    {
-      INS_bottom.Yaw = (int16_t)((rx_data[0] << 8) | rx_data[1]);   // yaw
-      INS_bottom.Roll = (int16_t)((rx_data[2] << 8) | rx_data[3]);  // roll（roll和pitch根据c放置位置不同可能交换）
-      INS_bottom.Pitch = (int16_t)((rx_data[4] << 8) | rx_data[5]); // pitch
-    }
+    // if (rx_header.StdId == 0x55) // 接收下C板传来的IMU数据
+    // {
+    //   INS_bottom.Yaw = (int16_t)((rx_data[0] << 8) | rx_data[1]);   // yaw
+    //   INS_bottom.Roll = (int16_t)((rx_data[2] << 8) | rx_data[3]);  // roll（roll和pitch根据c放置位置不同可能交换）
+    //   INS_bottom.Pitch = (int16_t)((rx_data[4] << 8) | rx_data[5]); // pitch
+    // }
   }
 
   // can2电机信息接收

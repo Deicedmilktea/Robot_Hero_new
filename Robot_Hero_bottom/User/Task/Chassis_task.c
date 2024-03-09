@@ -329,11 +329,12 @@ static void yaw_correct()
     yaw_correction_flag = 0;
     INS.yaw_init = INS.Yaw;
   }
-  // // 解决yaw偏移，完成校正
-  // if (Wz > 100)
-  //   imu_err_yaw -= 0.002f;
-  // if (Wz < -100)
-  //   imu_err_yaw += 0.002f;
+  // Wz为负，顺时针旋转，陀螺仪飘 60°/min
+  // 解决yaw偏移，完成校正
+  if (Wz > 100)
+    imu_err_yaw -= 0.001f;
+  if (Wz < -100)
+    imu_err_yaw += 0.001f;
 
   INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }

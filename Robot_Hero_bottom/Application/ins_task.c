@@ -116,16 +116,16 @@ void INS_Task(void)
 
     count++;
 
-    temp_imu_angle[0] = ((int16_t)INS.yaw_update >> 8) & 0xff; // yaw
-    temp_imu_angle[1] = (int16_t)INS.yaw_update & 0xff;
-    temp_imu_angle[2] = ((int16_t)INS.Roll >> 8) & 0xff; // roll
-    temp_imu_angle[3] = (int16_t)INS.Roll & 0xff;
-    temp_imu_angle[4] = ((int16_t)INS.Pitch >> 8) & 0xff; // pitch
-    temp_imu_angle[5] = (int16_t)INS.Pitch & 0xff;
-    temp_imu_angle[6] = 0;
-    temp_imu_angle[7] = 0;
+    // temp_imu_angle[0] = ((int16_t)INS.yaw_update >> 8) & 0xff; // yaw
+    // temp_imu_angle[1] = (int16_t)INS.yaw_update & 0xff;
+    // temp_imu_angle[2] = ((int16_t)INS.Roll >> 8) & 0xff; // roll
+    // temp_imu_angle[3] = (int16_t)INS.Roll & 0xff;
+    // temp_imu_angle[4] = ((int16_t)INS.Pitch >> 8) & 0xff; // pitch
+    // temp_imu_angle[5] = (int16_t)INS.Pitch & 0xff;
+    // temp_imu_angle[6] = 0;
+    // temp_imu_angle[7] = 0;
 
-    can_remote(temp_imu_angle, 0x55);
+    // can_remote(temp_imu_angle, 0x55);
 }
 
 /**
