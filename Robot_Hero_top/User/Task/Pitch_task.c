@@ -1,7 +1,7 @@
 /*
 *************pitch轴任务**************
 采用3508，ID = 7，CAN2，motor_can2[2]
-遥控器控制：右拨杆上下
+遥控器控制：左遥杆上下
 */
 
 #include "Pitch_task.h"
@@ -36,11 +36,11 @@ void Pitch_task(void const *argument)
     {
         relative_pitch = INS.Roll - INS_bottom.Roll;
 
-        // 视觉识别
-        if (rc_ctrl.rc.s[1] == 2 || press_right == 1)
+        // 视觉识别，右拨杆上/鼠标右键
+        if (rc_ctrl.rc.s[0] == 1 || press_right == 1)
         {
             // 视觉模式下的遥控器微调
-            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[1] / 660.0f - rc_ctrl.mouse.y / 16384.0f * 50) * 0.1;
+            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[3] / 660.0f - rc_ctrl.mouse.y / 16384.0f * 50) * 0.1;
             pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
 
             if (pitch.vision_target_pitch > 20)
@@ -59,7 +59,7 @@ void Pitch_task(void const *argument)
 
         else
         {
-            pitch.target_speed = -(rc_ctrl.rc.ch[1] / 660.0f * pitch.speed_max - 200 * rc_ctrl.mouse.y / 16384.0f * pitch.speed_max);
+            pitch.target_speed = -(rc_ctrl.rc.ch[3] / 660.0f * pitch.speed_max - 200 * rc_ctrl.mouse.y / 16384.0f * pitch.speed_max);
             pitch_position_limit();
         }
 

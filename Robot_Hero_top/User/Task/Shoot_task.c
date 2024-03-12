@@ -2,7 +2,7 @@
 **********Shoot_task射击任务**********
 包含对两个摩擦轮的控制
 摩擦轮分别为3508，ID = 5（left）和 ID = 6（right），CAN2 控制
-遥控器右边拨杆控制，拨到最上面启动 (从上到下分别为132)
+遥控器左边拨杆控制，拨到最上面启动 (从上到下分别为132)
 */
 
 #include "Shoot_task.h"
@@ -46,7 +46,7 @@ void Shoot_task(void const *argument)
     read_keyboard();
 
     // 遥控器右边拨到上和中，电机启动
-    if (rc_ctrl.rc.s[0] == 1 || rc_ctrl.rc.s[0] == 3 || friction_flag == 1)
+    if (rc_ctrl.rc.s[1] == 1 || rc_ctrl.rc.s[1] == 3 || friction_flag == 1)
     {
       shoot_start();
     }

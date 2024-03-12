@@ -2,7 +2,7 @@
 **********Shoot_task射击任务**********
 包含对拨盘的控制
 拨盘为3508，ID = 5，CAN2控制, motor_can2[4]
-遥控器右边拨杆控制，拨到最上面启动 (从上到下分别为132)
+遥控器左边拨杆控制，拨到最上面启动 (从上到下分别为132)
 */
 
 #include "Shoot_task.h"
@@ -34,8 +34,8 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
-    // 遥控器右边拨到上，电机启动
-    if (rc_ctrl.rc.s[0] == 1 || press_left == 1)
+    // 遥控器左边拨到上，电机启动
+    if (rc_ctrl.rc.s[1] == 1 || press_left == 1)
     {
       shoot_start();
     }

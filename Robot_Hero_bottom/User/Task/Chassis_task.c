@@ -1,8 +1,8 @@
 /*
 *************Chassis_task底盘任务**************
 采用3508，CAN2，ID = 1234
-遥控器控制：左拨杆上下→前后
-           左拨杆左右→左右
+遥控器控制：右遥杆上下→前后
+           右遥杆左右→左右
            左滑轮→旋转
 */
 
@@ -106,15 +106,15 @@ void Chassis_task(void const *pvParameters)
     // 底盘模式读取
     read_keyboard();
 
-    // 底盘跟随云台模式，左拨杆拨到上 || r键触发
-    if (rc_ctrl.rc.s[1] == 1 || chassis_mode == 1)
+    // 底盘跟随云台模式，右拨杆拨到中 || r键触发
+    if (rc_ctrl.rc.s[0] == 3 || chassis_mode == 1)
     {
       key_control();
       chassis_mode_follow();
     }
 
-    // 正常运动模式，左拨杆拨到中 || f键触发
-    else if (rc_ctrl.rc.s[1] == 3 || chassis_mode == 2)
+    // 小陀螺运动模式，右拨杆拨到下 || f键触发
+    else if (rc_ctrl.rc.s[0] == 2 || chassis_mode == 2)
     {
       key_control();
       chassis_mode_normal();
@@ -175,8 +175,8 @@ static void read_keyboard(void)
 /*************************************** 正常运动模式 ************************************/
 static void chassis_mode_normal()
 {
-  Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+  Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
   Wz = rc_ctrl.rc.ch[4] / 660.0f * CHASSIS_SPEED_MAX + key_Wz;                  // rotate
 
   int16_t Temp_Vx = Vx;
@@ -199,9 +199,9 @@ static void chassis_mode_normal()
 /****************************** 小陀螺模式 *********************************/
 static void chassis_mode_top()
 {
-  Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
-  Wz = key_Wz;
+  Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+  Wz = WZ_MAX;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -221,13 +221,15 @@ static void chassis_mode_top()
   // chassis[1].target_speed = 0;
   // chassis[2].target_speed = 0;
   // chassis[3].target_speed = 0;
+
+  cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 }
 
 /***************************** 底盘跟随云台模式 *******************************/
 static void chassis_mode_follow()
 {
-  Vx = rc_ctrl.rc.ch[2] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl.rc.ch[3] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+  Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
 
   // 切换模式的时候循环一次，计算 yaw 的差值，防止出现在切换模式的时候底盘突然一转
   if (cycle)
