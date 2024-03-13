@@ -18,9 +18,10 @@ typedef struct
 
 typedef struct
 {
-    pid_struct_t pid;     // 云台电机speed的pid结构体
-    fp32 pid_value[3];    // 云台电机speed的pid参数
-    int16_t target_speed; // 云台电机的目标速度
+    pid_struct_t pid;     // 底盘电机speed的pid结构体
+    float pid_value[3];    // 底盘电机speed的pid参数
+    int16_t target_speed; // 底盘电机的目标速度
+    int16_t speed_max;    // 底盘电机的最大速度
 } chassis_t;
 
 void Chassis_task(void const *pvParameters);

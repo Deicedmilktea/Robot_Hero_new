@@ -237,14 +237,14 @@ static void gimbal_mode_vision()
 	else
 	{
 		// 使用非线性映射函数调整灵敏度
-		float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f;
+		float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 100;
 		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 	}
 
 	detel_calc(&gimbal_gyro.target_angle);
 
 	// 云台角度输出
-	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.Yaw);
+	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.yaw_update);
 
 	// 云台速度输出
 	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
@@ -260,7 +260,7 @@ static void gimbal_mode_normal()
 	Yaw_read_imu();
 
 	// 使用非线性映射函数调整灵敏度
-	float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 80;
+	float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 100;
 	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 
 	detel_calc(&gimbal_gyro.target_angle);

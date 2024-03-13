@@ -12,11 +12,19 @@
 #include "exchange.h"
 #include "drv_can.h"
 
+#define CHASSIS_SPEED_MAX_1 3000
+#define CHASSIS_SPEED_MAX_2 3000
+#define CHASSIS_SPEED_MAX_3 3000
+#define CHASSIS_SPEED_MAX_4 3000
+#define CHASSIS_SPEED_MAX_5 3000
+#define CHASSIS_SPEED_MAX_6 3000
+#define CHASSIS_SPEED_MAX_7 3000
+#define CHASSIS_SPEED_MAX_8 3000
+#define CHASSIS_SPEED_MAX_9 3000
+#define CHASSIS_SPEED_MAX_10 3000
 #define KEY_START_OFFSET 10
 #define KEY_STOP_OFFSET 20
-#define CHASSIS_SPEED_MAX 3000
 #define FOLLOW_WEIGHT 80
-#define WZ_MAX 3000
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
@@ -40,12 +48,7 @@ extern uint16_t Hero_chassis_power_buffer;
 extern int superop; // 超电
 extern uint8_t rx_buffer_c[49];
 extern uint8_t rx_buffer_d[128];
-
-// 底盘跟随云台计算
-static pid_struct_t pid_yaw_angle;
-static pid_struct_t pid_yaw_speed;
-static float pid_yaw_angle_value[3];
-static float pid_yaw_speed_value[3];
+extern uint8_t Hero_level;
 
 // 功率限制算法的变量定义
 float Watch_Power_Max;                                                // 限制值
@@ -105,6 +108,9 @@ static void parse_data(char *data_string);
 
 static void datapy();
 
+// 判断机器人等级，赋值最大速度
+static void level_judge();
+
 void Chassis_task(void const *pvParameters)
 {
 
@@ -112,6 +118,8 @@ void Chassis_task(void const *pvParameters)
 
   for (;;)
   {
+    // 等级判断，获取最大速度
+    level_judge();
     // 校正yaw值
     yaw_correct();
     // 底盘模式读取
@@ -152,23 +160,10 @@ static void Chassis_loop_Init()
     chassis[i].pid_value[2] = 0;
   }
 
-  // 底盘跟随云台
-  pid_yaw_angle_value[0] = 1;
-  pid_yaw_angle_value[1] = 0;
-  pid_yaw_angle_value[2] = 0;
-
-  pid_yaw_speed_value[0] = 10;
-  pid_yaw_speed_value[1] = 0;
-  pid_yaw_speed_value[2] = 0;
-
   for (uint8_t i = 0; i < 4; i++)
   {
     pid_init(&chassis[i].pid, chassis[i].pid_value, 6000, 6000);
   }
-
-  // 底盘跟随云台
-  pid_init(&pid_yaw_angle, pid_yaw_angle_value, 6000, 2000);
-  pid_init(&pid_yaw_speed, pid_yaw_speed_value, 6000, 4000);
 
   Vx = 0;
   Vy = 0;
@@ -187,9 +182,9 @@ static void read_keyboard(void)
 /*************************************** 正常运动模式 ************************************/
 static void chassis_mode_normal()
 {
-  Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
-  Wz = rc_ctrl.rc.ch[4] / 660.0f * CHASSIS_SPEED_MAX + key_Wz;                  // rotate
+  Vx = rc_ctrl.rc.ch[0] / 660.0f * chassis->speed_max + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[1] / 660.0f * chassis->speed_max + key_y_fast - key_y_slow; // front and back
+  Wz = rc_ctrl.rc.ch[4] / 660.0f * chassis->speed_max + key_Wz;                  // rotate
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -211,9 +206,9 @@ static void chassis_mode_normal()
 /****************************** 小陀螺模式 *********************************/
 static void chassis_mode_top()
 {
-  Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
-  Wz = WZ_MAX;
+  Vx = rc_ctrl.rc.ch[0] / 660.0f * chassis->speed_max + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[1] / 660.0f * chassis->speed_max + key_y_fast - key_y_slow; // front and back
+  Wz = chassis->speed_max;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -240,8 +235,8 @@ static void chassis_mode_top()
 /***************************** 底盘跟随云台模式 *******************************/
 static void chassis_mode_follow()
 {
-  Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
+  Vx = rc_ctrl.rc.ch[0] / 660.0f * chassis->speed_max + key_x_fast - key_x_slow; // left and right
+  Vy = rc_ctrl.rc.ch[1] / 660.0f * chassis->speed_max + key_y_fast - key_y_slow; // front and back
 
   // // 切换模式的时候循环一次，计算 yaw 的差值，防止出现在切换模式的时候底盘突然一转
   // if (cycle)
@@ -265,10 +260,10 @@ static void chassis_mode_follow()
     detel_calc(&relative_yaw);
     Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-    if (Wz > WZ_MAX)
-      Wz = WZ_MAX;
-    if (Wz < -WZ_MAX)
-      Wz = -WZ_MAX;
+    if (Wz > chassis->speed_max)
+      Wz = chassis->speed_max;
+    if (Wz < -chassis->speed_max)
+      Wz = -chassis->speed_max;
   }
 
   int16_t Temp_Vx = Vx;
@@ -288,7 +283,7 @@ static void chassis_mode_vision()
 {
   // int16_t Temp_Vx = vision_Vx;
   // int16_t Temp_Vy = vision_Vy;
-  // Wz = mapping(rc_ctrl.rc.ch[4], -660, 660, -CHASSIS_SPEED_MAX, CHASSIS_SPEED_MAX); // rotate
+  // Wz = mapping(rc_ctrl.rc.ch[4], -660, 660, -chassis->speed_max, chassis->speed_max); // rotate
 
   relative_yaw = INS.yaw_update - INS_top.Yaw;
   relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
@@ -309,10 +304,10 @@ static void chassis_current_give()
 
   for (i = 0; i < 4; i++)
   {
-    chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, CHASSIS_SPEED_MAX);
+    chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, chassis->speed_max);
     motor_can2[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_can2[i].rotor_speed);
   }
-  Chassis_Power_Limit(4 * CHASSIS_SPEED_MAX);
+  Chassis_Power_Limit(4 * chassis->speed_max);
   chassis_can2_cmd(motor_can2[0].set_current, motor_can2[1].set_current, motor_can2[2].set_current, motor_can2[3].set_current);
 }
 
@@ -478,24 +473,24 @@ static void key_control(void)
   else
     key_Wz -= KEY_STOP_OFFSET;
 
-  if (key_x_fast > CHASSIS_SPEED_MAX)
-    key_x_fast = CHASSIS_SPEED_MAX;
+  if (key_x_fast > chassis->speed_max)
+    key_x_fast = chassis->speed_max;
   if (key_x_fast < 0)
     key_x_fast = 0;
-  if (key_x_slow > CHASSIS_SPEED_MAX)
-    key_x_slow = CHASSIS_SPEED_MAX;
+  if (key_x_slow > chassis->speed_max)
+    key_x_slow = chassis->speed_max;
   if (key_x_slow < 0)
     key_x_slow = 0;
-  if (key_y_fast > CHASSIS_SPEED_MAX)
-    key_y_fast = CHASSIS_SPEED_MAX;
+  if (key_y_fast > chassis->speed_max)
+    key_y_fast = chassis->speed_max;
   if (key_y_fast < 0)
     key_y_fast = 0;
-  if (key_y_slow > CHASSIS_SPEED_MAX)
-    key_y_slow = CHASSIS_SPEED_MAX;
+  if (key_y_slow > chassis->speed_max)
+    key_y_slow = chassis->speed_max;
   if (key_y_slow < 0)
     key_y_slow = 0;
-  if (key_Wz > CHASSIS_SPEED_MAX)
-    key_Wz = CHASSIS_SPEED_MAX;
+  if (key_Wz > chassis->speed_max)
+    key_Wz = chassis->speed_max;
   if (key_Wz < 0)
     key_Wz = 0;
 }
@@ -534,4 +529,42 @@ static void datapy()
   memcpy(rx_buffer_c, &rx_buffer_d[index1], 49);
 
   parse_data(rx_buffer_c);
+}
+
+// 判断机器人等级，赋值最大速度
+static void level_judge()
+{
+  switch (Hero_level)
+  {
+  case 1:
+    chassis->speed_max = CHASSIS_SPEED_MAX_1;
+    break;
+  case 2:
+    chassis->speed_max = CHASSIS_SPEED_MAX_2;
+    break;
+  case 3:
+    chassis->speed_max = CHASSIS_SPEED_MAX_3;
+    break;
+  case 4:
+    chassis->speed_max = CHASSIS_SPEED_MAX_4;
+    break;
+  case 5:
+    chassis->speed_max = CHASSIS_SPEED_MAX_5;
+    break;
+  case 6:
+    chassis->speed_max = CHASSIS_SPEED_MAX_6;
+    break;
+  case 7:
+    chassis->speed_max = CHASSIS_SPEED_MAX_7;
+    break;
+  case 8:
+    chassis->speed_max = CHASSIS_SPEED_MAX_8;
+    break;
+  case 9:
+    chassis->speed_max = CHASSIS_SPEED_MAX_9;
+    break;
+  case 10:
+    chassis->speed_max = CHASSIS_SPEED_MAX_10;
+    break;
+  }
 }
