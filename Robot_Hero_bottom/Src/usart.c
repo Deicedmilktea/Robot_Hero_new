@@ -62,7 +62,7 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -412,7 +412,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 
-//重映射printf的功�?
+//重映射printf的功�?
 PUTCHAR_PROTOTYPE
 {
   HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1, 0xFFFF);

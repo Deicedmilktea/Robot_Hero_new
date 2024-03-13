@@ -174,17 +174,17 @@ void Update_data()
         }
     }
 
-    // 发送给上C板
-    uint8_t temp_remote[2];
-    temp_remote[0] = Flag_progress;
-    temp_remote[1] = Flag_judge;
+    // // 发送给上C板
+    // uint8_t temp_remote[2];
+    // temp_remote[0] = Flag_progress;
+    // temp_remote[1] = Flag_judge;
 
-    CAN_TxHeaderTypeDef tx_header;
+    // CAN_TxHeaderTypeDef tx_header;
 
-    tx_header.StdId = 0x10;
-    tx_header.IDE = CAN_ID_STD;   // 标准帧
-    tx_header.RTR = CAN_RTR_DATA; // 数据帧
-    tx_header.DLC = 2;            // 发送数据长度（字节）
+    // tx_header.StdId = 0x10;
+    // tx_header.IDE = CAN_ID_STD;   // 标准帧
+    // tx_header.RTR = CAN_RTR_DATA; // 数据帧
+    // tx_header.DLC = 2;            // 发送数据长度（字节）
 
-    HAL_CAN_AddTxMessage(&hcan1, &tx_header, temp_remote, (uint32_t *)CAN_TX_MAILBOX0);
+    // HAL_CAN_AddTxMessage(&hcan1, &tx_header, temp_remote, (uint32_t *)CAN_TX_MAILBOX0);
 }

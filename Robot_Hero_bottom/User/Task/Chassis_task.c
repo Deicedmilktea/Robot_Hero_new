@@ -37,6 +37,9 @@ extern INS_t INS_top;
 extern uint16_t shift_flag;
 extern float Hero_chassis_power;
 extern uint16_t Hero_chassis_power_buffer;
+extern int superop; // 超电
+extern uint8_t rx_buffer_c[49];
+extern uint8_t rx_buffer_d[128];
 
 // 底盘跟随云台计算
 static pid_struct_t pid_yaw_angle;
@@ -54,6 +57,10 @@ static double Scaling1 = 0, Scaling2 = 0, Scaling3 = 0, Scaling4 = 0; // 比例
 float Klimit = 1;                                                     // 限制值
 float Plimit = 0;                                                     // 约束比例
 float Chassis_pidout_max;                                             // 输出值限制
+// 超电
+float data[6];
+int index1;
+float vi, vo, pi, ii, io, ps;
 
 // 读取键鼠数据控制底盘模式
 static void read_keyboard(void);
@@ -94,6 +101,10 @@ static void key_control(void);
 // 角度范围限制
 static void detel_calc(fp32 *angle);
 
+static void parse_data(char *data_string);
+
+static void datapy();
+
 void Chassis_task(void const *pvParameters)
 {
 
@@ -127,6 +138,7 @@ void Chassis_task(void const *pvParameters)
     }
 
     chassis_current_give();
+    datapy(); // 超电数据接收
     osDelay(1);
   }
 }
@@ -231,14 +243,18 @@ static void chassis_mode_follow()
   Vx = rc_ctrl.rc.ch[0] / 660.0f * CHASSIS_SPEED_MAX + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[1] / 660.0f * CHASSIS_SPEED_MAX + key_y_fast - key_y_slow; // front and back
 
-  // 切换模式的时候循环一次，计算 yaw 的差值，防止出现在切换模式的时候底盘突然一转
-  if (cycle)
-  {
-    cycle = 0;
-    init_relative_yaw = INS.yaw_update - INS_top.Yaw;
-  }
+  // // 切换模式的时候循环一次，计算 yaw 的差值，防止出现在切换模式的时候底盘突然一转
+  // if (cycle)
+  // {
+  //   cycle = 0;
+  //   init_relative_yaw = INS.yaw_update - INS_top.Yaw;
+  // }
 
-  relative_yaw = INS.yaw_update - INS_top.Yaw - init_relative_yaw;
+  // relative_yaw = INS.yaw_update - INS_top.Yaw - init_relative_yaw;
+
+  // 保证切换回这个模式的时候，头在初始方向上，速度移动最快，方便逃跑(●'◡'●)
+  relative_yaw = INS.yaw_update - INS_top.Yaw;
+
   // 消除静态旋转
   if (relative_yaw > -5 && relative_yaw < 5)
   {
@@ -349,7 +365,7 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
   Watch_Buffer = Hero_chassis_power_buffer; // 限制值，功率值，缓冲能量值，初始值是1，0，0
   // get_chassis_power_and_buffer(&Power, &Power_Buffer, &Power_Max);//通过裁判系统和编码器值获取（限制值，实时功率，实时缓冲能量）
 
-  Chassis_pidout_max = 61536; // 32768，40，960			15384 * 4，取了4个3508电机最大电流的一个保守值
+  Chassis_pidout_max = 32768; // 32768，40，960			15384 * 4，取了4个3508电机最大电流的一个保守值
 
   if (Watch_Power > 600)
   {
@@ -391,17 +407,17 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
       Klimit = -1; // 限制绝对值不能超过1，也就是Chassis_pidout一定要小于某个速度值，不能超调
 
     /*缓冲能量占比环，总体约束*/
-    if (Watch_Buffer < 50 && Watch_Buffer >= 40)
+    if (Watch_Buffer < 50 && Watch_Buffer >= 40 && superop == 0)
       Plimit = 0.9; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
-    else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
+    else if (Watch_Buffer < 40 && Watch_Buffer >= 35 && superop == 0)
       Plimit = 0.75;
-    else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
+    else if (Watch_Buffer < 35 && Watch_Buffer >= 30 && superop == 0)
       Plimit = 0.5;
-    else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
+    else if (Watch_Buffer < 30 && Watch_Buffer >= 20 && superop == 0)
       Plimit = 0.25;
-    else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
+    else if (Watch_Buffer < 20 && Watch_Buffer >= 10 && superop == 0)
       Plimit = 0.125;
-    else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
+    else if (Watch_Buffer < 10 && Watch_Buffer >= 0 && superop == 0)
       Plimit = 0.05;
     else
     {
@@ -497,4 +513,25 @@ static void detel_calc(fp32 *angle)
   {
     *angle += 360;
   }
+}
+
+static void parse_data(char *data_string)
+{
+  sscanf(data_string, "Vi:%f Vo:%f Pi:%f Ii:%f Io:%f Ps:%f", &data[0], &data[1], &data[2], &data[3], &data[4], &data[5]);
+}
+
+static void datapy()
+{
+  for (int i = 0; i < 128; i++)
+  {
+    if ((rx_buffer_d[i] == 0x56) && (rx_buffer_d[i + 1] == 'i'))
+    {
+      index1 = i;
+      break;
+    }
+  }
+
+  memcpy(rx_buffer_c, &rx_buffer_d[index1], 49);
+
+  parse_data(rx_buffer_c);
 }

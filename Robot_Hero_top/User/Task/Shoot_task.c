@@ -97,12 +97,12 @@ static void shoot_start()
 {
   // shoot_motor[0].target_speed = 7000;
   // shoot_motor[1].target_speed = 7100;
-  // // 16 m/s
-  // shoot_motor[0].target_speed = 5900;
-  // shoot_motor[1].target_speed = 5900;
-  // 10 m/s
-  shoot_motor[0].target_speed = 5000;
-  shoot_motor[1].target_speed = 5000;
+  // 16 m/s
+  shoot_motor[0].target_speed = 5900;
+  shoot_motor[1].target_speed = 5900;
+  // // 10 m/s
+  // shoot_motor[0].target_speed = 5000;
+  // shoot_motor[1].target_speed = 5000;
 }
 
 /*************** 停止射击模式 **************/
