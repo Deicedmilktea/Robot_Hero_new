@@ -13,7 +13,7 @@ void Supercap_task(void const *argument)
 {
 	while (1)
 	{
-		uint8_t iuy[7] = "P060P\r\n";
+		uint8_t iuy[7] = "P055P\r\n";
 		int power = (int)Hero_chassis_power_limit;
 		if (power == 55)
 			strcpy(iuy, "P055P\r\n");
@@ -38,18 +38,6 @@ void Supercap_task(void const *argument)
 
 		uint8_t scon[7] = "PVONP\r\n";
 		uint8_t scoff[7] = "PVOFP\r\n";
-		char buffer[20];
-
-		if (Hero_chassis_power_buffer < 5)
-		{
-			HAL_UART_Transmit(&huart1, (uint8_t *)scon, 7, 0xff);
-			superop = 1;
-		}
-		else
-		{
-			HAL_UART_Transmit(&huart1, (uint8_t *)scoff, 7, 0xff);
-			superop = 0;
-		}
 
 		HAL_UART_Transmit(&huart1, (uint8_t *)iuy, 7, 0xff);
 

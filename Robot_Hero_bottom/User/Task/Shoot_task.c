@@ -19,6 +19,9 @@ static void shoot_loop_init();
 // 射击模式
 static void shoot_start();
 
+// 反转
+static void shoot_reverse();
+
 // 停止射击模式
 static void shoot_stop();
 
@@ -38,6 +41,10 @@ void Shoot_task(void const *argument)
     if (rc_ctrl.rc.s[1] == 1 || press_left == 1)
     {
       shoot_start();
+    }
+    else if (v_flag)
+    {
+      shoot_reverse();
     }
     else
     {
@@ -66,6 +73,12 @@ static void shoot_loop_init()
 
 /***************射击模式*****************/
 static void shoot_start()
+{
+  trigger.target_speed = -250;
+}
+
+/*****************反转******************/
+static void shoot_reverse()
 {
   trigger.target_speed = 250;
 }
@@ -105,6 +118,6 @@ static void trigger_can2_cmd(int16_t v1)
 static void shoot_current_give()
 {
   // trigger
-  motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, -motor_can2[4].rotor_speed);
-  trigger_can2_cmd(-motor_can2[4].set_current);
+  motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, motor_can2[4].rotor_speed);
+  trigger_can2_cmd(motor_can2[4].set_current);
 }
