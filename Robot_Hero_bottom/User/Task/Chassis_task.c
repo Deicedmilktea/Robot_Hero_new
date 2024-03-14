@@ -355,12 +355,14 @@ static void yaw_correct()
     yaw_correction_flag = 0;
     INS.yaw_init = INS.Yaw;
   }
-  // Wz为负，顺时针旋转，陀螺仪飘 60°/min
+  // Wz为负，顺时针旋转，陀螺仪飘 60°/min（以3000为例转出的，根据速度不同调整）
   // 解决yaw偏移，完成校正
   if (Wz > 500)
     imu_err_yaw -= 0.001f;
+  // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
   if (Wz < -500)
     imu_err_yaw += 0.001f;
+  // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
 
   INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }
