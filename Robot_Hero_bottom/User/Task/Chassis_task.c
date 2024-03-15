@@ -12,20 +12,13 @@
 #include "exchange.h"
 #include "drv_can.h"
 
-#define CHASSIS_SPEED_MAX_1 5000
-#define CHASSIS_SPEED_MAX_2 3000
-#define CHASSIS_SPEED_MAX_3 3000
-#define CHASSIS_SPEED_MAX_4 3000
-#define CHASSIS_SPEED_MAX_5 3000
-#define CHASSIS_SPEED_MAX_6 3000
-#define CHASSIS_SPEED_MAX_7 3000
-#define CHASSIS_SPEED_MAX_8 3000
-#define CHASSIS_SPEED_MAX_9 3000
-#define CHASSIS_SPEED_MAX_10 3000
+#define CHASSIS_SPEED_MAX_13 8000
+#define CHASSIS_SPEED_MAX_46 9000
+#define CHASSIS_SPEED_MAX_710 10000
 #define CHASSIS_SPEED_SUPERCAP 5000
 #define CHASSIS_WZ_MAX 3000
-#define KEY_START_OFFSET 10
-#define KEY_STOP_OFFSET 20
+#define KEY_START_OFFSET 20
+#define KEY_STOP_OFFSET 30
 #define FOLLOW_WEIGHT 80
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
@@ -197,7 +190,7 @@ static void chassis_mode_normal()
 {
   Vx = rc_ctrl.rc.ch[0] / 660.0f * chassis_speed_max + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[1] / 660.0f * chassis_speed_max + key_y_fast - key_y_slow; // front and back
-  Wz = rc_ctrl.rc.ch[4] / 660.0f * chassis_speed_max + key_Wz_acw + key_Wz_cw;  // rotate
+  Wz = rc_ctrl.rc.ch[4] / 660.0f * CHASSIS_WZ_MAX + key_Wz_acw + key_Wz_cw;     // rotate
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -573,39 +566,39 @@ static void level_judge()
     switch (Hero_level)
     {
     case 1:
-      chassis_speed_max = CHASSIS_SPEED_MAX_1;
+      chassis_speed_max = CHASSIS_SPEED_MAX_13;
       break;
     case 2:
-      chassis_speed_max = CHASSIS_SPEED_MAX_2;
+      chassis_speed_max = CHASSIS_SPEED_MAX_13;
       break;
     case 3:
-      chassis_speed_max = CHASSIS_SPEED_MAX_3;
+      chassis_speed_max = CHASSIS_SPEED_MAX_13;
       break;
     case 4:
-      chassis_speed_max = CHASSIS_SPEED_MAX_4;
+      chassis_speed_max = CHASSIS_SPEED_MAX_46;
       break;
     case 5:
-      chassis_speed_max = CHASSIS_SPEED_MAX_5;
+      chassis_speed_max = CHASSIS_SPEED_MAX_46;
       break;
     case 6:
-      chassis_speed_max = CHASSIS_SPEED_MAX_6;
+      chassis_speed_max = CHASSIS_SPEED_MAX_46;
       break;
     case 7:
-      chassis_speed_max = CHASSIS_SPEED_MAX_7;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     case 8:
-      chassis_speed_max = CHASSIS_SPEED_MAX_8;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     case 9:
-      chassis_speed_max = CHASSIS_SPEED_MAX_9;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     case 10:
-      chassis_speed_max = CHASSIS_SPEED_MAX_10;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     }
   }
   else
-    chassis_speed_max = CHASSIS_SPEED_MAX_1;
+    chassis_speed_max = CHASSIS_SPEED_MAX_13;
 }
 
 // 判断是否开启超级电容
