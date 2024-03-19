@@ -56,7 +56,7 @@
 // osThreadId Chassis_taskHandle;
 osThreadId myTask02Handle;
 osThreadId SupercapTaskHandle;
-osThreadId UI_taskHandle;
+osThreadId UITaskHandle;
 /* USER CODE END Variables */
 osThreadId INSTaskHandle;
 osThreadId ChassisTaskHandle;
@@ -65,6 +65,7 @@ osThreadId ShootTaskHandle;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void Supercap_task(void const *argument);
+void UI_task(void const *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartINSTask(void const *argument);
@@ -148,6 +149,9 @@ void MX_FREERTOS_Init(void)
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(SupercapTask, Supercap_task, osPriorityNormal, 0, 128);
   SupercapTaskHandle = osThreadCreate(osThread(SupercapTask), NULL);
+
+  osThreadDef(UITask, UI_task, osPriorityNormal, 0, 128);
+  SupercapTaskHandle = osThreadCreate(osThread(UITask), NULL);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 }

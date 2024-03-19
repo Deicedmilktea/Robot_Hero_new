@@ -16,7 +16,7 @@
 #define CHASSIS_SPEED_MAX_46 9000
 #define CHASSIS_SPEED_MAX_710 10000
 #define CHASSIS_SPEED_SUPERCAP 5000
-#define CHASSIS_WZ_MAX 3000
+#define CHASSIS_WZ_MAX 4000
 #define KEY_START_OFFSET 20
 #define KEY_STOP_OFFSET 30
 #define FOLLOW_WEIGHT 80
@@ -30,7 +30,6 @@ int yaw_correction_flag = 1;                                                    
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz_acw, key_Wz_cw; // 键盘控制变量
 uint8_t chassis_mode = 0;                                                             // 判断底盘状态，用于UI编写
 uint8_t supercap_flag = 0;                                                            // 是否开启超级电容
-int chassis_mode_flag = 0;
 static float init_relative_yaw = 0;
 static uint8_t cycle = 0; // do while循环一次的条件
 float imu_err_yaw = 0;    // 记录yaw飘移的数值便于进行校正
@@ -126,24 +125,51 @@ void Chassis_task(void const *pvParameters)
     // 判断是否开启超电
     supercap_judge();
 
-    // 底盘跟随云台模式，右拨杆拨到中 || r键触发
-    if (rc_ctrl.rc.s[0] == 3 || chassis_mode == 1)
+    // 遥控操作
+    if (rc_ctrl.rc.ch[0] != 0 || rc_ctrl.rc.ch[1] != 0 || rc_ctrl.rc.ch[2] != 0 || rc_ctrl.rc.ch[3] != 0)
     {
-      key_control();
-      chassis_mode_follow();
-    }
+      // 底盘跟随云台模式，右拨杆拨到中 || r键触发
+      if (rc_ctrl.rc.s[0] == 3 || chassis_mode == 1)
+      {
+        key_control();
+        chassis_mode_follow();
+      }
 
-    // 正常运动模式，右拨杆拨到下 || f键触发
-    else if (rc_ctrl.rc.s[0] == 2 || chassis_mode == 2)
-    {
-      key_control();
-      chassis_mode_normal();
-    }
+      // 正常运动模式，右拨杆拨到下 || f键触发
+      else if (rc_ctrl.rc.s[0] == 2 || chassis_mode == 2)
+      {
+        key_control();
+        chassis_mode_normal();
+      }
 
+      else
+      {
+        key_control();
+        chassis_mode_normal();
+      }
+    }
+    // 键鼠操作
     else
     {
-      key_control();
-      chassis_mode_normal();
+      // 底盘跟随云台模式，r键触发
+      if (chassis_mode == 1)
+      {
+        key_control();
+        chassis_mode_follow();
+      }
+
+      // 正常运动模式，f键触发
+      else if (chassis_mode == 2)
+      {
+        key_control();
+        chassis_mode_normal();
+      }
+
+      else
+      {
+        key_control();
+        chassis_mode_normal();
+      }
     }
 
     chassis_current_give();
@@ -350,12 +376,15 @@ static void yaw_correct()
   }
   // Wz为负，顺时针旋转，陀螺仪飘 60°/min（以3000为例转出的，根据速度不同调整）
   // 解决yaw偏移，完成校正
-  if (Wz > 500)
-    imu_err_yaw -= 0.001f;
-  // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
-  if (Wz < -500)
-    imu_err_yaw += 0.001f;
-  // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
+  if (shift_flag || ctrl_flag)
+  {
+    if (Wz > 500)
+      imu_err_yaw -= 0.001f;
+    // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
+    if (Wz < -500)
+      imu_err_yaw += 0.001f;
+    // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
+  }
 
   INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }

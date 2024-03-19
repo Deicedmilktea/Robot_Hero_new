@@ -178,12 +178,12 @@ static void Yaw_read_imu()
 		gimbal_gyro.target_angle = INS.yaw_init;
 	}
 
-	// 顺时针旋转，陀螺仪飘 -90°/min
-	// 解决yaw偏移，完成校正
-	if (rc_ctrl.rc.ch[2] > 50 || rc_ctrl.mouse.x > 1500)
-		imu_err_yaw += 0.0015f;
-	if ((rc_ctrl.rc.ch[2] < -50 || rc_ctrl.mouse.x < -1500))
-		imu_err_yaw -= 0.0015f;
+	// // 顺时针旋转，陀螺仪飘 -90°/min
+	// // 解决yaw偏移，完成校正
+	// if (rc_ctrl.rc.ch[2] > 50 || rc_ctrl.mouse.x > 1500)
+	// 	imu_err_yaw += 0.0015f;
+	// if ((rc_ctrl.rc.ch[2] < -50 || rc_ctrl.mouse.x < -1500))
+	// 	imu_err_yaw -= 0.0015f;
 
 	// 校正
 	INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
