@@ -153,7 +153,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
 
     if (rx_header.StdId == 0x211)
     {
-      extern float powerdata[4];
       uint16_t *pPowerdata = (uint16_t *)rx_data;
 
       powerdata[0] = (float)pPowerdata[0] / 100.f; // 输入电压

@@ -42,7 +42,7 @@ void Shoot_task(void const *argument)
     {
       shoot_start();
     }
-    else if (v_flag)
+    else if (z_flag)
     {
       shoot_reverse();
     }

@@ -12,14 +12,21 @@
 #include "exchange.h"
 #include "drv_can.h"
 
-#define CHASSIS_SPEED_MAX_13 8000
-#define CHASSIS_SPEED_MAX_46 9000
-#define CHASSIS_SPEED_MAX_710 10000
-#define CHASSIS_SPEED_SUPERCAP 5000
+#define CHASSIS_SPEED_MAX_1 5000
+#define CHASSIS_SPEED_MAX_2 5500
+#define CHASSIS_SPEED_MAX_3 6000
+#define CHASSIS_SPEED_MAX_4 6500
+#define CHASSIS_SPEED_MAX_5 7500
+#define CHASSIS_SPEED_MAX_6 8500
+#define CHASSIS_SPEED_MAX_7 9000
+#define CHASSIS_SPEED_MAX_8 10000
+#define CHASSIS_SPEED_MAX_9 11000
+#define CHASSIS_SPEED_MAX_10 12000
+#define CHASSIS_SPEED_SUPERCAP 10000
 #define CHASSIS_WZ_MAX 4000
 #define KEY_START_OFFSET 20
 #define KEY_STOP_OFFSET 30
-#define FOLLOW_WEIGHT 80
+#define FOLLOW_WEIGHT 160
 
 motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
 chassis_t chassis[4];
@@ -45,6 +52,7 @@ extern int superop; // 超电
 extern uint8_t rx_buffer_c[49];
 extern uint8_t rx_buffer_d[128];
 extern uint8_t Hero_level;
+extern float powerdata[4];
 
 // 功率限制算法的变量定义
 float Watch_Power_Max;                                                // 限制值
@@ -81,6 +89,9 @@ static void chassis_mode_vision();
 // yaw值校正
 static void yaw_correct();
 
+// 手动yaw值校正（仅在正常运动模式生效）
+static void manual_yaw_correct();
+
 // 电机电流控制
 static void chassis_current_give(void);
 
@@ -99,6 +110,7 @@ static void key_control(void);
 // 角度范围限制
 static void detel_calc(fp32 *angle);
 
+// 关于
 static void parse_data(char *data_string);
 
 static void datapy();
@@ -128,15 +140,15 @@ void Chassis_task(void const *pvParameters)
     // 遥控操作
     if (rc_ctrl.rc.ch[0] != 0 || rc_ctrl.rc.ch[1] != 0 || rc_ctrl.rc.ch[2] != 0 || rc_ctrl.rc.ch[3] != 0)
     {
-      // 底盘跟随云台模式，右拨杆拨到中 || r键触发
-      if (rc_ctrl.rc.s[0] == 3 || chassis_mode == 1)
+      // 底盘跟随云台模式，右拨杆拨到中
+      if (rc_ctrl.rc.s[0] == 3)
       {
         key_control();
         chassis_mode_follow();
       }
 
-      // 正常运动模式，右拨杆拨到下 || f键触发
-      else if (rc_ctrl.rc.s[0] == 2 || chassis_mode == 2)
+      // 正常运动模式，右拨杆拨到下
+      else if (rc_ctrl.rc.s[0] == 2)
       {
         key_control();
         chassis_mode_normal();
@@ -162,6 +174,7 @@ void Chassis_task(void const *pvParameters)
       else if (chassis_mode == 2)
       {
         key_control();
+        manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
         chassis_mode_normal();
       }
 
@@ -189,7 +202,7 @@ static void Chassis_loop_Init()
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    pid_init(&chassis[i].pid, chassis[i].pid_value, 6000, 6000);
+    pid_init(&chassis[i].pid, chassis[i].pid_value, 12000, 12000);
   }
 
   Vx = 0;
@@ -292,10 +305,10 @@ static void chassis_mode_follow()
     detel_calc(&relative_yaw);
     Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-    if (Wz > CHASSIS_WZ_MAX)
-      Wz = CHASSIS_WZ_MAX;
-    if (Wz < -CHASSIS_WZ_MAX)
-      Wz = -CHASSIS_WZ_MAX;
+    if (Wz > 2 * CHASSIS_WZ_MAX)
+      Wz = 2 * CHASSIS_WZ_MAX;
+    if (Wz < -2 * CHASSIS_WZ_MAX)
+      Wz = -2 * CHASSIS_WZ_MAX;
   }
 
   int16_t Temp_Vx = Vx;
@@ -389,6 +402,16 @@ static void yaw_correct()
   INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }
 
+/***************** 手动yaw值校正（仅在正常运动模式生效） ******************/
+static void manual_yaw_correct()
+{
+  if (v_flag)
+  {
+    float manual_err_yaw = INS.yaw_update - INS_top.Yaw;
+    imu_err_yaw -= manual_err_yaw;
+  }
+}
+
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
 {
   // 819.2/A，假设最大功率为120W，那么能够通过的最大电流为5A，取一个保守值：800.0 * 5 = 4000
@@ -438,23 +461,38 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     else if (Klimit < -1)
       Klimit = -1; // 限制绝对值不能超过1，也就是Chassis_pidout一定要小于某个速度值，不能超调
 
-    /*缓冲能量占比环，总体约束*/
-    if (Watch_Buffer < 50 && Watch_Buffer >= 40)
-      Plimit = 0.9; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
-    else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
-      Plimit = 0.75;
-    else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
+    // /*缓冲能量占比环，总体约束*/
+    // if (Watch_Buffer < 50 && Watch_Buffer >= 40)
+    //   Plimit = 0.9; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
+    // else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
+    //   Plimit = 0.75;
+    // else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
+    //   Plimit = 0.5;
+    // else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
+    //   Plimit = 0.25;
+    // else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
+    //   Plimit = 0.125;
+    // else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
+    //   Plimit = 0.05;
+    // else
+    // {
+    //   Plimit = 1;
+    // }
+
+    if (powerdata[1] < 24 && powerdata[1] > 23)
+      Plimit = 0.9;
+    else if (powerdata[1] < 23 && powerdata[1] > 22)
+      Plimit = 0.8;
+    else if (powerdata[1] < 22 && powerdata[1] > 21)
+      Plimit = 0.7;
+    else if (powerdata[1] < 21 && powerdata[1] > 20)
+      Plimit = 0.6;
+    else if (powerdata[1] < 20 && powerdata[1] > 18)
       Plimit = 0.5;
-    else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
-      Plimit = 0.25;
-    else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
-      Plimit = 0.125;
-    else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
-      Plimit = 0.05;
-    else
-    {
-      Plimit = 1;
-    }
+    else if (powerdata[1] < 18 && powerdata[1] > 15)
+      Plimit = 0.3;
+    else if (powerdata[1] < 15)
+      Plimit = 0.1;
 
     motor_can2[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
     motor_can2[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
@@ -595,39 +633,39 @@ static void level_judge()
     switch (Hero_level)
     {
     case 1:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_1;
       break;
     case 2:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_2;
       break;
     case 3:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_3;
       break;
     case 4:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_4;
       break;
     case 5:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_5;
       break;
     case 6:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_6;
       break;
     case 7:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_7;
       break;
     case 8:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_8;
       break;
     case 9:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_9;
       break;
     case 10:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_10;
       break;
     }
   }
   else
-    chassis_speed_max = CHASSIS_SPEED_MAX_13;
+    chassis_speed_max = CHASSIS_SPEED_MAX_1;
 }
 
 // 判断是否开启超级电容
