@@ -21,6 +21,7 @@ extern UART_HandleTypeDef huart6;
 static uint8_t usart6_tx_dma_is_busy = 0;
 
 extern int8_t chassis_mode;
+extern uint8_t supercap_flag;
 
 #define UI_NEED_REFRESH (userUI_control.module_refresh_timer > USERUI_MODULE_REFRESH_TIME)
 #define UI_IS_EXTERN (userUI_control.module_extern_flag)
@@ -84,7 +85,7 @@ void UI_task(void const *argument)
 
     while (1)
     {
-        if (v_flag)
+        if (g_flag)
         {
             userUI_control.all_refresh_key_press_time += USERUI_TASK_CONTROL_TIME_MS;
             // 当手动刷新按键被按下一段时间后，执行UI全部重绘
@@ -111,7 +112,7 @@ void UI_task(void const *argument)
         userUI_draw_constant_power_allowance(1, &graph8, powerdata[1]);
 
         // XTL模式
-        userUI_draw_robot_xtl_mode(1, chassis_mode);
+        userUI_draw_robot_xtl_mode(1, supercap_flag);
 
         //********************以上为自己定义动态ui*************
 
@@ -141,7 +142,7 @@ void userUI_init(void)
     userUI_draw_background();
 
     userUI_draw_constant_power_allowance(0, &graph8, powerdata[1]);
-    userUI_draw_robot_xtl_mode(0, chassis_mode);
+    userUI_draw_robot_xtl_mode(0, supercap_flag);
 }
 
 /**
@@ -239,7 +240,6 @@ void userUI_draw_background(void)
 // 绘制超电，图层3
 void userUI_draw_constant_power_allowance(uint8_t en, Graph_Data *graph, fp32 cap_volt)
 {
-
     // 1. 将 12.5v - 23v 处理成 [0.0, 1.0]
     cap_volt = (cap_volt - 12.5f) / (23.0f - 12.5f);
     if (cap_volt < 0.0f)
@@ -285,7 +285,7 @@ void userUI_draw_constant_power_allowance(uint8_t en, Graph_Data *graph, fp32 ca
 void userUI_draw_robot_xtl_mode(uint8_t en, int refresh)
 {
 
-    if (refresh == 2)
+    if (refresh == 1)
     {
         UI_delete(1, 6);
         string_Draw(&ui_str, "XTLE", en == 0 ? UI_Graph_ADD : UI_Graph_Change, 7, UI_Color_Pink, 3, 20, 650, 155, "ENABLE");

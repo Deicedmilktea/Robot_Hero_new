@@ -23,7 +23,7 @@
 #define CHASSIS_SPEED_MAX_9 11000
 #define CHASSIS_SPEED_MAX_10 12000
 #define CHASSIS_SPEED_SUPERCAP 10000
-#define CHASSIS_WZ_MAX 4000
+#define CHASSIS_WZ_MAX 6000
 #define KEY_START_OFFSET 20
 #define KEY_STOP_OFFSET 30
 #define FOLLOW_WEIGHT 160
@@ -134,8 +134,8 @@ void Chassis_task(void const *pvParameters)
     yaw_correct();
     // 底盘模式读取
     read_keyboard();
-    // 判断是否开启超电
-    supercap_judge();
+    // // 判断是否开启超电
+    // supercap_judge();
 
     // 遥控操作
     if (rc_ctrl.rc.ch[0] != 0 || rc_ctrl.rc.ch[1] != 0 || rc_ctrl.rc.ch[2] != 0 || rc_ctrl.rc.ch[3] != 0)
@@ -478,21 +478,30 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     // {
     //   Plimit = 1;
     // }
-
-    if (powerdata[1] < 24 && powerdata[1] > 23)
-      Plimit = 0.9;
-    else if (powerdata[1] < 23 && powerdata[1] > 22)
-      Plimit = 0.8;
-    else if (powerdata[1] < 22 && powerdata[1] > 21)
-      Plimit = 0.7;
-    else if (powerdata[1] < 21 && powerdata[1] > 20)
-      Plimit = 0.6;
-    else if (powerdata[1] < 20 && powerdata[1] > 18)
-      Plimit = 0.5;
-    else if (powerdata[1] < 18 && powerdata[1] > 15)
-      Plimit = 0.3;
-    else if (powerdata[1] < 15)
-      Plimit = 0.1;
+    if (!supercap_flag)
+    {
+      if (powerdata[1] < 24 && powerdata[1] > 23)
+        Plimit = 0.9;
+      else if (powerdata[1] < 23 && powerdata[1] > 22)
+        Plimit = 0.8;
+      else if (powerdata[1] < 22 && powerdata[1] > 21)
+        Plimit = 0.7;
+      else if (powerdata[1] < 21 && powerdata[1] > 20)
+        Plimit = 0.6;
+      else if (powerdata[1] < 20 && powerdata[1] > 18)
+        Plimit = 0.5;
+      else if (powerdata[1] < 18 && powerdata[1] > 15)
+        Plimit = 0.3;
+      else if (powerdata[1] < 15)
+        Plimit = 0.1;
+    }
+    else
+    {
+      // if (powerdata[1] < 24 && powerdata[1] > 16)
+        Plimit = 1;
+      // else if (powerdata[1] < 16 && powerdata[1] > 12)
+      //   Plimit = 0.5;
+    }
 
     motor_can2[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
     motor_can2[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
@@ -633,34 +642,64 @@ static void level_judge()
     switch (Hero_level)
     {
     case 1:
-      chassis_speed_max = CHASSIS_SPEED_MAX_1;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_1;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_1 + 3000;
       break;
     case 2:
-      chassis_speed_max = CHASSIS_SPEED_MAX_2;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_2;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_2 + 3000;
       break;
     case 3:
-      chassis_speed_max = CHASSIS_SPEED_MAX_3;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_3;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_3 + 3000;
       break;
     case 4:
-      chassis_speed_max = CHASSIS_SPEED_MAX_4;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_4;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_4 + 3000;
       break;
     case 5:
-      chassis_speed_max = CHASSIS_SPEED_MAX_5;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_5;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_5 + 3000;
       break;
     case 6:
-      chassis_speed_max = CHASSIS_SPEED_MAX_6;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_6;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_6 + 3000;
       break;
     case 7:
-      chassis_speed_max = CHASSIS_SPEED_MAX_7;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_7;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_7 + 3000;
       break;
     case 8:
-      chassis_speed_max = CHASSIS_SPEED_MAX_8;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_8;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_8 + 3000;
       break;
     case 9:
-      chassis_speed_max = CHASSIS_SPEED_MAX_9;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_9;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_9 + 3000;
       break;
     case 10:
-      chassis_speed_max = CHASSIS_SPEED_MAX_10;
+      if (!supercap_flag)
+        chassis_speed_max = CHASSIS_SPEED_MAX_10;
+      else
+        chassis_speed_max = CHASSIS_SPEED_MAX_10 + 3000;
       break;
     }
   }
