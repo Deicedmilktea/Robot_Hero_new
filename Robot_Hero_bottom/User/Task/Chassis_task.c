@@ -23,7 +23,8 @@
 #define CHASSIS_SPEED_MAX_9 11000
 #define CHASSIS_SPEED_MAX_10 12000
 #define CHASSIS_SPEED_SUPERCAP 10000
-#define CHASSIS_WZ_MAX 6000
+#define CHASSIS_WZ_MAX_1 4000 // 低速，g键触发
+#define CHASSIS_WZ_MAX_2 6000 // 高速，b键触发
 #define KEY_START_OFFSET 20
 #define KEY_STOP_OFFSET 30
 #define FOLLOW_WEIGHT 160
@@ -41,6 +42,7 @@ static float init_relative_yaw = 0;
 static uint8_t cycle = 0; // do while循环一次的条件
 float imu_err_yaw = 0;    // 记录yaw飘移的数值便于进行校正
 int16_t chassis_speed_max = 0;
+int16_t chassis_wz_max = 4000;
 
 extern RC_ctrl_t rc_ctrl;
 extern INS_t INS;
@@ -186,7 +188,7 @@ void Chassis_task(void const *pvParameters)
     }
 
     chassis_current_give();
-    datapy(); // 超电数据接收
+    // datapy(); // 超电数据接收
     osDelay(1);
   }
 }
@@ -222,6 +224,11 @@ static void read_keyboard(void)
     supercap_flag = 0;
   else if (c_flag)
     supercap_flag = 1;
+
+  if (g_flag)
+    chassis_wz_max = CHASSIS_WZ_MAX_1;
+  else if (b_flag)
+    chassis_wz_max = CHASSIS_WZ_MAX_2;
 }
 
 /*************************************** 正常运动模式 ************************************/
@@ -229,7 +236,7 @@ static void chassis_mode_normal()
 {
   Vx = rc_ctrl.rc.ch[0] / 660.0f * chassis_speed_max + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[1] / 660.0f * chassis_speed_max + key_y_fast - key_y_slow; // front and back
-  Wz = rc_ctrl.rc.ch[4] / 660.0f * CHASSIS_WZ_MAX + key_Wz_acw + key_Wz_cw;     // rotate
+  Wz = rc_ctrl.rc.ch[4] / 660.0f * chassis_wz_max + key_Wz_acw + key_Wz_cw;     // rotate
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -253,7 +260,7 @@ static void chassis_mode_top()
 {
   Vx = rc_ctrl.rc.ch[0] / 660.0f * chassis_speed_max + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl.rc.ch[1] / 660.0f * chassis_speed_max + key_y_fast - key_y_slow; // front and back
-  Wz = CHASSIS_WZ_MAX;
+  Wz = chassis_wz_max;
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
@@ -305,10 +312,10 @@ static void chassis_mode_follow()
     detel_calc(&relative_yaw);
     Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-    if (Wz > 2 * CHASSIS_WZ_MAX)
-      Wz = 2 * CHASSIS_WZ_MAX;
-    if (Wz < -2 * CHASSIS_WZ_MAX)
-      Wz = -2 * CHASSIS_WZ_MAX;
+    if (Wz > 2 * chassis_wz_max)
+      Wz = 2 * chassis_wz_max;
+    if (Wz < -2 * chassis_wz_max)
+      Wz = -2 * chassis_wz_max;
   }
 
   int16_t Temp_Vx = Vx;
@@ -498,7 +505,7 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     else
     {
       // if (powerdata[1] < 24 && powerdata[1] > 16)
-        Plimit = 1;
+      Plimit = 1;
       // else if (powerdata[1] < 16 && powerdata[1] > 12)
       //   Plimit = 0.5;
     }
@@ -580,12 +587,12 @@ static void key_control(void)
     key_y_slow = chassis_speed_max;
   if (key_y_slow < 0)
     key_y_slow = 0;
-  if (key_Wz_acw > CHASSIS_WZ_MAX)
-    key_Wz_acw = CHASSIS_WZ_MAX;
+  if (key_Wz_acw > chassis_wz_max)
+    key_Wz_acw = chassis_wz_max;
   if (key_Wz_acw < 0)
     key_Wz_acw = 0;
-  if (key_Wz_cw < -CHASSIS_WZ_MAX)
-    key_Wz_cw = -CHASSIS_WZ_MAX;
+  if (key_Wz_cw < -chassis_wz_max)
+    key_Wz_cw = -chassis_wz_max;
   if (key_Wz_cw > 0)
     key_Wz_cw = 0;
 }
