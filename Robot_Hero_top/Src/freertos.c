@@ -51,6 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 osThreadId ExchangeTaskHandle;
+osThreadId DaemonTaskHandle;
 /* USER CODE END Variables */
 osThreadId INSTaskHandle;
 osThreadId ShootTaskHandle;
@@ -60,20 +61,21 @@ osThreadId GimbalTaskHandle;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void exchange_task(void const *argument);
+void StartDAEMONTASK(void const *argument);
 /* USER CODE END FunctionPrototypes */
 
-void StartINSTask(void const * argument);
-void Shoot_task(void const * argument);
-void Pitch_task(void const * argument);
-void Gimbal_task(void const * argument);
+void StartINSTask(void const *argument);
+void Shoot_task(void const *argument);
+void Pitch_task(void const *argument);
+void Gimbal_task(void const *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize);
 
 /* GetTimerTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize );
+void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize);
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -102,11 +104,12 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackT
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
-void MX_FREERTOS_Init(void) {
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -148,8 +151,10 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   osThreadDef(ExchangeTask, exchange_task, osPriorityNormal, 0, 128);
   ExchangeTaskHandle = osThreadCreate(osThread(ExchangeTask), NULL);
-  /* USER CODE END RTOS_THREADS */
 
+  // osThreadDef(DaemonTask, StartDAEMONTASK, osPriorityNormal, 0, 128);
+  // DaemonTaskHandle = osThreadCreate(osThread(DaemonTask), NULL);
+  /* USER CODE END RTOS_THREADS */
 }
 
 /* USER CODE BEGIN Header_StartINSTask */
@@ -159,7 +164,7 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartINSTask */
-void StartINSTask(void const * argument)
+void StartINSTask(void const *argument)
 {
   /* USER CODE BEGIN StartINSTask */
   INS_Init();
@@ -179,7 +184,7 @@ void StartINSTask(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_Shoot_task */
-__weak void Shoot_task(void const * argument)
+__weak void Shoot_task(void const *argument)
 {
   /* USER CODE BEGIN Shoot_task */
   /* Infinite loop */
@@ -197,7 +202,7 @@ __weak void Shoot_task(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_Pitch_task */
-__weak void Pitch_task(void const * argument)
+__weak void Pitch_task(void const *argument)
 {
   /* USER CODE BEGIN Pitch_task */
   /* Infinite loop */
@@ -210,16 +215,16 @@ __weak void Pitch_task(void const * argument)
 
 /* USER CODE BEGIN Header_Gimbal_task */
 /**
-* @brief Function implementing the GimbalTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the GimbalTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_Gimbal_task */
-__weak void Gimbal_task(void const * argument)
+__weak void Gimbal_task(void const *argument)
 {
   /* USER CODE BEGIN Gimbal_task */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     osDelay(1);
   }

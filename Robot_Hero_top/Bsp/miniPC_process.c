@@ -1,11 +1,15 @@
 #include "miniPC_process.h"
 #include "string.h"
+#include "daemon.h"
+#include "bsp_usart.h"
 
 float vision_yaw = 0;
 float vision_pitch = 0;
 bool vision_is_tracking = false;
 
-static Vision_Instance *vision_instance; // 用于和视觉通信的串口实例
+static Vision_Instance *vision_instance;       // 用于和视觉通信的串口实例
+static DaemonInstance *vision_daemon_instance; // 用于判断视觉通信是否离线
+static USART_Instance *vision_usart_instance;
 
 /**
  * @brief 处理视觉传入的数据
@@ -39,6 +43,8 @@ static void DecodeVision(void)
         vision_is_tracking = vision_instance->recv_data->is_tracking;
         vision_yaw = vision_instance->recv_data->yaw;
         vision_pitch = vision_instance->recv_data->pitch;
+
+        DaemonReload(vision_daemon_instance); // 喂狗
     }
     else
     {
@@ -81,6 +87,21 @@ Vision_Send_s *VisionSendRegister(Vision_Send_Init_Config_s *send_config)
 }
 
 /**
+ * @brief 离线回调函数,将在daemon.c中被daemon task调用
+ * @attention 由于HAL库的设计问题,串口开启DMA接收之后同时发送有概率出现__HAL_LOCK()导致的死锁,使得无法
+ *            进入接收中断.通过daemon判断数据更新,重新调用服务启动函数以解决此问题.
+ *
+ * @param id vision_usart_instance的地址,此处没用.
+ */
+static void VisionOfflineCallback(void *id)
+{
+#ifdef VISION_USE_UART
+    USARTServiceInit(vision_usart_instance);
+#endif // !VISION_USE_UART
+    // LOGWARNING("[vision] vision offline, restart communication.");
+}
+
+/**
  * @brief 用于注册一个视觉通信模块实例,返回一个视觉接收数据结构体指针
  *
  * @param init_config
@@ -96,6 +117,15 @@ Vision_Recv_s *VisionInit(Vision_Init_Config_s *init_config)
     vision_instance->usart = USARTRegister(&init_config->usart_config);
     vision_instance->recv_data = VisionRecvRegister(&init_config->recv_config);
     vision_instance->send_data = VisionSendRegister(&init_config->send_config);
+
+    // 为master process注册daemon,用于判断视觉通信是否离线
+    Daemon_Init_Config_s daemon_conf = {
+        .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
+        .owner_id = NULL,
+        .reload_count = 5, // 50ms
+    };
+    vision_daemon_instance = DaemonRegister(&daemon_conf);
+
     return vision_instance->recv_data;
 }
 

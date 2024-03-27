@@ -23,6 +23,8 @@
 #define VISION_RECV_SIZE 12u // 当前为固定值,12字节
 #define VISION_SEND_SIZE 19u
 
+#define VISION_USE_UART
+
 // #pragma pack(1) // 1字节对齐
 
 /* 是否追踪 */

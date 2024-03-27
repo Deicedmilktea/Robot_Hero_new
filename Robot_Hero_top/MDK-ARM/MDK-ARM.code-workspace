@@ -1,6 +1,10 @@
 {
     "folders": [
         {
+            "name": "Robot_Hero_top",
+            "path": ".."
+        },
+        {
             "path": "."
         }
     ],
@@ -14,7 +18,15 @@
             "drv_can.h": "c",
             "pitch_task.h": "c",
             "shoot_task.h": "c",
-            "gimbal_task.h": "c"
+            "gimbal_task.h": "c",
+            "memory.h": "c",
+            "bsp_dwt.h": "c",
+            "daemon.h": "c",
+            "daemon_task.h": "c",
+            "stdlib.h": "c",
+            "string.h": "c",
+            "cmsis_os.h": "c",
+            "stdint.h": "c"
         }
     },
     "extensions": {}
