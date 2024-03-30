@@ -1,11 +1,11 @@
 {
     "folders": [
         {
-            "path": "."
+            "name": "Robot_Hero_bottom",
+            "path": ".."
         },
         {
-            "name": "demo",
-            "path": "C:/Users/Reeve Ni/Desktop/demo/demo"
+            "path": "."
         }
     ],
     "settings": {
@@ -27,7 +27,9 @@
             "shoot_task.h": "c",
             "supercap_task.h": "c",
             "drv_usart.h": "c",
-            "usart.h": "c"
+            "usart.h": "c",
+            "bsp_dwt.h": "c",
+            "struct_typedef.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },

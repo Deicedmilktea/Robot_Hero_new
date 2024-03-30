@@ -31,6 +31,7 @@
 #include "INS_task.h"
 #include "exchange.h"
 #include "stm32f4xx_it.h"
+#include "usb_device.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,6 +70,7 @@ void Shoot_task(void const *argument);
 void Pitch_task(void const *argument);
 void Gimbal_task(void const *argument);
 
+extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
@@ -132,7 +134,7 @@ void MX_FREERTOS_Init(void)
 
   /* Create the thread(s) */
   /* definition and creation of INSTask */
-  osThreadDef(INSTask, StartINSTask, osPriorityNormal, 0, 1024);
+  osThreadDef(INSTask, StartINSTask, osPriorityHigh, 0, 1024);
   INSTaskHandle = osThreadCreate(osThread(INSTask), NULL);
 
   /* definition and creation of ShootTask */
@@ -166,6 +168,8 @@ void MX_FREERTOS_Init(void)
 /* USER CODE END Header_StartINSTask */
 void StartINSTask(void const *argument)
 {
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartINSTask */
   INS_Init();
   /* Infinite loop */

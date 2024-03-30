@@ -26,4 +26,6 @@ float pid_calc(pid_struct_t *pid, float ref, float fdb); // ref是目标值,fdb�
 
 float pid_calc_a(pid_struct_t *pid, float ref, float fdb); // ref是目标值,fdb是电机解码的速度返回值
 
+float pid_calc_trigger(pid_struct_t *pid, float ref, float fdb); // ref是目标值,fdb是电机解码的速度返回值
+
 #endif

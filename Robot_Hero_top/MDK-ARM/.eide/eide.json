@@ -40,6 +40,9 @@
                 "path": "../Bsp/bsp_usart.c"
               },
               {
+                "path": "../Bsp/bsp_usb.c"
+              },
+              {
                 "path": "../Bsp/miniPC_process.c"
               }
             ],
@@ -488,7 +491,12 @@
           "../User/Task",
           "RTE/_C_Board_Standard_Robot",
           "../User/Module",
-          "../Module"
+          "../Module",
+          "../Middlewares/ST/STM32_USB_Device_Library/Core/Src",
+          "../Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+          "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src",
+          "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc",
+          "../Src"
         ],
         "libList": [],
         "sourceDirList": [],

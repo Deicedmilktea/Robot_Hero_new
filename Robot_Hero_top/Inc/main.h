@@ -123,8 +123,6 @@ extern uint8_t rx_data[8];
 #define HALL_SENSOR_PIN2_EXTI_IRQn EXTI9_5_IRQn
 #define LASER_Pin GPIO_PIN_8
 #define LASER_GPIO_Port GPIOC
-#define RSTN_IST8310_Pin GPIO_PIN_6
-#define RSTN_IST8310_GPIO_Port GPIOG
 #define IMU_HEAT_Pin GPIO_PIN_6
 #define IMU_HEAT_GPIO_Port GPIOF
 #define DRDY_IST8310_Pin GPIO_PIN_3

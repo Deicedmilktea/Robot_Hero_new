@@ -26,7 +26,10 @@
             "stdlib.h": "c",
             "string.h": "c",
             "cmsis_os.h": "c",
-            "stdint.h": "c"
+            "stdint.h": "c",
+            "usbd_def.h": "c",
+            "stm32f4xx_hal.h": "c",
+            "usb_device.h": "c"
         }
     },
     "extensions": {}

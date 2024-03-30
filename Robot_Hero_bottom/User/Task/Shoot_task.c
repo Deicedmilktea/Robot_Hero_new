@@ -7,9 +7,19 @@
 
 #include "Shoot_task.h"
 #include "pid.h"
+#include "bsp_dwt.h"
 #include "cmsis_os.h"
+#include <stdbool.h>
 
-shoot_t trigger; // 拨盘can1，id = 5
+#define TRIGGER_SINGLE_ANGLE 1365
+
+trigger_t trigger; // 拨盘can1，id = 5
+
+bool is_angle_control = false;
+float current_time = 0;
+float last_time = 0;
+uint16_t cnt;
+
 extern RC_ctrl_t rc_ctrl;
 extern motor_info_t motor_can2[6];
 
@@ -25,6 +35,9 @@ static void shoot_reverse();
 // 停止射击模式
 static void shoot_stop();
 
+// 拨盘旋转固定角度
+static void trigger_single_angle_move();
+
 // 拨盘can1发送电流
 static void trigger_can2_cmd(int16_t v1);
 
@@ -38,12 +51,20 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     // 遥控器左边拨到上，电机启动
-    if (rc_ctrl.rc.s[1] == 1 || press_left == 1)
+    if (rc_ctrl.rc.s[1] == 1 || press_left)
     {
+      is_angle_control = false;
       shoot_start();
     }
+    // // 单发，鼠标控制
+    // else if (press_left)
+    // {
+    //   is_angle_control = true;
+    //   trigger_single_angle_move();
+    // }
     else if (z_flag)
     {
+      is_angle_control = false;
       shoot_reverse();
     }
     else
@@ -60,21 +81,47 @@ void Shoot_task(void const *argument)
 static void shoot_loop_init()
 {
   // trigger
-  trigger.pid_value[0] = 50;
-  trigger.pid_value[1] = 1;
-  trigger.pid_value[2] = 0.05;
+  // trigger.pid_value[0] = 50;
+  // trigger.pid_value[1] = 1;
+  // trigger.pid_value[2] = 0.05;
+
+  trigger.pid_speed_value[0] = 200;
+  trigger.pid_speed_value[1] = 0;
+  trigger.pid_speed_value[2] = 0;
+
+  trigger.pid_angle_value[0] = 1.5;
+  trigger.pid_angle_value[1] = 0;
+  trigger.pid_angle_value[2] = 0;
 
   // 初始化目标速度
   trigger.target_speed = 0;
+  trigger.target_angle = motor_can2[4].rotor_angle;
 
   // 初始化PID
-  pid_init(&trigger.pid, trigger.pid_value, 10000, 8000); // trigger
+  pid_init(&trigger.pid_speed, trigger.pid_speed_value, 8000, 8000); // trigger_speed
+  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 3000, 3000); // trigger_angle
 }
 
 /***************射击模式*****************/
 static void shoot_start()
 {
   trigger.target_speed = -250;
+}
+
+/*************拨盘旋转固定角度***********/
+static void trigger_single_angle_move()
+{
+  current_time = DWT_GetTimeline_ms();
+  // 判断两次发射时间间隔，避免双发
+  if (current_time - last_time > 1000)
+  {
+    last_time = DWT_GetTimeline_ms();
+    trigger.target_angle = (int16_t)motor_can2[4].rotor_angle - 1365;
+    cnt++;
+    if (trigger.target_angle < 0)
+      trigger.target_angle += 8191;
+  }
+  // motor_can2[4].set_current = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_can2[4].rotor_angle);
 }
 
 /*****************反转******************/
@@ -86,7 +133,8 @@ static void shoot_reverse()
 /***************停止射击模式**************/
 static void shoot_stop()
 {
-  trigger.target_speed = 0;
+  if (!is_angle_control)
+    trigger.target_speed = 0;
 }
 
 /********************************拨盘can1发送电流***************************/
@@ -117,7 +165,10 @@ static void trigger_can2_cmd(int16_t v1)
 /********************************PID计算速度并发送电流****************************/
 static void shoot_current_give()
 {
-  // trigger
-  motor_can2[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, motor_can2[4].rotor_speed);
+  if (is_angle_control)
+    motor_can2[4].set_current = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_can2[4].rotor_angle);
+  else
+    motor_can2[4].set_current = pid_calc(&trigger.pid_speed, trigger.target_speed, motor_can2[4].rotor_speed);
+
   trigger_can2_cmd(motor_can2[4].set_current);
 }

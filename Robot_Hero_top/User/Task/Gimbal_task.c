@@ -99,7 +99,7 @@ static void Gimbal_loop_init()
 	// gimbal_gyro.pid_speed_value[2] = 2;
 
 	// // normal
-	// gimbal_gyro.pid_angle_value[0] = 350;
+	// gimbal_gyro.pid_angle_value[0] = 1050;
 	// gimbal_gyro.pid_angle_value[1] = 0.05;
 	// gimbal_gyro.pid_angle_value[2] = 800;
 
@@ -115,15 +115,6 @@ static void Gimbal_loop_init()
 	gimbal_gyro.pid_speed_value[0] = 2.5;
 	gimbal_gyro.pid_speed_value[1] = 0;
 	gimbal_gyro.pid_speed_value[2] = 2;
-
-	// // shoot
-	// gimbal_gyro.pid_angle_value[0] = 40;
-	// gimbal_gyro.pid_angle_value[1] = 0.001;
-	// gimbal_gyro.pid_angle_value[2] = 30;
-
-	// gimbal_gyro.pid_speed_value[0] = 25;
-	// gimbal_gyro.pid_speed_value[1] = 0.001;
-	// gimbal_gyro.pid_speed_value[2] = 0;
 
 	gimbal_encoder.target_angle = 0;
 	gimbal_gyro.target_angle = 0;
