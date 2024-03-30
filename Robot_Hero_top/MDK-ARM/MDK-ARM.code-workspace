@@ -29,7 +29,11 @@
             "stdint.h": "c",
             "usbd_def.h": "c",
             "stm32f4xx_hal.h": "c",
-            "usb_device.h": "c"
+            "usb_device.h": "c",
+            "stm32f4xx_hal_pcd.h": "c",
+            "usbd_ctlreq.h": "c",
+            "stm32f4xx_it.h": "c",
+            "usbd_ioreq.h": "c"
         }
     },
     "extensions": {}

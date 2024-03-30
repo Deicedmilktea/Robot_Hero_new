@@ -9,7 +9,7 @@ bool vision_is_tracking = false;
 
 static Vision_Instance *vision_instance;       // 用于和视觉通信的串口实例
 static DaemonInstance *vision_daemon_instance; // 用于判断视觉通信是否离线
-
+static uint8_t *vis_recv_buff __attribute__((unused));
 /**
  * @brief 处理视觉传入的数据
  *
@@ -17,7 +17,8 @@ static DaemonInstance *vision_daemon_instance; // 用于判断视觉通信是否
  * @param rx_buff
  * 此处根据接收结构体的不同修改
  */
-static void RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
+static void
+RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
 {
     /* 使用memcpy接收浮点型小数 */
     memcpy(&recv->is_tracking, &rx_buff[1], 1);
@@ -34,7 +35,7 @@ static void RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
  */
 static void DecodeVision(void)
 {
-    DaemonReload(vision_daemon_instance); // 喂狗
+    // DaemonReload(vision_daemon_instance); // 喂狗
 #ifdef VISION_USE_UART
     if (vision_instance->usart->recv_buff[0] == vision_instance->recv_data->header)
     {
@@ -168,13 +169,13 @@ Vision_Recv_s *VisionInit(Vision_Init_Config_s *init_config)
     vision_instance->recv_data = VisionRecvRegister(&init_config->recv_config);
     vision_instance->send_data = VisionSendRegister(&init_config->send_config);
 
-    // 为master process注册daemon,用于判断视觉通信是否离线
-    Daemon_Init_Config_s daemon_conf = {
-        .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
-        .owner_id = NULL,
-        .reload_count = 5, // 50ms
-    };
-    vision_daemon_instance = DaemonRegister(&daemon_conf);
+    // // 为master process注册daemon,用于判断视觉通信是否离线
+    // Daemon_Init_Config_s daemon_conf = {
+    //     .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
+    //     .owner_id = NULL,
+    //     .reload_count = 5, // 50ms
+    // };
+    // vision_daemon_instance = DaemonRegister(&daemon_conf);
 
     return vision_instance->recv_data;
 }

@@ -7,7 +7,7 @@
  ******************************************************************************
  * @attention
  *
- * Copyright (c) 2024 STMicroelectronics.
+ * Copyright (c) 2023 STMicroelectronics.
  * All rights reserved.
  *
  * This software is licensed under terms that can be found in the LICENSE file
@@ -65,7 +65,7 @@ extern "C"
    */
 
   /* USER CODE BEGIN EXPORTED_TYPES */
-
+  typedef void (*USBCallback)(uint16_t); // USB事件回调函数类型
   /* USER CODE END EXPORTED_TYPES */
 
   /**
@@ -78,7 +78,7 @@ extern "C"
    */
 
   /* USER CODE BEGIN EXPORTED_MACRO */
-  typedef void (*USBCallback)(uint16_t); // USB事件回调函数类型
+
   /* USER CODE END EXPORTED_MACRO */
 
   /**

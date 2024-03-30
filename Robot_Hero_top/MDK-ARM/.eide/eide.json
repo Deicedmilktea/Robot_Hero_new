@@ -122,6 +122,18 @@
               },
               {
                 "path": "../Src/usart.c"
+              },
+              {
+                "path": "../Src/usb_device.c"
+              },
+              {
+                "path": "../Src/usbd_cdc_if.c"
+              },
+              {
+                "path": "../Src/usbd_conf.c"
+              },
+              {
+                "path": "../Src/usbd_desc.c"
               }
             ],
             "folders": []
@@ -178,6 +190,12 @@
                 "path": "../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c"
               },
               {
+                "path": "../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pcd_ex.c"
+              },
+              {
+                "path": "../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pcd.c"
+              },
+              {
                 "path": "../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c"
               },
               {
@@ -203,6 +221,9 @@
               },
               {
                 "path": "../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c"
+              },
+              {
+                "path": "../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c"
               }
             ],
             "folders": []
@@ -248,6 +269,60 @@
               }
             ],
             "folders": []
+          },
+          {
+            "name": "ST",
+            "files": [],
+            "folders": [
+              {
+                "name": "STM32_USB_Device_Library",
+                "files": [],
+                "folders": [
+                  {
+                    "name": "Class",
+                    "files": [],
+                    "folders": [
+                      {
+                        "name": "CDC",
+                        "files": [],
+                        "folders": [
+                          {
+                            "name": "Src",
+                            "files": [
+                              {
+                                "path": "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c"
+                              }
+                            ],
+                            "folders": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Core",
+                    "files": [],
+                    "folders": [
+                      {
+                        "name": "Src",
+                        "files": [
+                          {
+                            "path": "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c"
+                          },
+                          {
+                            "path": "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c"
+                          },
+                          {
+                            "path": "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c"
+                          }
+                        ],
+                        "folders": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -315,7 +390,11 @@
   },
   "targets": {
     "C_Board_Standard_Robot": {
-      "excludeList": [],
+      "excludeList": [
+        "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_conf_template.c",
+        "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_desc_template.c",
+        "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.c"
+      ],
       "toolchain": "AC5",
       "compileConfig": {
         "cpuType": "Cortex-M4",
@@ -434,7 +513,7 @@
       "uploadConfig": {
         "bin": "",
         "target": "stm32f4x",
-        "interface": "cmsis-dap",
+        "interface": "stlink-v2",
         "baseAddr": "0x08000000"
       },
       "uploadConfigMap": {
@@ -492,11 +571,10 @@
           "RTE/_C_Board_Standard_Robot",
           "../User/Module",
           "../Module",
-          "../Middlewares/ST/STM32_USB_Device_Library/Core/Src",
-          "../Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
-          "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src",
           "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc",
-          "../Src"
+          "../Src",
+          "../Drivers/STM32F4xx_HAL_Driver/Src",
+          "../Middlewares/ST/STM32_USB_Device_Library/Core/Inc"
         ],
         "libList": [],
         "sourceDirList": [],

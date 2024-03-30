@@ -1,4 +1,6 @@
 #include "daemon.h"
+#include "cmsis_os.h"
+#include "bsp_dwt.h"
 
 __attribute__((noreturn)) void StartDAEMONTASK(void const *argument)
 {

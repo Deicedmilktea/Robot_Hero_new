@@ -29,5 +29,5 @@
         "user_lib.h": "c"
     },
     "editor.formatOnPaste": true,
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
 }
