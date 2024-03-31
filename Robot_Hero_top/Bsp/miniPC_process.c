@@ -17,8 +17,7 @@ static uint8_t *vis_recv_buff __attribute__((unused));
  * @param rx_buff
  * 此处根据接收结构体的不同修改
  */
-static void
-RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
+static void RecvProcess(Vision_Recv_s *recv, uint8_t *rx_buff)
 {
     /* 使用memcpy接收浮点型小数 */
     memcpy(&recv->is_tracking, &rx_buff[1], 1);
@@ -215,13 +214,13 @@ Vision_Recv_s *VisionInit(Vision_Init_Config_s *init_config)
     vis_recv_buff = USBInit(conf);
     vision_instance->recv_data = VisionRecvRegister(&init_config->recv_config);
     vision_instance->send_data = VisionSendRegister(&init_config->send_config);
-    // 为master process注册daemon,用于判断视觉通信是否离线
-    Daemon_Init_Config_s daemon_conf = {
-        .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
-        .owner_id = NULL,
-        .reload_count = 5, // 50ms
-    };
-    vision_daemon_instance = DaemonRegister(&daemon_conf);
+    // // 为master process注册daemon,用于判断视觉通信是否离线
+    // Daemon_Init_Config_s daemon_conf = {
+    //     .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
+    //     .owner_id = NULL,
+    //     .reload_count = 5, // 50ms
+    // };
+    // vision_daemon_instance = DaemonRegister(&daemon_conf);
     return vision_instance->recv_data;
 }
 
