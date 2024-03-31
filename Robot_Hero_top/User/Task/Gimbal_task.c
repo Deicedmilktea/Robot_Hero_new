@@ -108,12 +108,12 @@ static void Gimbal_loop_init()
 	// gimbal_gyro.pid_speed_value[2] = 2;
 
 	// normal
-	gimbal_gyro.pid_angle_value[0] = 350;
+	gimbal_gyro.pid_angle_value[0] = 550;
 	gimbal_gyro.pid_angle_value[1] = 0.05;
 	gimbal_gyro.pid_angle_value[2] = 800;
 
-	gimbal_gyro.pid_speed_value[0] = 2.5;
-	gimbal_gyro.pid_speed_value[1] = 0;
+	gimbal_gyro.pid_speed_value[0] = 5;
+	gimbal_gyro.pid_speed_value[1] = 0.01;
 	gimbal_gyro.pid_speed_value[2] = 2;
 
 	gimbal_encoder.target_angle = 0;
@@ -126,8 +126,8 @@ static void Gimbal_loop_init()
 
 	pid_init(&gimbal_encoder.pid_angle, gimbal_encoder.pid_angle_value, 500, 8191);
 	pid_init(&gimbal_encoder.pid_speed, gimbal_encoder.pid_speed_value, 100, 3000);
-	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 10000, 10000);
-	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 10000, 10000);
+	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 30000, 30000);
+	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 30000, 30000);
 }
 
 /************************************ 角度过零处理 ********************************/
@@ -220,8 +220,8 @@ static void gimbal_mode_vision()
 	// 如果追踪到目标
 	if (vision_is_tracking)
 	{
-		// 视觉模式中加入遥控器的微调
-		float normalized_input = (rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f) * 5; // 最大微调角度限制为5°
+		// 视觉模式中加入手动微调
+		float normalized_input = (rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f) * 10; // 最大微调角度限制为5°
 		gimbal_gyro.target_angle = vision_yaw - normalized_input;
 	}
 
@@ -252,7 +252,7 @@ static void gimbal_mode_normal()
 
 	// 使用非线性映射函数调整灵敏度
 	float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 100;
-	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.97) * sign(normalized_input) * 0.3;
 
 	detel_calc(&gimbal_gyro.target_angle);
 
