@@ -33,7 +33,8 @@
             "stm32f4xx_hal_pcd.h": "c",
             "usbd_ctlreq.h": "c",
             "stm32f4xx_it.h": "c",
-            "usbd_ioreq.h": "c"
+            "usbd_ioreq.h": "c",
+            "crc.h": "c"
         }
     },
     "extensions": {}

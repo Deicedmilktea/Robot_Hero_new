@@ -152,8 +152,8 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(ExchangeTask, exchange_task, osPriorityNormal, 0, 128);
   ExchangeTaskHandle = osThreadCreate(osThread(ExchangeTask), NULL);
 
-  // osThreadDef(DaemonTask, StartDAEMONTASK, osPriorityNormal, 0, 128);
-  // DaemonTaskHandle = osThreadCreate(osThread(DaemonTask), NULL);
+  osThreadDef(DaemonTask, StartDAEMONTASK, osPriorityNormal, 0, 128);
+  DaemonTaskHandle = osThreadCreate(osThread(DaemonTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -182,16 +182,16 @@ void StartINSTask(void const * argument)
 
 /* USER CODE BEGIN Header_Shoot_task */
 /**
- * @brief Function implementing the ShootTask thread.
- * @param argument: Not used
- * @retval None
- */
+* @brief Function implementing the ShootTask thread.
+* @param argument: Not used
+* @retval None
+*/
 /* USER CODE END Header_Shoot_task */
 __weak void Shoot_task(void const * argument)
 {
   /* USER CODE BEGIN Shoot_task */
   /* Infinite loop */
-  for (;;)
+  for(;;)
   {
     osDelay(1);
   }
@@ -200,16 +200,16 @@ __weak void Shoot_task(void const * argument)
 
 /* USER CODE BEGIN Header_Pitch_task */
 /**
- * @brief Function implementing the PitchTask thread.
- * @param argument: Not used
- * @retval None
- */
+* @brief Function implementing the PitchTask thread.
+* @param argument: Not used
+* @retval None
+*/
 /* USER CODE END Header_Pitch_task */
 __weak void Pitch_task(void const * argument)
 {
   /* USER CODE BEGIN Pitch_task */
   /* Infinite loop */
-  for (;;)
+  for(;;)
   {
     osDelay(1);
   }
@@ -236,17 +236,17 @@ __weak void Gimbal_task(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void StartDefaultTask(void const *argument)
-{
-  /* USER CODE BEGIN StartDefaultTask */
-  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_10, GPIO_PIN_SET);
-  uint8_t TIM1_flag = 1;
-  /* Infinite loop */
-  for (;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartDefaultTask */
-}
+// void StartDefaultTask(void const *argument)
+// {
+//   /* USER CODE BEGIN StartDefaultTask */
+//   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
+//   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_10, GPIO_PIN_SET);
+//   // uint8_t TIM1_flag = 1;
+//   /* Infinite loop */
+//   for (;;)
+//   {
+//     osDelay(1);
+//   }
+//   /* USER CODE END StartDefaultTask */
+// }
 /* USER CODE END Application */

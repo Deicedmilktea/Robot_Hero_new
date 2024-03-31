@@ -12,3 +12,4 @@ MDK-ARM/C_Board_Standard_Robot/
 .*.swp
 *.gch
 .idea/
+build/

@@ -2,6 +2,8 @@
 #include "string.h"
 #include "daemon.h"
 #include "bsp_usart.h"
+#include "bsp_usb.h"
+#include "crc_ref.h"
 
 float vision_yaw = 0;
 float vision_pitch = 0;
@@ -10,6 +12,9 @@ bool vision_is_tracking = false;
 static Vision_Instance *vision_instance;       // 用于和视觉通信的串口实例
 static DaemonInstance *vision_daemon_instance; // 用于判断视觉通信是否离线
 static uint8_t *vis_recv_buff __attribute__((unused));
+
+extern uint16_t CRC_INIT;
+
 /**
  * @brief 处理视觉传入的数据
  *
@@ -131,6 +136,7 @@ static void SendProcess(Vision_Send_s *send, uint8_t *tx_buff)
     memcpy(&tx_buff[12], &send->pitch, 4);
 
     /* 发送校验位 */
+    send->checksum = Get_CRC16_Check_Sum(&tx_buff[0], VISION_SEND_SIZE - 3u, CRC_INIT);
     memcpy(&tx_buff[16], &send->checksum, 2);
     memcpy(&tx_buff[18], &send->tail, 1);
 }
