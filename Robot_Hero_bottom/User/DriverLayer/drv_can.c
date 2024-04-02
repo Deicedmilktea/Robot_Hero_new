@@ -2,6 +2,7 @@
 #include "ins_task.h"
 
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
+#define ECD_ANGLE_COEF 0.043945f // (360/8192),将编码器值转化为角度制
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
@@ -137,15 +138,24 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
         && (rx_header.StdId <= 0x205)) // 判断标识符，标识符为0x200+ID
     {
       uint8_t index = rx_header.StdId - 0x201; // get motor index by can_id
-      motor_can2[index].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
+      motor_can2[index].last_ecd = motor_can2[index].ecd;
+      motor_can2[index].ecd = ((rx_data[0] << 8) | rx_data[1]);
+      motor_can2[index].angle_single_round = ECD_ANGLE_COEF * (float)motor_can2[index].ecd;
       motor_can2[index].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
       motor_can2[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
       motor_can2[index].temp = rx_data[6];
+
+      // 多圈角度计算,前提是假设两次采样间电机转过的角度小于180°,自己画个图就清楚计算过程了
+      if (motor_can2[index].ecd - motor_can2[index].last_ecd > 4096)
+        motor_can2[index].total_round--;
+      else if (motor_can2[index].ecd - motor_can2[index].last_ecd < -4096)
+        motor_can2[index].total_round++;
+      motor_can2[index].total_angle = motor_can2[index].total_round * 360 + motor_can2[index].angle_single_round;
     }
 
     if (rx_header.StdId == 0x209) // gimbal
     {
-      motor_can2[5].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
+      motor_can2[5].ecd = ((rx_data[0] << 8) | rx_data[1]);
       motor_can2[5].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
       motor_can2[5].torque_current = ((rx_data[4] << 8) | rx_data[5]);
       motor_can2[5].temp = rx_data[6];

@@ -29,7 +29,8 @@
             "drv_usart.h": "c",
             "usart.h": "c",
             "bsp_dwt.h": "c",
-            "struct_typedef.h": "c"
+            "struct_typedef.h": "c",
+            "rc_potocal.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },
