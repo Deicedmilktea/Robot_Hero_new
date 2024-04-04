@@ -345,6 +345,9 @@
             "path": "../User/Task/Daemon_task.c"
           },
           {
+            "path": "../User/Task/exchange.c"
+          },
+          {
             "path": "../User/Task/Gimbal_task.c"
           },
           {
@@ -352,9 +355,6 @@
           },
           {
             "path": "../User/Task/Shoot_task.c"
-          },
-          {
-            "path": "EXCHANGE.c"
           }
         ],
         "folders": []
@@ -394,7 +394,8 @@
         "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_conf_template.c",
         "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_desc_template.c",
         "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.c",
-        "<virtual_root>/USER/CRC.c"
+        "<virtual_root>/USER/CRC.c",
+        "<virtual_root>/RTOS TASK/EXCHANGE.c"
       ],
       "toolchain": "AC5",
       "compileConfig": {
