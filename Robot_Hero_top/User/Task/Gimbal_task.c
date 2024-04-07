@@ -89,32 +89,32 @@ static void Gimbal_loop_init()
 	gimbal_encoder.pid_speed_value[1] = 0.5;
 	gimbal_encoder.pid_speed_value[2] = 0;
 
-	// // normal
-	// gimbal_gyro.pid_angle_value[0] = 550;
+	// // normal不压榨电机，效果一般，超调
+	// gimbal_gyro.pid_angle_value[0] = 200;
 	// gimbal_gyro.pid_angle_value[1] = 0.05;
-	// gimbal_gyro.pid_angle_value[2] = 800;
+	// gimbal_gyro.pid_angle_value[2] = 2000;
 
-	// gimbal_gyro.pid_speed_value[0] = 2;
+	// gimbal_gyro.pid_speed_value[0] = 10;
 	// gimbal_gyro.pid_speed_value[1] = 0;
-	// gimbal_gyro.pid_speed_value[2] = 2;
+	// gimbal_gyro.pid_speed_value[2] = 0;
 
-	// normal
-	gimbal_gyro.pid_angle_value[0] = 200;
-	gimbal_gyro.pid_angle_value[1] = 0.05;
+	// normal日常使用版本，压榨一点点电机，效果不错
+	gimbal_gyro.pid_angle_value[0] = 150;
+	gimbal_gyro.pid_angle_value[1] = 0.01;
 	gimbal_gyro.pid_angle_value[2] = 800;
 
-	gimbal_gyro.pid_speed_value[0] = 10;
+	gimbal_gyro.pid_speed_value[0] = 20;
 	gimbal_gyro.pid_speed_value[1] = 0;
-	gimbal_gyro.pid_speed_value[2] = 2;
+	gimbal_gyro.pid_speed_value[2] = 100;
 
-	// // normal
-	// gimbal_gyro.pid_angle_value[0] = 550;
+	// // normal效果很好，但是6020发热很严重，能感觉电机微小抖动
+	// gimbal_gyro.pid_angle_value[0] = 150;
 	// gimbal_gyro.pid_angle_value[1] = 0.05;
-	// gimbal_gyro.pid_angle_value[2] = 800;
+	// gimbal_gyro.pid_angle_value[2] = 0;
 
-	// gimbal_gyro.pid_speed_value[0] = 5;
-	// gimbal_gyro.pid_speed_value[1] = 0.01;
-	// gimbal_gyro.pid_speed_value[2] = 2;
+	// gimbal_gyro.pid_speed_value[0] = 20;
+	// gimbal_gyro.pid_speed_value[1] = 0;
+	// gimbal_gyro.pid_speed_value[2] = 800;
 
 	gimbal_encoder.target_angle = 0;
 	gimbal_gyro.target_angle = 0;
