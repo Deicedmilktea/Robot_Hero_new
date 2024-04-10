@@ -15,14 +15,15 @@
 #include "stdlib.h"
 #include "usart.h"
 
-#define USART_DEVICE_MAX_NUM 3    // 支持的最大USART设备数量
-#define USART_RXBUFF_LIMIT   255u // 如果协议需要更大的buff,请修改这里
+#define USART_DEVICE_MAX_NUM 3  // 支持的最大USART设备数量
+#define USART_RXBUFF_LIMIT 255u // 如果协议需要更大的buff,请修改这里
 
 // 模块回调函数,用于解析协议
 typedef void (*usart_module_callback)();
 
 /* 发送模式枚举 */
-typedef enum {
+typedef enum
+{
     USART_TRANSFER_NONE = 0,
     USART_TRANSFER_BLOCKING,
     USART_TRANSFER_IT,

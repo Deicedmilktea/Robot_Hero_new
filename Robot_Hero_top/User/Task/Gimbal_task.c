@@ -198,13 +198,13 @@ static void gimbal_control()
 	if (gimbal_mode == 1)
 	{
 		// 视觉控制
-		if (rc_ctrl.rc.s[0] == 1 || press_right == 1) // 右拨杆上 || 按住右键
+		if (rc_ctrl.rc.s[0] == 1 || press_right == 1) // 左拨杆上 || 按住右键
 		{
 			gimbal_mode_vision();
 		}
 
 		// 锁yaw模式
-		else // 左拨杆上或中
+		else // 左拨杆中或下
 		{
 			gimbal_mode_normal();
 		}

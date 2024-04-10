@@ -11,8 +11,6 @@ float powerdata[4];
 uint16_t pPowerdata[8];
 uint16_t setpower = 5500;
 INS_t INS_bottom; // 下C板的imu数据
-int canerror = 0;
-int error9 = 0;
 
 void CAN1_Init(void)
 {
@@ -75,7 +73,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
   // can2电机信息接收
   if (hcan->Instance == CAN2)
   {
-    error9++;
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can2 data
     if ((rx_header.StdId >= 0x205)                                 // 205-207

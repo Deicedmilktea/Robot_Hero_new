@@ -1,5 +1,5 @@
 {
-  "name": "Robot_Hero_top",
+  "name": "Robot_Hero_top_new",
   "type": "ARM",
   "dependenceList": [],
   "srcDirs": [
@@ -20,30 +20,26 @@
         "folders": [
           {
             "name": "Applications",
-            "files": [
-              {
-                "path": "../Application/ins_task.c"
-              }
-            ],
+            "files": [],
             "folders": []
           },
           {
             "name": "Bsp",
             "files": [
               {
-                "path": "../Bsp/bsp_dwt.c"
+                "path": "../Bsp/dwt/bsp_dwt.c"
               },
               {
-                "path": "../Bsp/bsp_PWM.c"
+                "path": "../Bsp/miniPC_process/miniPC_process.c"
               },
               {
-                "path": "../Bsp/bsp_usart.c"
+                "path": "../Bsp/pwm/bsp_PWM.c"
               },
               {
-                "path": "../Bsp/bsp_usb.c"
+                "path": "../Bsp/usart/bsp_usart.c"
               },
               {
-                "path": "../Bsp/miniPC_process.c"
+                "path": "../Bsp/usb/bsp_usb.c"
               }
             ],
             "folders": []
@@ -333,7 +329,13 @@
             "path": "../Module/daemon/daemon.c"
           },
           {
+            "path": "../Module/imu/ins_task.c"
+          },
+          {
             "path": "../Module/referee/crc_ref.c"
+          },
+          {
+            "path": "../Module/remote/remote_control.c"
           }
         ],
         "folders": []
@@ -560,7 +562,6 @@
           "../Drivers/CMSIS/Device/ST/STM32F4xx/Include",
           "../Drivers/CMSIS/Include",
           "../Application",
-          "../Bsp",
           "../Components",
           "../Components/Algorithm",
           "../Components/Controller",
@@ -572,11 +573,17 @@
           "../User/Task",
           "RTE/_C_Board_Standard_Robot",
           "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc",
-          "../Src",
           "../Drivers/STM32F4xx_HAL_Driver/Src",
           "../Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
           "../Module/referee",
-          "../Module/daemon"
+          "../Module/daemon",
+          "../Bsp/dwt",
+          "../Bsp/miniPC_process",
+          "../Bsp/pwm",
+          "../Bsp/usart",
+          "../Bsp/usb",
+          "../Module/imu",
+          "../Module/remote"
         ],
         "libList": [],
         "sourceDirList": [],

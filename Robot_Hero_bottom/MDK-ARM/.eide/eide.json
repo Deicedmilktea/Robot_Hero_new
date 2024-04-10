@@ -20,21 +20,17 @@
         "folders": [
           {
             "name": "Applications",
-            "files": [
-              {
-                "path": "../Application/ins_task.c"
-              }
-            ],
+            "files": [],
             "folders": []
           },
           {
             "name": "Bsp",
             "files": [
               {
-                "path": "../Bsp/bsp_dwt.c"
+                "path": "../Bsp/dwt/bsp_dwt.c"
               },
               {
-                "path": "../Bsp/bsp_PWM.c"
+                "path": "../Bsp/pwm/bsp_PWM.c"
               }
             ],
             "folders": []
@@ -243,10 +239,28 @@
         ]
       },
       {
+        "name": "Module",
+        "files": [],
+        "folders": [
+          {
+            "name": "imu",
+            "files": [
+              {
+                "path": "../Module/imu/ins_task.c"
+              }
+            ],
+            "folders": []
+          }
+        ]
+      },
+      {
         "name": "RTOS TASK",
         "files": [
           {
             "path": "../User/Task/Chassis_task.c"
+          },
+          {
+            "path": "../User/Task/exchange.c"
           },
           {
             "path": "../User/Task/Shoot_task.c"
@@ -256,9 +270,6 @@
           },
           {
             "path": "../User/Task/UI_task.c"
-          },
-          {
-            "path": "EXCHANGE.c"
           }
         ],
         "folders": []
@@ -297,7 +308,9 @@
   },
   "targets": {
     "C_Board_Standard_Robot": {
-      "excludeList": [],
+      "excludeList": [
+        "<virtual_root>/RTOS TASK/EXCHANGE.c"
+      ],
       "toolchain": "AC5",
       "compileConfig": {
         "cpuType": "Cortex-M4",
@@ -461,7 +474,6 @@
           "../Drivers/CMSIS/Device/ST/STM32F4xx/Include",
           "../Drivers/CMSIS/Include",
           "../Application",
-          "../Bsp",
           "../Components",
           "../Components/Algorithm",
           "../Components/Controller",
@@ -471,7 +483,10 @@
           "../User/DriverLayer",
           "../User/PotocaLayer",
           "../User/Task",
-          "RTE/_C_Board_Standard_Robot"
+          "RTE/_C_Board_Standard_Robot",
+          "../Module/imu",
+          "../Bsp/dwt",
+          "../Bsp/pwm"
         ],
         "libList": [],
         "sourceDirList": [],

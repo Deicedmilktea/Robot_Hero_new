@@ -183,7 +183,7 @@ void Chassis_task(void const *pvParameters)
       else
       {
         key_control();
-        chassis_mode_normal();
+        chassis_mode_follow();
       }
     }
 
