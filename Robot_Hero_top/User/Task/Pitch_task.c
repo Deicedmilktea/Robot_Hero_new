@@ -6,11 +6,11 @@
 
 #include "Pitch_task.h"
 #include "cmsis_os.h"
-#include "rc_potocal.h"
 #include "ins_task.h"
+#include "remote_control.h"
 
 extern motor_info_t motor_can2[4];
-extern RC_ctrl_t rc_ctrl;
+extern RC_ctrl_t rc_ctrl[2];
 pitch_t pitch;
 float relative_pitch = 0;
 extern INS_t INS_bottom;
@@ -37,10 +37,10 @@ void Pitch_task(void const *argument)
         relative_pitch = INS.Roll - INS_bottom.Roll;
 
         // 视觉识别，右拨杆上/鼠标右键
-        if (rc_ctrl.rc.s[0] == 1 || press_right == 1)
+        if (rc_ctrl[TEMP].rc.switch_right == 1 || rc_ctrl[TEMP].mouse.press_r == 1)
         {
             // 视觉模式下的遥控器微调
-            pitch.vision_remote_pitch += (rc_ctrl.rc.ch[3] / 660.0f - rc_ctrl.mouse.y / 16384.0f * 50) * 0.1f;
+            pitch.vision_remote_pitch += (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 50) * 0.1f;
             pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
 
             if (pitch.vision_target_pitch > 20)
@@ -59,7 +59,7 @@ void Pitch_task(void const *argument)
 
         else
         {
-            pitch.target_speed = -(rc_ctrl.rc.ch[3] / 660.0f * pitch.speed_max - 200 * rc_ctrl.mouse.y / 16384.0f * pitch.speed_max);
+            pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f * pitch.speed_max - 200 * rc_ctrl[TEMP].mouse.y / 16384.0f * pitch.speed_max);
             pitch_position_limit();
         }
 
@@ -124,7 +124,7 @@ static void pitch_can2_cmd(int16_t v3)
 /****************PID计算速度并发送电流***************/
 static void pitch_current_give()
 {
-    if (rc_ctrl.rc.s[1] == 2)
+    if (rc_ctrl[TEMP].rc.switch_right == 1 || rc_ctrl[TEMP].mouse.press_r == 1)
     {
         motor_can2[2].set_current = pid_calc(&pitch.vision_pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
     }

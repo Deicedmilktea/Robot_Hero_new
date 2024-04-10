@@ -1,6 +1,5 @@
 #include "drv_usart.h"
 #include "main.h"
-
 #include "rc_potocal.h"
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
@@ -105,13 +104,13 @@ static void dma_m0_rxcplt_callback(DMA_HandleTypeDef *hdma)
 	if (hdma == huart3.hdmarx)
 	{
 		hdma->Instance->CR |= (uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory1
-		USART3_rxDataHandler(usart3_dma_rxbuf[0]);
+													   // USART3_rxDataHandler(usart3_dma_rxbuf[0]);
 	}
 
 	else if (hdma == huart6.hdmarx)
 	{
 		hdma->Instance->CR |= (uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory1
-		// JUDGE_Receive(judge_dma_buffer[0], judge_receive_length);
+													   // JUDGE_Receive(judge_dma_buffer[0], judge_receive_length);
 	}
 }
 
@@ -121,12 +120,14 @@ static void dma_m1_rxcplt_callback(DMA_HandleTypeDef *hdma)
 	if (hdma == huart3.hdmarx)
 	{
 		hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
-		USART3_rxDataHandler(usart3_dma_rxbuf[1]);
+
+		// USART3_rxDataHandler(usart3_dma_rxbuf[1]);
 	}
 
 	else if (hdma == huart6.hdmarx)
 	{
 		hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
+
 		// JUDGE_Receive(judge_dma_buffer[1], judge_receive_length);
 	}
 }

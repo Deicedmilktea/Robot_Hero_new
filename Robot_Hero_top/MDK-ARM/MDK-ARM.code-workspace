@@ -35,7 +35,9 @@
             "stm32f4xx_it.h": "c",
             "usbd_ioreq.h": "c",
             "crc.h": "c",
-            "rc_potocal.h": "c"
+            "rc_potocal.h": "c",
+            "controller.h": "c",
+            "remote_control.h": "c"
         }
     },
     "extensions": {}

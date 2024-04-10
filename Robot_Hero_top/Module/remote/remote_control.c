@@ -1,14 +1,22 @@
 #include "remote_control.h"
 #include "string.h"
 #include "bsp_usart.h"
+#include "drv_can.h"
 #include "stdlib.h"
 #include "daemon.h"
+#include "ins_task.h"
 
 #define REMOTE_CONTROL_FRAME_SIZE 18u // 遥控器接收的buffer大小
 
+// 引用全局变量
+extern INS_t INS;
+
+static float yaw = 0; // 用于接收yaw的值
+
 // 遥控器数据
-static RC_ctrl_t rc_ctrl[2];     //[0]:当前数据TEMP,[1]:上一次的数据LAST.用于按键持续按下和切换的判断
+RC_ctrl_t rc_ctrl[2];            //[0]:当前数据TEMP,[1]:上一次的数据LAST.用于按键持续按下和切换的判断
 static uint8_t rc_init_flag = 0; // 遥控器初始化标志位
+static uint8_t temp_remote[8];   // 临时存储发送数据
 
 // 遥控器拥有的串口实例,因为遥控器是单例,所以这里只有一个,就不封装了
 static USART_Instance *rc_usart_instance;
@@ -48,6 +56,36 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
     rc_ctrl[TEMP].mouse.y = (sbus_buf[8] | (sbus_buf[9] << 8)); //!< Mouse Y axis
     rc_ctrl[TEMP].mouse.press_l = sbus_buf[12];                 //!< Mouse Left Is Press ?
     rc_ctrl[TEMP].mouse.press_r = sbus_buf[13];                 //!< Mouse Right Is Press ?
+
+    // CAN发送遥控器数据给下C板
+    // 遥控器数据
+    for (int i = 0; i <= 7; i++)
+    {
+        temp_remote[i] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+    }
+    can_remote(temp_remote, 0x33);
+
+    // 键鼠数据
+    for (int i = 8; i <= 15; i++)
+    {
+        temp_remote[i - 8] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+    }
+    can_remote(temp_remote, 0x34);
+
+    // 零碎数据（yaw）
+    temp_remote[0] = sbus_buf[16];
+    temp_remote[1] = sbus_buf[17];
+
+    yaw = 100 * INS.yaw_update; // 使之接收带上小数点
+
+    temp_remote[2] = ((int16_t)yaw >> 8) & 0xff;
+    temp_remote[3] = (int16_t)yaw & 0xff;
+    temp_remote[4] = 0;
+    temp_remote[5] = 0;
+    temp_remote[6] = 0;
+    temp_remote[7] = 0;
+
+    can_remote(temp_remote, 0x35);
 
     // 位域的按键值解算,直接memcpy即可,注意小端低字节在前,即lsb在第一位,msb在最后
     *(uint16_t *)&rc_ctrl[TEMP].key[KEY_PRESS] = (uint16_t)(sbus_buf[14] | (sbus_buf[15] << 8));

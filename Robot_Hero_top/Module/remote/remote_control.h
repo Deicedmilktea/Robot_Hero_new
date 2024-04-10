@@ -70,8 +70,8 @@ typedef union
     {
         uint16_t w : 1;
         uint16_t s : 1;
-        uint16_t d : 1;
         uint16_t a : 1;
+        uint16_t d : 1;
         uint16_t shift : 1;
         uint16_t ctrl : 1;
         uint16_t q : 1;
@@ -111,6 +111,9 @@ typedef struct
     } mouse;
 
     Key_t key[3]; // 改为位域后的键盘索引,空间减少8倍,速度增加16~倍
+                  // 0：按键按下
+                  // 1：ctrl+按下
+                  // 2：shift+按下
 
     uint8_t key_count[3][16];
 } RC_ctrl_t;

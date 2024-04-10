@@ -13,6 +13,7 @@
 #include "drv_can.h"
 #include "user_lib.h"
 #include "stdbool.h"
+#include "remote_control.h"
 
 // motor data read
 #define get_motor_measure(ptr, data)                                   \
@@ -33,7 +34,7 @@ uint8_t gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
 int Update_yaw_flag = 1;
 float imu_err_yaw = 0; // 记录yaw飘移的数值便于进行校正
 
-extern RC_ctrl_t rc_ctrl;
+extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
 extern motor_info_t motor_can2[4];
 extern bool vision_is_tracking;
@@ -171,9 +172,9 @@ static void Yaw_read_imu()
 
 	// // 顺时针旋转，陀螺仪飘 -90°/min
 	// // 解决yaw偏移，完成校正
-	// if (rc_ctrl.rc.ch[2] > 50 || rc_ctrl.mouse.x > 1500)
+	// if (rc_ctrl[TEMP].rc.rocker_l_ > 50 || rc_ctrl[TEMP].mouse.x > 1500)
 	// 	imu_err_yaw += 0.0015f;
-	// if ((rc_ctrl.rc.ch[2] < -50 || rc_ctrl.mouse.x < -1500))
+	// if ((rc_ctrl[TEMP].rc.rocker_l_ < -50 || rc_ctrl[TEMP].mouse.x < -1500))
 	// 	imu_err_yaw -= 0.0015f;
 
 	// 校正
@@ -185,7 +186,7 @@ static void gimbal_control()
 {
 	if (gimbal_mode == 0)
 	{
-		gimbal_encoder.target_angle += 0.02 * rc_ctrl.rc.ch[2];
+		gimbal_encoder.target_angle += 0.02 * rc_ctrl[TEMP].rc.rocker_l_;
 		detel_calc(&gimbal_encoder.target_angle);
 		err_yaw_angle = gimbal_gyro.target_angle - motor_can2[3].rotor_angle;
 		angle_over_zero(err_yaw_angle);
@@ -198,7 +199,7 @@ static void gimbal_control()
 	if (gimbal_mode == 1)
 	{
 		// 视觉控制
-		if (rc_ctrl.rc.s[0] == 1 || press_right == 1) // 左拨杆上 || 按住右键
+		if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
 		{
 			gimbal_mode_vision();
 		}
@@ -221,14 +222,14 @@ static void gimbal_mode_vision()
 	if (vision_is_tracking)
 	{
 		// 视觉模式中加入手动微调
-		float normalized_input = (rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f) * 10; // 最大微调角度限制为5°
+		float normalized_input = (rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f) * 10; // 最大微调角度限制为5°
 		gimbal_gyro.target_angle = vision_yaw - normalized_input;
 	}
 
 	else
 	{
 		// 使用非线性映射函数调整灵敏度
-		float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 100;
+		float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;
 		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 	}
 
@@ -251,7 +252,7 @@ static void gimbal_mode_normal()
 	Yaw_read_imu();
 
 	// 使用非线性映射函数调整灵敏度
-	float normalized_input = rc_ctrl.rc.ch[2] / 660.0f + rc_ctrl.mouse.x / 16384.0f * 100;
+	float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;
 	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.97) * sign(normalized_input) * 0.3;
 
 	detel_calc(&gimbal_gyro.target_angle);

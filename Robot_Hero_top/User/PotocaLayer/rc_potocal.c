@@ -35,7 +35,7 @@ uint16_t v_flag;
 uint16_t b_flag;
 
 uint8_t temp_remote[8];
-RC_ctrl_t rc_ctrl;
+// RC_ctrl_t rc_ctrl;
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
 
 // void USART3_rxDataHandler(uint8_t *rxBuf)

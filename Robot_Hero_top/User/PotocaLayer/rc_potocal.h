@@ -4,29 +4,29 @@
 #include "drv_can.h"
 #include "main.h"
 
-void USART3_rxDataHandler(uint8_t *rxBuf);
+// void USART3_rxDataHandler(uint8_t *rxBuf);
 
-typedef struct
-{
-        struct
-        {
-                int16_t ch[5];
-                char s[2];
-        } rc;
-        struct
-        {
-                int16_t x;
-                int16_t y;
-                int16_t z;
-                uint8_t press_l;
-                uint8_t press_r;
-        } mouse;
-        struct
-        {
-                uint16_t v;
-        } key;
+// typedef struct
+// {
+//         struct
+//         {
+//                 int16_t ch[5];
+//                 char s[2];
+//         } rc;
+//         struct
+//         {
+//                 int16_t x;
+//                 int16_t y;
+//                 int16_t z;
+//                 uint8_t press_l;
+//                 uint8_t press_r;
+//         } mouse;
+//         struct
+//         {
+//                 uint16_t v;
+//         } key;
 
-} RC_ctrl_t;
+// } RC_ctrl_t;
 
 extern uint16_t w_flag;
 extern uint16_t s_flag;

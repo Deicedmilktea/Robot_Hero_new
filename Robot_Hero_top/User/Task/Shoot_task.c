@@ -9,14 +9,14 @@
 #include "pid.h"
 #include "cmsis_os.h"
 #include "main.h"
-#include "rc_potocal.h"
+#include "remote_control.h"
 
 shoot_t shoot_motor[2];             // 摩擦轮can2，id = 56
 motor_info_t motor_can2[4];         //[2]:pitch,[3]:yaw
 int16_t friction_max_speed = 20000; // 摩擦轮速度
 uint8_t friction_flag = 0;          // 开启摩擦轮的标志
 
-extern RC_ctrl_t rc_ctrl;
+extern RC_ctrl_t rc_ctrl[2];
 
 // 初始化
 static void shoot_loop_init();
@@ -46,7 +46,7 @@ void Shoot_task(void const *argument)
     read_keyboard();
 
     // 遥控器右边拨到上和中，电机启动
-    if (rc_ctrl.rc.s[1] == 1 || rc_ctrl.rc.s[1] == 3 || friction_flag == 1)
+    if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].rc.switch_left == 3 || friction_flag == 1)
     {
       shoot_start();
     }
@@ -56,14 +56,6 @@ void Shoot_task(void const *argument)
     }
 
     // shoot_stop();
-
-    // //遥控器左边拨到下，弹仓盖打开
-    // if(rc_ctrl.rc.s[1] == 2){
-    //   shoot_lid_open();
-    // }
-    // else{
-    //   shoot_lid_close();
-    // }
 
     shoot_current_give();
     osDelay(1);
@@ -95,11 +87,11 @@ static void shoot_loop_init()
 /*************** 射击模式 *****************/
 static void shoot_start()
 {
-  shoot_motor[0].target_speed = 7000;
-  shoot_motor[1].target_speed = 7000;
-  // // 16 m/s
-  // shoot_motor[0].target_speed = 5900;
-  // shoot_motor[1].target_speed = 5900;
+  // shoot_motor[0].target_speed = 7000;
+  // shoot_motor[1].target_speed = 7000;
+  // 16 m/s
+  shoot_motor[0].target_speed = 5900;
+  shoot_motor[1].target_speed = 5900;
   // // 10 m/s
   // shoot_motor[0].target_speed = 5000;
   // shoot_motor[1].target_speed = 5000;
@@ -116,10 +108,10 @@ static void shoot_stop()
 static void read_keyboard()
 {
   // 开启摩擦轮
-  if (q_flag)
+  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
     friction_flag = 1;
   // 关闭摩擦轮
-  if (e_flag)
+  else
     friction_flag = 0;
 }
 
