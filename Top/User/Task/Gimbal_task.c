@@ -1,7 +1,7 @@
 /*
 *****Gimbal_task云台任务*****
 * 云台电机为6020，ID = 4
-* 云台电机为motor_can2[3] // CAN1控制
+* 云台电机为motor_top[3] // CAN1控制
 * 遥控器控制：左拨杆左右
 */
 
@@ -15,28 +15,15 @@
 #include "stdbool.h"
 #include "remote_control.h"
 
-// motor data read
-#define get_motor_measure(ptr, data)                                   \
-	{                                                                  \
-		(ptr)->last_ecd = (ptr)->ecd;                                  \
-		(ptr)->ecd = (uint16_t)((data)[0] << 8 | (data)[1]);           \
-		(ptr)->speed_rpm = (uint16_t)((data)[2] << 8 | (data)[3]);     \
-		(ptr)->given_current = (uint16_t)((data)[4] << 8 | (data)[5]); \
-		(ptr)->temperate = (data)[6];                                  \
-	}
-
-gimbal_t gimbal_encoder; // gimbal encoder
-gimbal_t gimbal_gyro;	 // gimbal gyro
-fp32 err_yaw_angle;		 // yaw angle error
-uint8_t gimbal_mode = 0; // 记录模式，0为编码器，1为陀螺仪
+gimbal_t gimbal_gyro; // gimbal gyro
 
 // yaw_correct
-int Update_yaw_flag = 1;
-float imu_err_yaw = 0; // 记录yaw飘移的数值便于进行校正
+static uint8_t Update_yaw_flag = 1;
+static float imu_err_yaw = 0; // 记录yaw飘移的数值便于进行校正
 
 extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
-extern motor_info_t motor_can2[4];
+extern motor_info_t motor_top[4];
 extern bool vision_is_tracking;
 extern float vision_yaw;
 
@@ -50,7 +37,7 @@ static void angle_over_zero(float err);
 static void gimbal_control();
 
 // 角度范围限制
-static void detel_calc(fp32 *angle);
+static void detel_calc(float *angle);
 
 // can1发送电流
 static void gimbal_can2_cmd(int16_t v4);
@@ -65,12 +52,6 @@ static void gimbal_mode_normal();
 void Gimbal_task(void const *pvParameters)
 {
 	Gimbal_loop_init();
-	gimbal_mode = 1;
-
-	if (gimbal_mode == 0)
-	{
-		gimbal_encoder.target_angle = motor_can2[3].rotor_angle;
-	}
 
 	for (;;)
 	{
@@ -81,15 +62,6 @@ void Gimbal_task(void const *pvParameters)
 
 static void Gimbal_loop_init()
 {
-	// Kp, Ki, Kd
-	gimbal_encoder.pid_angle_value[0] = 5;
-	gimbal_encoder.pid_angle_value[1] = 0.5;
-	gimbal_encoder.pid_angle_value[2] = 0;
-
-	gimbal_encoder.pid_speed_value[0] = 5;
-	gimbal_encoder.pid_speed_value[1] = 0.5;
-	gimbal_encoder.pid_speed_value[2] = 0;
-
 	// // normal不压榨电机，效果一般，超调
 	// gimbal_gyro.pid_angle_value[0] = 200;
 	// gimbal_gyro.pid_angle_value[1] = 0.05;
@@ -117,45 +89,36 @@ static void Gimbal_loop_init()
 	// gimbal_gyro.pid_speed_value[1] = 0;
 	// gimbal_gyro.pid_speed_value[2] = 800;
 
-	gimbal_encoder.target_angle = 0;
+	// 视觉使用版本，防止yaw抖动过大
+	gimbal_gyro.pid_angle_vision_value[0] = 150;
+	gimbal_gyro.pid_angle_vision_value[1] = 0.01;
+	gimbal_gyro.pid_angle_vision_value[2] = 800;
+
+	gimbal_gyro.pid_speed_vision_value[0] = 10;
+	gimbal_gyro.pid_speed_vision_value[1] = 0;
+	gimbal_gyro.pid_speed_vision_value[2] = 0;
+
 	gimbal_gyro.target_angle = 0;
 
-	gimbal_encoder.pid_angle_out = 0;
-	gimbal_encoder.pid_speed_out = 0;
 	gimbal_gyro.pid_angle_out = 0;
 	gimbal_gyro.pid_speed_out = 0;
 
-	pid_init(&gimbal_encoder.pid_angle, gimbal_encoder.pid_angle_value, 500, 8191);
-	pid_init(&gimbal_encoder.pid_speed, gimbal_encoder.pid_speed_value, 100, 3000);
 	pid_init(&gimbal_gyro.pid_angle, gimbal_gyro.pid_angle_value, 30000, 30000);
 	pid_init(&gimbal_gyro.pid_speed, gimbal_gyro.pid_speed_value, 30000, 30000);
+	pid_init(&gimbal_gyro.pid_angle_vision, gimbal_gyro.pid_angle_vision_value, 30000, 30000);
+	pid_init(&gimbal_gyro.pid_speed_vision, gimbal_gyro.pid_speed_vision_value, 30000, 30000);
 }
 
 /************************************ 角度过零处理 ********************************/
 static void angle_over_zero(float err)
 {
-	if (gimbal_mode == 0)
+	if (err > 180) // 180 ：半圈机械角度
 	{
-		if (err > 4096) // 4096 ：半圈机械角度
-		{
-			gimbal_encoder.target_angle -= 8191;
-		}
-		else if (err < -4096)
-		{
-			gimbal_encoder.target_angle += 8191;
-		}
+		gimbal_gyro.target_angle -= 360;
 	}
-
-	if (gimbal_mode == 1)
+	else if (err < -180)
 	{
-		if (err > 180) // 180 ：半圈机械角度
-		{
-			gimbal_gyro.target_angle -= 360;
-		}
-		else if (err < -180)
-		{
-			gimbal_gyro.target_angle += 360;
-		}
+		gimbal_gyro.target_angle += 360;
 	}
 }
 
@@ -184,31 +147,17 @@ static void Yaw_read_imu()
 /***************************** 处理接收遥控器数据控制云台旋转 *********************************/
 static void gimbal_control()
 {
-	if (gimbal_mode == 0)
-	{
-		gimbal_encoder.target_angle += 0.02 * rc_ctrl[TEMP].rc.rocker_l_;
-		detel_calc(&gimbal_encoder.target_angle);
-		err_yaw_angle = gimbal_gyro.target_angle - motor_can2[3].rotor_angle;
-		angle_over_zero(err_yaw_angle);
-		gimbal_encoder.pid_angle_out = pid_calc(&gimbal_encoder.pid_angle, gimbal_encoder.target_angle, motor_can2[3].rotor_angle);	 // 计算出云台角度
-		gimbal_encoder.pid_speed_out = pid_calc(&gimbal_encoder.pid_speed, gimbal_encoder.pid_angle_out, motor_can2[3].rotor_speed); // 计算出云台速度
 
-		gimbal_can2_cmd(gimbal_encoder.pid_speed_out); // 给电流
+	// 视觉控制
+	if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
+	{
+		gimbal_mode_vision();
 	}
 
-	if (gimbal_mode == 1)
+	// 锁yaw模式
+	else // 左拨杆中或下
 	{
-		// 视觉控制
-		if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
-		{
-			gimbal_mode_vision();
-		}
-
-		// 锁yaw模式
-		else // 左拨杆中或下
-		{
-			gimbal_mode_normal();
-		}
+		gimbal_mode_normal();
 	}
 }
 
@@ -236,10 +185,10 @@ static void gimbal_mode_vision()
 	detel_calc(&gimbal_gyro.target_angle);
 
 	// 云台角度输出
-	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.yaw_update);
+	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle_vision, gimbal_gyro.target_angle, INS.yaw_update);
 
 	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed_vision, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out); // 给电流
@@ -257,12 +206,6 @@ static void gimbal_mode_normal()
 
 	detel_calc(&gimbal_gyro.target_angle);
 
-	// // 在范围内置零，消除抖动
-	// if (err_yaw_angle > -err_yaw_range && err_yaw_angle < err_yaw_range)
-	// {
-	// 	err_yaw_angle = 0;
-	// }
-
 	// 云台角度输出
 	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.yaw_update);
 
@@ -274,33 +217,18 @@ static void gimbal_mode_normal()
 }
 
 /*****************************角度范围限制**********************************/
-static void detel_calc(fp32 *angle)
+static void detel_calc(float *angle)
 {
-	if (gimbal_mode == 0)
+	// 如果角度大于180度，则减去360度
+	if (*angle > 180)
 	{
-		if (*angle > 8191)
-		{
-			*angle -= 8191;
-		}
-		else if (*angle < 0)
-		{
-			*angle += 8191;
-		}
+		*angle -= 360;
 	}
 
-	if (gimbal_mode == 1)
+	// 如果角度小于-180度，则加上360度
+	else if (*angle < -180)
 	{
-		// 如果角度大于180度，则减去360度
-		if (*angle > 180)
-		{
-			*angle -= 360;
-		}
-
-		// 如果角度小于-180度，则加上360度
-		else if (*angle < -180)
-		{
-			*angle += 360;
-		}
+		*angle += 360;
 	}
 }
 

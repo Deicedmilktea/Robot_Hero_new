@@ -11,10 +11,12 @@
 #include "main.h"
 #include "remote_control.h"
 
-shoot_t shoot_motor[2];             // 摩擦轮can2，id = 56
-motor_info_t motor_can2[4];         //[2]:pitch,[3]:yaw
-int16_t friction_max_speed = 20000; // 摩擦轮速度
-uint8_t friction_flag = 0;          // 开启摩擦轮的标志
+#define FRICTION_MAX_SPEED 20000
+
+motor_info_t motor_top[4]; //[2]:pitch,[3]:yaw
+
+static shoot_t shoot_motor[2];    // 摩擦轮can2，id = 56
+static uint8_t friction_flag = 0; // 开启摩擦轮的标志
 
 extern RC_ctrl_t rc_ctrl[2];
 
@@ -42,20 +44,25 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
-    // 读取键鼠是否开启摩擦轮
-    read_keyboard();
-
-    // 遥控器右边拨到上和中，电机启动
-    if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].rc.switch_left == 3 || friction_flag == 1)
+    // 右拨杆中，键鼠控制
+    if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
     {
       shoot_start();
     }
+
+    // 右拨杆下，遥控器控制
     else
     {
-      shoot_stop();
+      // 遥控器左边拨到上和中，电机启动
+      if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
+      {
+        shoot_start();
+      }
+      else
+      {
+        shoot_stop();
+      }
     }
-
-    // shoot_stop();
 
     shoot_current_give();
     osDelay(1);
@@ -66,12 +73,12 @@ void Shoot_task(void const *argument)
 static void shoot_loop_init()
 {
   // friction_left
-  shoot_motor[0].pid_value[0] = 10;
+  shoot_motor[0].pid_value[0] = 20;
   shoot_motor[0].pid_value[1] = 0;
   shoot_motor[0].pid_value[2] = 0;
 
   // friction_right
-  shoot_motor[1].pid_value[0] = 10;
+  shoot_motor[1].pid_value[0] = 20;
   shoot_motor[1].pid_value[1] = 0;
   shoot_motor[1].pid_value[2] = 0;
 
@@ -80,8 +87,8 @@ static void shoot_loop_init()
   shoot_motor[1].target_speed = 0;
 
   // 初始化PID
-  pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, friction_max_speed); // friction_right
-  pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, friction_max_speed); // friction_left
+  pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
+  pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
 }
 
 /*************** 射击模式 *****************/
@@ -91,7 +98,7 @@ static void shoot_start()
   // shoot_motor[1].target_speed = 7000;
   // 16 m/s
   shoot_motor[0].target_speed = 5900;
-  shoot_motor[1].target_speed = 5900;
+  shoot_motor[1].target_speed = -5900;
   // // 10 m/s
   // shoot_motor[0].target_speed = 5000;
   // shoot_motor[1].target_speed = 5000;
@@ -144,8 +151,8 @@ static void shoot_can2_cmd(int16_t v1, int16_t v2)
 static void shoot_current_give()
 {
 
-  motor_can2[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_can2[0].rotor_speed);
-  motor_can2[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, -motor_can2[1].rotor_speed);
+  motor_top[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_top[0].rotor_speed);
+  motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
 
-  shoot_can2_cmd(motor_can2[0].set_current, -motor_can2[1].set_current);
+  shoot_can2_cmd(motor_top[0].set_current, motor_top[1].set_current);
 }

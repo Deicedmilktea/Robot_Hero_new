@@ -5,12 +5,8 @@
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
-uint16_t can_cnt_1 = 0;
-extern motor_info_t motor_can2[4];
+extern motor_info_t motor_top[4];
 
-// float powerdata[4];
-// uint16_t pPowerdata[8];
-// uint16_t setpower = 5500;
 INS_t INS_bottom; // 下C板的imu数据
 
 void CAN1_Init(void)
@@ -62,6 +58,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
   {
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can1 data
+
+    // yaw
+    if ((rx_header.StdId == 0x208))
+    {
+      motor_top[3].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
+      motor_top[3].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
+      motor_top[3].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+      motor_top[3].temp = rx_data[6];
+    }
   }
 
   // can2电机信息接收
@@ -73,31 +78,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
         && (rx_header.StdId <= 0x207))                             // 判断标识符，标识符为0x200+ID
     {
       uint8_t index = rx_header.StdId - 0x205; // start from 0x205
-      motor_can2[index].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
-      motor_can2[index].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
-      motor_can2[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-      motor_can2[index].temp = rx_data[6];
+      motor_top[index].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
+      motor_top[index].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
+      motor_top[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+      motor_top[index].temp = rx_data[6];
     }
-
-    // yaw
-    if ((rx_header.StdId == 0x208))
-    {
-      motor_can2[3].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
-      motor_can2[3].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
-      motor_can2[3].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-      motor_can2[3].temp = rx_data[6];
-    }
-
-    // if (rx_header.StdId == 0x211)
-    // {
-    //   extern float powerdata[4];
-    //   uint16_t *pPowerdata = (uint16_t *)rx_data;
-
-    //   powerdata[0] = (float)pPowerdata[0] / 100.f; // 输入电压
-    //   powerdata[1] = (float)pPowerdata[1] / 100.f; // 电容电压
-    //   powerdata[2] = (float)pPowerdata[2] / 100.f; // 输入电流
-    //   powerdata[3] = (float)pPowerdata[3] / 100.f; // P
-    // }
   }
 }
 

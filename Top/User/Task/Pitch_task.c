@@ -1,6 +1,6 @@
 /*
 *************pitch轴任务**************
-采用3508，ID = 7，CAN2，motor_can2[2]
+采用3508，ID = 7，CAN2，motor_top[2]
 遥控器控制：左遥杆上下
 */
 
@@ -9,10 +9,13 @@
 #include "ins_task.h"
 #include "remote_control.h"
 
-extern motor_info_t motor_can2[4];
-extern RC_ctrl_t rc_ctrl[2];
+#define PITCH_MAX 40
+#define PITCH_MIN 0
+
 pitch_t pitch;
-float relative_pitch = 0;
+
+extern motor_info_t motor_top[4];
+extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS_bottom;
 extern float vision_pitch;
 
@@ -34,22 +37,23 @@ void Pitch_task(void const *argument)
 
     for (;;)
     {
-        relative_pitch = INS.Roll - INS_bottom.Roll;
+        // 在非平地起作用，使用相对角度保证软件限位依旧有效
+        pitch.relative_pitch = INS.Roll - INS_bottom.Roll;
 
         // 视觉识别，右拨杆上/鼠标右键
-        if (rc_ctrl[TEMP].rc.switch_right == 1 || rc_ctrl[TEMP].mouse.press_r == 1)
+        if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r == 1)
         {
-            // 视觉模式下的遥控器微调
-            pitch.vision_remote_pitch += (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 50) * 0.1f;
-            pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
+            // 视觉模式下的手动微调
+            pitch.vision_manual_pitch = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
+            pitch.vision_target_pitch = pitch.vision_manual_pitch + vision_pitch;
 
-            if (pitch.vision_target_pitch > 20)
+            if (pitch.vision_target_pitch > PITCH_MAX)
             {
-                pitch.vision_target_pitch = 20;
+                pitch.vision_target_pitch = PITCH_MAX;
             }
-            if (pitch.vision_target_pitch < -15)
+            if (pitch.vision_target_pitch < PITCH_MIN)
             {
-                pitch.vision_target_pitch = -15;
+                pitch.vision_target_pitch = PITCH_MIN;
             }
 
             pitch.target_speed = -pid_calc(&pitch.vision_pid_angle, pitch.vision_target_pitch, INS.Roll);
@@ -124,27 +128,27 @@ static void pitch_can2_cmd(int16_t v3)
 /****************PID计算速度并发送电流***************/
 static void pitch_current_give()
 {
-    if (rc_ctrl[TEMP].rc.switch_right == 1 || rc_ctrl[TEMP].mouse.press_r == 1)
+    if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r == 1)
     {
-        motor_can2[2].set_current = pid_calc(&pitch.vision_pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
+        motor_top[2].set_current = pid_calc(&pitch.vision_pid_speed, pitch.target_speed, motor_top[2].rotor_speed);
     }
 
     else
     {
-        motor_can2[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, motor_can2[2].rotor_speed);
+        motor_top[2].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, motor_top[2].rotor_speed);
     }
 
-    pitch_can2_cmd(motor_can2[2].set_current);
+    pitch_can2_cmd(motor_top[2].set_current);
 }
 
 /***************判断pitch位置******************/
 static void pitch_position_limit()
 {
-    if (relative_pitch > 20 && pitch.target_speed < 0) // pitch.target_speed正负与3508旋转方向有关
+    if (pitch.relative_pitch > PITCH_MAX && pitch.target_speed < 0) // pitch.target_speed正负与3508旋转方向有关
     {
         pitch.target_speed = 0;
     }
-    if (relative_pitch < -15 && pitch.target_speed > 0)
+    if (pitch.relative_pitch < PITCH_MIN && pitch.target_speed > 0)
     {
         pitch.target_speed = 0;
     }
