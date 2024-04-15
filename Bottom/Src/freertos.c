@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "rc_potocal.h"
+#include "remote_control.h"
 #include "arm_math.h"
 #include "INS_task.h"
 #include "exchange.h"

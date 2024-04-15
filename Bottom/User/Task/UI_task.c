@@ -14,14 +14,16 @@ uint8_t UI_Seq; // 包序号
 uint8_t referee_uart_tx_buf[2][150]; // 裁判系统学生串口发送DMA缓冲池
 uint8_t referee_tx_fifo = 0;         // 正在使用的缓存池
 
+extern RC_ctrl_t rc_ctrl[2];
 extern float powerdata[4];
-
-extern JUDGE_MODULE_DATA Judge_Hero;
-extern UART_HandleTypeDef huart6;
-static uint8_t usart6_tx_dma_is_busy = 0;
-
 extern int8_t chassis_mode;
 extern uint8_t supercap_flag;
+extern JUDGE_MODULE_DATA Judge_Hero;
+extern UART_HandleTypeDef huart6;
+extern int8_t chassis_mode;
+extern uint8_t supercap_flag;
+
+static uint8_t usart6_tx_dma_is_busy = 0;
 
 #define UI_NEED_REFRESH (userUI_control.module_refresh_timer > USERUI_MODULE_REFRESH_TIME)
 #define UI_IS_EXTERN (userUI_control.module_extern_flag)
@@ -85,7 +87,7 @@ void UI_task(void const *argument)
 
     while (1)
     {
-        if (g_flag)
+        if (rc_ctrl[TEMP].key[KEY_PRESS].g)
         {
             userUI_control.all_refresh_key_press_time += USERUI_TASK_CONTROL_TIME_MS;
             // 当手动刷新按键被按下一段时间后，执行UI全部重绘

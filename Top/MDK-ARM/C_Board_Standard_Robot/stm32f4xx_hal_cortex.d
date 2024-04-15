@@ -1,0 +1,36 @@
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Inc/stm32f4xx_hal_conf.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Include/core_cm4.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: D:\Software\MDK keil\ARM\ARM_Compiler_5.06u7\Bin\..\include\stdint.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Include/cmsis_version.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Include/mpu_armv7.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: D:\Software\MDK keil\ARM\ARM_Compiler_5.06u7\Bin\..\include\stddef.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_exti.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
+.\c_board_standard_robot\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h

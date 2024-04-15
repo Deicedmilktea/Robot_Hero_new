@@ -1,5 +1,5 @@
 {
-  "name": "Robot_Hero_bottom_new",
+  "name": "Bottom",
   "type": "ARM",
   "dependenceList": [],
   "srcDirs": [
@@ -25,15 +25,36 @@
           },
           {
             "name": "Bsp",
-            "files": [
+            "files": [],
+            "folders": [
               {
-                "path": "../Bsp/dwt/bsp_dwt.c"
+                "name": "dwt",
+                "files": [
+                  {
+                    "path": "../Bsp/dwt/bsp_dwt.c"
+                  }
+                ],
+                "folders": []
               },
               {
-                "path": "../Bsp/pwm/bsp_PWM.c"
+                "name": "pwm",
+                "files": [
+                  {
+                    "path": "../Bsp/pwm/bsp_PWM.c"
+                  }
+                ],
+                "folders": []
+              },
+              {
+                "name": "usart",
+                "files": [
+                  {
+                    "path": "../Bsp/usart/bsp_usart.c"
+                  }
+                ],
+                "folders": []
               }
-            ],
-            "folders": []
+            ]
           },
           {
             "name": "Components",
@@ -243,10 +264,28 @@
         "files": [],
         "folders": [
           {
+            "name": "daemon",
+            "files": [
+              {
+                "path": "../Module/daemon/daemon.c"
+              }
+            ],
+            "folders": []
+          },
+          {
             "name": "imu",
             "files": [
               {
                 "path": "../Module/imu/ins_task.c"
+              }
+            ],
+            "folders": []
+          },
+          {
+            "name": "remote",
+            "files": [
+              {
+                "path": "../Module/remote/remote_control.c"
               }
             ],
             "folders": []
@@ -291,9 +330,6 @@
           },
           {
             "path": "../User/PotocaLayer/judge.c"
-          },
-          {
-            "path": "../User/PotocaLayer/rc_potocal.c"
           }
         ],
         "folders": []
@@ -309,7 +345,8 @@
   "targets": {
     "C_Board_Standard_Robot": {
       "excludeList": [
-        "<virtual_root>/RTOS TASK/EXCHANGE.c"
+        "<virtual_root>/RTOS TASK/EXCHANGE.c",
+        "<virtual_root>/USER/rc_potocal.c"
       ],
       "toolchain": "AC5",
       "compileConfig": {
@@ -486,7 +523,10 @@
           "RTE/_C_Board_Standard_Robot",
           "../Module/imu",
           "../Bsp/dwt",
-          "../Bsp/pwm"
+          "../Bsp/pwm",
+          "../Module/remote",
+          "../Bsp/usart",
+          "../Module/daemon"
         ],
         "libList": [],
         "sourceDirList": [],

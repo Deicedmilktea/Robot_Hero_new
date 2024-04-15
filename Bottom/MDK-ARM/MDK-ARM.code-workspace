@@ -1,7 +1,7 @@
 {
     "folders": [
         {
-            "name": "Robot_Hero_bottom",
+            "name": "Bottom",
             "path": ".."
         },
         {
@@ -30,7 +30,9 @@
             "usart.h": "c",
             "bsp_dwt.h": "c",
             "struct_typedef.h": "c",
-            "rc_potocal.h": "c"
+            "rc_potocal.h": "c",
+            "ins_task.h": "c",
+            "remote_control.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },

@@ -1,26 +1,21 @@
 #include "drv_can.h"
 #include "ins_task.h"
+#include "remote_control.h"
 
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
 #define ECD_ANGLE_COEF 0.043945f // (360/8192),将编码器值转化为角度制
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
-extern RC_ctrl_t rc_ctrl;
-uint16_t can_cnt_1 = 0;
+extern RC_ctrl_t rc_ctrl[2];
 extern motor_info_t motor_can2[6];
+
 INS_t INS_top;
-float vision_yaw = 0;
-// float vision_Vx = 0;
-// float vision_Vy = 0;
-float yaw_speed = 0;
 float powerdata[4];
 uint16_t pPowerdata[8];
-
-uint8_t rx_data2[8];
 uint16_t setpower = 5500;
-int canerror = 0;
-int error9 = 0;
+
+static uint8_t sbus_buf[18u]; // 遥控器接收的buffer
 
 void CAN1_Init(void)
 {
@@ -74,63 +69,25 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
 
     if (rx_header.StdId == 0x33) // 接收上C传来的遥控器数据
     {
-      rc_ctrl.rc.ch[0] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff);                                      //!< Channel 0  ÖÐÖµÎª1024£¬×î´óÖµ1684£¬×îÐ¡Öµ364£¬²¨¶¯·¶Î§£º660
-      rc_ctrl.rc.ch[1] = ((((rx_data[1] >> 3) & 0xff) | (rx_data[2] << 5)) & 0x07ff);                      //!< Channel 1
-      rc_ctrl.rc.ch[2] = ((((rx_data[2] >> 6) & 0xff) | (rx_data[3] << 2) | (rx_data[4] << 10)) & 0x07ff); //!< Channel 2
-      rc_ctrl.rc.ch[3] = ((((rx_data[4] >> 1) & 0xff) | (rx_data[5] << 7)) & 0x07ff);                      //!< Channel 3
-      rc_ctrl.rc.s[0] = ((rx_data[5] >> 4) & 0x0003);                                                      //!< Switch left£¡£¡£¡ÕâÄáÂêÊÇÓÒ
-      rc_ctrl.rc.s[1] = ((rx_data[5] >> 4) & 0x000C) >> 2;                                                 //!< Switch right£¡£¡£¡Õâ²ÅÊÇ×ó
-      rc_ctrl.mouse.x = rx_data[6] | (rx_data[7] << 8);                                                    //!< Mouse X axis
-      rc_ctrl.rc.ch[0] -= RC_CH_VALUE_OFFSET;
-      rc_ctrl.rc.ch[1] -= RC_CH_VALUE_OFFSET;
-      rc_ctrl.rc.ch[2] -= RC_CH_VALUE_OFFSET;
-      rc_ctrl.rc.ch[3] -= RC_CH_VALUE_OFFSET;
+      memcpy(sbus_buf, rx_data, 8);
     }
 
     if (rx_header.StdId == 0x34) // 接收上C传来的遥控器数据
     {
-      rc_ctrl.mouse.y = rx_data[0] | (rx_data[1] << 8); //!< Mouse Y axis
-      rc_ctrl.mouse.z = rx_data[2] | (rx_data[3] << 8); //!< Mouse Z axis
-      rc_ctrl.mouse.press_l = rx_data[4];               //!< Mouse Left Is Press ?
-      rc_ctrl.mouse.press_r = rx_data[5];               //!< Mouse Right Is Press ?
-      rc_ctrl.key.v = rx_data[6] | (rx_data[7] << 8);   //!< KeyBoard value
-
-      // Some flag of keyboard
-      w_flag = (rx_data[6] & 0x01);
-      s_flag = (rx_data[6] & 0x02);
-      a_flag = (rx_data[6] & 0x04);
-      d_flag = (rx_data[6] & 0x08);
-      q_flag = (rx_data[6] & 0x40);
-      e_flag = (rx_data[6] & 0x80);
-      shift_flag = (rx_data[6] & 0x10);
-      ctrl_flag = (rx_data[6] & 0x20);
-      press_left = rc_ctrl.mouse.press_l;
-      press_right = rc_ctrl.mouse.press_r;
-      r_flag = rc_ctrl.key.v & (0x00 | 0x01 << 8);
-      f_flag = rc_ctrl.key.v & (0x00 | 0x02 << 8);
-      g_flag = rc_ctrl.key.v & (0x00 | 0x04 << 8);
-      z_flag = rc_ctrl.key.v & (0x00 | 0x08 << 8);
-      x_flag = rc_ctrl.key.v & (0x00 | 0x10 << 8);
-      c_flag = rc_ctrl.key.v & (0x00 | 0x20 << 8);
-      v_flag = rc_ctrl.key.v & (0x00 | 0x40 << 8);
-      b_flag = rc_ctrl.key.v & (0x00 | 0x80 << 8);
+      memcpy(sbus_buf + 8, rx_data, 8);
     }
 
     if (rx_header.StdId == 0x35)
     {
-      rc_ctrl.rc.ch[4] = ((rx_data[0] | (rx_data[1] << 8)) & 0x07ff) - RC_CH_VALUE_OFFSET;
-      INS_top.Yaw = ((int16_t)((rx_data[2] << 8) | rx_data[3])) / 100.0f; // yaw
-      // INS_top.Roll = ((int16_t)((rx_data[4] << 8) | rx_data[5])) / 100;  // roll（roll和pitch根据c放置位置不同可能交换）
-      // INS_top.Pitch = ((int16_t)((rx_data[6] << 8) | rx_data[7])) / 100; // pitch
-      // vision_Vx = ((int16_t)((rx_data[4] << 8) | rx_data[5])) / 100; // 导航所需Vx
-      // vision_Vy = ((int16_t)((rx_data[6] << 8) | rx_data[7])) / 100; // 导航所需Vy
+      memcpy(sbus_buf + 16, rx_data, 2);
+      sbus_to_rc(sbus_buf);
+      memcpy(&INS_top.Yaw, rx_data + 2, 2);
     }
   }
 
   // can2电机信息接收
   if (hcan->Instance == CAN2)
   {
-    error9++;
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can2 data
 
@@ -161,7 +118,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       motor_can2[5].temp = rx_data[6];
     }
 
-    if (rx_header.StdId == 0x211)
+    if (rx_header.StdId == 0x211) // superpower
     {
       uint16_t *pPowerdata = (uint16_t *)rx_data;
 

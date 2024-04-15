@@ -3,13 +3,13 @@
 #include "struct_typedef.h"
 #include "pid.h"
 #include "drv_can.h"
-#include "rc_potocal.h"
+#include "remote_control.h"
 #include "main.h"
 
 typedef struct
 {
-    uint16_t last_ecd; // 上一次读取的编码器值
-    uint16_t ecd;      // 0-8191,刻度总共有8192格
+    uint16_t last_ecd;        // 上一次读取的编码器值
+    uint16_t ecd;             // 0-8191,刻度总共有8192格
     float angle_single_round; // 单圈角度
     int16_t rotor_speed;
     int16_t torque_current;
