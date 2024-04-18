@@ -151,8 +151,8 @@ int main(void)
   //	HAL_NVIC_SetPriority(SysTick_IRQn,1,1);
   CAN1_Init();
   CAN2_Init();
-  USART6_Init();
-  USART3_Init();
+  // USART6_Init();
+  // USART3_Init();
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim6); // 测试发弹速度
   DWT_Init(168);

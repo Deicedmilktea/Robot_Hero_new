@@ -398,7 +398,8 @@
         "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.c",
         "<virtual_root>/USER/CRC.c",
         "<virtual_root>/RTOS TASK/EXCHANGE.c",
-        "<virtual_root>/USER/rc_potocal.c"
+        "<virtual_root>/USER/rc_potocal.c",
+        "<virtual_root>/USER/drv_usart.c"
       ],
       "toolchain": "AC5",
       "compileConfig": {

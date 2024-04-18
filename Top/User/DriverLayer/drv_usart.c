@@ -1,6 +1,5 @@
 #include "drv_usart.h"
 #include "main.h"
-#include "rc_potocal.h"
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
 extern DMA_HandleTypeDef hdma_usart6_rx;
@@ -14,17 +13,17 @@ uint8_t judge_receive_length = 0;
 
 void USART3_Init(void)
 {
-	__HAL_UART_CLEAR_IDLEFLAG(&huart3);			 // 清除空闲中断标志位，，防止开启中断时立马进入中断
-	__HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE); // 使能空闲中断
+	// __HAL_UART_CLEAR_IDLEFLAG(&huart3);			 // 清除空闲中断标志位，，防止开启中断时立马进入中断
+	// __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE); // 使能空闲中断
 
-	// Enable the DMA transfer for the receiver request
-	SET_BIT(huart3.Instance->CR3, USART_CR3_DMAR); // 将串口对应的DMA打开
+	// // Enable the DMA transfer for the receiver request
+	// SET_BIT(huart3.Instance->CR3, USART_CR3_DMAR); // 将串口对应的DMA打开
 
-	DMAEx_MultiBufferStart_NoIT(huart3.hdmarx,
-								(uint32_t)&huart3.Instance->DR,
-								(uint32_t)usart3_dma_rxbuf[0],
-								(uint32_t)usart3_dma_rxbuf[1],
-								USART3_RX_DATA_FRAME_LEN); // 开启DMA双缓冲模式
+	// DMAEx_MultiBufferStart_NoIT(huart3.hdmarx,
+	// 							(uint32_t)&huart3.Instance->DR,
+	// 							(uint32_t)usart3_dma_rxbuf[0],
+	// 							(uint32_t)usart3_dma_rxbuf[1],
+	// 							USART3_RX_DATA_FRAME_LEN); // 开启DMA双缓冲模式
 }
 
 void DRV_USART3_IRQHandler(UART_HandleTypeDef *huart) // 在stm32f4xx_it.c文件USART3_IRQHandler调用
@@ -103,8 +102,8 @@ static void dma_m0_rxcplt_callback(DMA_HandleTypeDef *hdma)
 
 	if (hdma == huart3.hdmarx)
 	{
-		hdma->Instance->CR |= (uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory1
-													   // USART3_rxDataHandler(usart3_dma_rxbuf[0]);
+		// hdma->Instance->CR |= (uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory1
+		// USART3_rxDataHandler(usart3_dma_rxbuf[0]);
 	}
 
 	else if (hdma == huart6.hdmarx)
@@ -119,14 +118,14 @@ static void dma_m1_rxcplt_callback(DMA_HandleTypeDef *hdma)
 
 	if (hdma == huart3.hdmarx)
 	{
-		hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
+		// hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
 
 		// USART3_rxDataHandler(usart3_dma_rxbuf[1]);
 	}
 
 	else if (hdma == huart6.hdmarx)
 	{
-		hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
+		// hdma->Instance->CR &= ~(uint32_t)(DMA_SxCR_CT); // 将当前目标内存设置为Memory0
 
 		// JUDGE_Receive(judge_dma_buffer[1], judge_receive_length);
 	}
