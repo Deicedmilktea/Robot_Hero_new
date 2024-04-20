@@ -336,6 +336,12 @@
           },
           {
             "path": "../Module/remote/remote_control.c"
+          },
+          {
+            "path": "../User/AlgorithmLayer/pid.c"
+          },
+          {
+            "path": "../User/DriverLayer/drv_can.c"
           }
         ],
         "folders": []
@@ -360,27 +366,6 @@
           }
         ],
         "folders": []
-      },
-      {
-        "name": "USER",
-        "files": [
-          {
-            "path": "../Module/referee/crc_ref.c"
-          },
-          {
-            "path": "../User/AlgorithmLayer/pid.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_can.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_usart.c"
-          },
-          {
-            "path": "../User/PotocaLayer/rc_potocal.c"
-          }
-        ],
-        "folders": []
       }
     ]
   },
@@ -399,7 +384,8 @@
         "<virtual_root>/USER/CRC.c",
         "<virtual_root>/RTOS TASK/EXCHANGE.c",
         "<virtual_root>/USER/rc_potocal.c",
-        "<virtual_root>/USER/drv_usart.c"
+        "<virtual_root>/USER/drv_usart.c",
+        "<virtual_root>/USER/pid.c"
       ],
       "toolchain": "AC5",
       "compileConfig": {
@@ -519,7 +505,7 @@
       "uploadConfig": {
         "bin": "",
         "target": "stm32f4x",
-        "interface": "cmsis-dap-v1",
+        "interface": "stlink-v2-1",
         "baseAddr": "0x08000000"
       },
       "uploadConfigMap": {

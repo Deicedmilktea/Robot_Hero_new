@@ -220,13 +220,13 @@ Vision_Recv_s *VisionInit(Vision_Init_Config_s *init_config)
     vis_recv_buff = USBInit(conf);
     vision_instance->recv_data = VisionRecvRegister(&init_config->recv_config);
     vision_instance->send_data = VisionSendRegister(&init_config->send_config);
-    // // 为master process注册daemon,用于判断视觉通信是否离线
-    // Daemon_Init_Config_s daemon_conf = {
-    //     .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
-    //     .owner_id = NULL,
-    //     .reload_count = 5, // 50ms
-    // };
-    // vision_daemon_instance = DaemonRegister(&daemon_conf);
+    // 为master process注册daemon,用于判断视觉通信是否离线
+    Daemon_Init_Config_s daemon_conf = {
+        .callback = VisionOfflineCallback, // 离线时调用的回调函数,会重启串口接收
+        .owner_id = NULL,
+        .reload_count = 5, // 50ms
+    };
+    vision_daemon_instance = DaemonRegister(&daemon_conf);
     return vision_instance->recv_data;
 }
 

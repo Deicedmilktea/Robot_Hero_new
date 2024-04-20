@@ -26,7 +26,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "rc_potocal.h"
 #include "arm_math.h"
 #include "INS_task.h"
 #include "exchange.h"
@@ -182,16 +181,16 @@ void StartINSTask(void const * argument)
 
 /* USER CODE BEGIN Header_Shoot_task */
 /**
-* @brief Function implementing the ShootTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the ShootTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_Shoot_task */
 __weak void Shoot_task(void const * argument)
 {
   /* USER CODE BEGIN Shoot_task */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     osDelay(1);
   }
@@ -200,16 +199,16 @@ __weak void Shoot_task(void const * argument)
 
 /* USER CODE BEGIN Header_Pitch_task */
 /**
-* @brief Function implementing the PitchTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the PitchTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_Pitch_task */
 __weak void Pitch_task(void const * argument)
 {
   /* USER CODE BEGIN Pitch_task */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     osDelay(1);
   }

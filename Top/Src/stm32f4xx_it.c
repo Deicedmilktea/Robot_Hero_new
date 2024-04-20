@@ -22,7 +22,6 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "drv_usart.h"
 #include "usart.h"
 #include "stdio.h"
 /* USER CODE END Includes */

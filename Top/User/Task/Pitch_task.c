@@ -67,7 +67,7 @@ void Pitch_task(void const *argument)
             pitch_position_limit();
         }
 
-        pitch_current_give();
+        // pitch_current_give();
         osDelay(1);
     }
 }

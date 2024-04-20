@@ -6,7 +6,6 @@
 */
 
 #include "Gimbal_task.h"
-#include "rc_potocal.h"
 #include "ins_task.h"
 #include "cmsis_os.h"
 #include "pid.h"
@@ -55,7 +54,7 @@ void Gimbal_task(void const *pvParameters)
 
 	for (;;)
 	{
-		gimbal_control();
+		// gimbal_control();
 		osDelay(1);
 	}
 }
