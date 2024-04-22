@@ -1,6 +1,9 @@
 #include "drv_can.h"
 #include "ins_task.h"
-#include "remote_control.h"`
+#include "remote_control.h"
+
+#define RC_CH_VALUE_OFFSET ((uint16_t)1024)
+#define ECD_ANGLE_COEF 0.043945f // (360/8192),将编码器值转化为角度制
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
@@ -8,6 +11,8 @@ extern RC_ctrl_t rc_ctrl[2];
 extern motor_info_t motor_top[4];
 
 INS_t INS_bottom; // 下C板的imu数据
+
+static void motor_read(uint8_t index, uint8_t rx_data[]);
 
 void CAN1_Init(void)
 {
@@ -62,10 +67,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     // yaw
     if ((rx_header.StdId == 0x208))
     {
-      motor_top[3].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
-      motor_top[3].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
-      motor_top[3].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-      motor_top[3].temp = rx_data[6];
+      motor_read(3, rx_data);
     }
   }
 
@@ -77,11 +79,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     if ((rx_header.StdId >= 0x205)                                 // 205-207
         && (rx_header.StdId <= 0x207))                             // 判断标识符，标识符为0x200+ID
     {
-      uint8_t index = rx_header.StdId - 0x205; // start from 0x205
-      motor_top[index].rotor_angle = ((rx_data[0] << 8) | rx_data[1]);
-      motor_top[index].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
-      motor_top[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-      motor_top[index].temp = rx_data[6];
+      uint8_t index = rx_header.StdId - 0x201; // get motor index by can_id
+      motor_read(index, rx_data);
     }
   }
 }
@@ -96,4 +95,21 @@ void can_remote(uint8_t sbus_buf[], uint32_t can_send_id) // 调用can来发送�
   tx_header.DLC = 8;             // 发送数据长度（字节）
 
   HAL_CAN_AddTxMessage(&hcan1, &tx_header, sbus_buf, (uint32_t *)CAN_TX_MAILBOX0);
+}
+
+static void motor_read(uint8_t index, uint8_t rx_data[])
+{
+  motor_top[index].last_ecd = motor_top[index].ecd;
+  motor_top[index].ecd = ((rx_data[0] << 8) | rx_data[1]);
+  motor_top[index].angle_single_round = ECD_ANGLE_COEF * (float)motor_top[index].ecd;
+  motor_top[index].rotor_speed = ((rx_data[2] << 8) | rx_data[3]);
+  motor_top[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+  motor_top[index].temp = rx_data[6];
+
+  // 多圈角度计算,前提是假设两次采样间电机转过的角度小于180°,自己画个图就清楚计算过程了
+  if (motor_top[index].ecd - motor_top[index].last_ecd > 4096)
+    motor_top[index].total_round--;
+  else if (motor_top[index].ecd - motor_top[index].last_ecd < -4096)
+    motor_top[index].total_round++;
+  motor_top[index].total_angle = motor_top[index].total_round * 360 + motor_top[index].angle_single_round;
 }

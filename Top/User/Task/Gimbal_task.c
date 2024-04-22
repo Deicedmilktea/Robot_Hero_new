@@ -20,9 +20,10 @@ gimbal_t gimbal_gyro; // gimbal gyro
 static uint8_t Update_yaw_flag = 1;
 static float imu_err_yaw = 0; // 记录yaw飘移的数值便于进行校正
 
+extern CAN_HandleTypeDef hcan1;
 extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
-extern motor_info_t motor_top[4];
+extern motor_info_t motor_top[6];
 extern bool vision_is_tracking;
 extern float vision_yaw;
 

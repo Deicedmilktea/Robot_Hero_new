@@ -261,36 +261,33 @@
       },
       {
         "name": "Module",
-        "files": [],
-        "folders": [
+        "files": [
           {
-            "name": "daemon",
-            "files": [
-              {
-                "path": "../Module/daemon/daemon.c"
-              }
-            ],
-            "folders": []
+            "path": "../Module/daemon/daemon.c"
           },
           {
-            "name": "imu",
-            "files": [
-              {
-                "path": "../Module/imu/ins_task.c"
-              }
-            ],
-            "folders": []
+            "path": "../Module/imu/ins_task.c"
           },
           {
-            "name": "remote",
-            "files": [
-              {
-                "path": "../Module/remote/remote_control.c"
-              }
-            ],
-            "folders": []
+            "path": "../Module/remote/remote_control.c"
+          },
+          {
+            "path": "../User/AlgorithmLayer/CRC.c"
+          },
+          {
+            "path": "../User/AlgorithmLayer/pid.c"
+          },
+          {
+            "path": "../User/DriverLayer/drv_can.c"
+          },
+          {
+            "path": "../User/DriverLayer/drv_usart.c"
+          },
+          {
+            "path": "../User/PotocaLayer/judge.c"
           }
-        ]
+        ],
+        "folders": []
       },
       {
         "name": "RTOS TASK",
@@ -309,27 +306,6 @@
           },
           {
             "path": "../User/Task/UI_task.c"
-          }
-        ],
-        "folders": []
-      },
-      {
-        "name": "USER",
-        "files": [
-          {
-            "path": "../User/AlgorithmLayer/CRC.c"
-          },
-          {
-            "path": "../User/AlgorithmLayer/pid.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_can.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_usart.c"
-          },
-          {
-            "path": "../User/PotocaLayer/judge.c"
           }
         ],
         "folders": []

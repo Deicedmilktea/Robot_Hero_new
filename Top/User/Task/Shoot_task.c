@@ -1,8 +1,9 @@
 /*
 **********Shoot_task射击任务**********
-包含对两个摩擦轮的控制
-摩擦轮分别为3508，ID = 5（left）和 ID = 6（right），CAN2 控制
-遥控器左边拨杆控制，拨到最上面启动 (从上到下分别为132)
+包含对三个摩擦轮以及开镜电机的控制
+摩擦轮分别为3508, ID = 1(left) ID = 2(right) ID = 3(up) ID = 4(lens), CAN2 控制
+遥控器控制：左边拨杆，拨到中间启动摩擦轮(lr)，最上面发射(up) (从上到下分别为132)
+键鼠控制：默认开启摩擦轮(lr)，左键发射(up)
 */
 
 #include "Shoot_task.h"
@@ -12,25 +13,34 @@
 #include "remote_control.h"
 
 #define FRICTION_MAX_SPEED 20000
+#define FRICTION_SPEED 6200
+#define FRICTION_LENS_SPEED 1000
 
-motor_info_t motor_top[4]; //[2]:pitch,[3]:yaw
+motor_info_t motor_top[6]; //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
 
-static shoot_t shoot_motor[2];    // 摩擦轮can2，id = 56
+static shoot_t shoot_motor[4];    // 摩擦轮can2，id = 56
 static uint8_t friction_flag = 0; // 开启摩擦轮的标志
 
+extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
 
 // 初始化
 static void shoot_loop_init();
 
-// 射击模式
-static void shoot_start();
+// 左右摩擦轮开启模式
+static void shoot_start_lr();
 
-// 停止射击模式
+// 三摩擦轮开启模式
+static void shoot_start_all();
+
+// 摩擦轮关闭模式
 static void shoot_stop();
 
+// 判断开关镜
+static void lens_judge();
+
 // can2发送电流
-static void shoot_can2_cmd(int16_t v1, int16_t v2);
+static void shoot_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
 
 // PID计算速度并发送电流
 static void shoot_current_give();
@@ -47,7 +57,8 @@ void Shoot_task(void const *argument)
     // 右拨杆中，键鼠控制
     if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
     {
-      shoot_start();
+      shoot_start_all();
+      lens_judge();
     }
 
     // 右拨杆下，遥控器控制
@@ -56,7 +67,7 @@ void Shoot_task(void const *argument)
       // 遥控器左边拨到上和中，电机启动
       if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
       {
-        shoot_start();
+        shoot_start_all();
       }
       else
       {
@@ -82,33 +93,58 @@ static void shoot_loop_init()
   shoot_motor[1].pid_value[1] = 0;
   shoot_motor[1].pid_value[2] = 0;
 
+  // friction_up
+  shoot_motor[2].pid_value[0] = 20;
+  shoot_motor[2].pid_value[1] = 0;
+  shoot_motor[2].pid_value[2] = 0;
+
+  // lens
+  shoot_motor[3].pid_value[0] = 20;
+  shoot_motor[3].pid_value[1] = 0;
+  shoot_motor[3].pid_value[2] = 0;
+
   // 初始化目标速度
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
+  shoot_motor[2].target_speed = 0;
+  shoot_motor[3].target_speed = 0;
 
   // 初始化PID
   pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
+  pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, FRICTION_MAX_SPEED); // friction_up
+  pid_init(&shoot_motor[3].pid, shoot_motor[3].pid_value, 1000, FRICTION_MAX_SPEED); // lens
 }
 
-/*************** 射击模式 *****************/
-static void shoot_start()
+/*************** 左右摩擦轮开启模式 *****************/
+static void shoot_start_lr()
 {
-  // shoot_motor[0].target_speed = 7000;
-  // shoot_motor[1].target_speed = 7000;
-  // 16 m/s
-  shoot_motor[0].target_speed = 5900;
-  shoot_motor[1].target_speed = -5900;
-  // // 10 m/s
-  // shoot_motor[0].target_speed = 5000;
-  // shoot_motor[1].target_speed = 5000;
+  shoot_motor[0].target_speed = FRICTION_SPEED;
+  shoot_motor[1].target_speed = -FRICTION_SPEED;
+  shoot_motor[2].target_speed = 0;
 }
 
-/*************** 停止射击模式 **************/
+/**************** 三摩擦轮开启模式 *****************/
+static void shoot_start_all()
+{
+  shoot_motor[0].target_speed = FRICTION_SPEED;
+  shoot_motor[1].target_speed = -FRICTION_SPEED;
+  shoot_motor[2].target_speed = -FRICTION_LENS_SPEED;
+}
+
+/*************** 摩擦轮关闭模式 **************/
 static void shoot_stop()
 {
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
+  shoot_motor[2].target_speed = 0;
+}
+
+/***************** 判断开关镜 *******************/
+static void lens_judge()
+{
+  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 2 == 1)
+    return;
 }
 
 /*************** 读取键鼠是否开启摩擦轮 **************/
@@ -123,13 +159,13 @@ static void read_keyboard()
 }
 
 /********************************摩擦轮can2发送电流***************************/
-static void shoot_can2_cmd(int16_t v1, int16_t v2)
+static void shoot_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
   uint8_t tx_data[8];
 
-  tx_header.StdId = 0x1FF;
+  tx_header.StdId = 0x200;
   tx_header.IDE = CAN_ID_STD;   // 标准帧
   tx_header.RTR = CAN_RTR_DATA; // 数据帧
 
@@ -139,10 +175,10 @@ static void shoot_can2_cmd(int16_t v1, int16_t v2)
   tx_data[1] = (v1) & 0xff;
   tx_data[2] = (v2 >> 8) & 0xff;
   tx_data[3] = (v2) & 0xff;
-  tx_data[4] = NULL;
-  tx_data[5] = NULL;
-  tx_data[6] = NULL;
-  tx_data[7] = NULL;
+  tx_data[4] = (v3 >> 8) & 0xff;
+  tx_data[5] = (v3) & 0xff;
+  tx_data[6] = (v4 >> 8) & 0xff;
+  tx_data[7] = (v4) & 0xff;
 
   HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }
@@ -153,6 +189,8 @@ static void shoot_current_give()
 
   motor_top[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_top[0].rotor_speed);
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
+  motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);
+  motor_top[3].set_current = pid_calc(&shoot_motor[3].pid, shoot_motor[3].target_speed, motor_top[3].rotor_speed);
 
-  shoot_can2_cmd(motor_top[0].set_current, motor_top[1].set_current);
+  shoot_can2_cmd(motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
 }

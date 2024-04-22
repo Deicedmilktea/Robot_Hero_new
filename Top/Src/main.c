@@ -64,40 +64,7 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-// ȫ�ֱ���
-uint16_t can_cnt_2;
-float target_speed[7] = {0};                  // ʵ��������ת��320rpm
-float target_speed_can_2[7] = {0};            // ʵ��������ת��320rpm
-motor_info_t motor_info[MOTOR_MAX_NUM];       // ��������7���ֽ�
-motor_info_t motor_info_can_2[MOTOR_MAX_NUM]; // ��������7���ֽ�
 
-uint8_t can_flag = 0;
-double step = 9158 / 660;
-double r;
-double target_v;
-int16_t target_int1;
-int16_t target_int2; // ���ڵ�����ת��ֱ��
-double target_curl;
-float yuntai_step = 60 * (1024 - 364);
-
-// ����
-float time = 100;   // ʱ��
-float time_count;   // ʱ������?
-uint8_t flag_shoot; // ��־λ
-float round_shoot;  // ת��Ȧ��
-float down;
-float up;
-
-// Yaw��
-int16_t target_angle = 4096;
-int16_t err_angle;
-int16_t max_yaw_speed;
-float small;
-float angle_limit = 8191; // ת�ǵ�����?
-
-uint8_t rx_data[8];
-
-extern int flag;
 /* USER CODE END 0 */
 
 /**

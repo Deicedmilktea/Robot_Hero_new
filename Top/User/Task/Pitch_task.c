@@ -8,16 +8,19 @@
 #include "cmsis_os.h"
 #include "ins_task.h"
 #include "remote_control.h"
+#include "stdbool.h"
 
 #define PITCH_MAX 40
 #define PITCH_MIN 0
 
 pitch_t pitch;
 
-extern motor_info_t motor_top[4];
+extern CAN_HandleTypeDef hcan2;
+extern motor_info_t motor_top[6];
 extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS_bottom;
 extern float vision_pitch;
+extern bool vision_is_tracking;
 
 // 初始化
 static void pitch_loop_init();
@@ -43,9 +46,14 @@ void Pitch_task(void const *argument)
         // 视觉识别，右拨杆上/鼠标右键
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r == 1)
         {
-            // 视觉模式下的手动微调
-            pitch.vision_manual_pitch = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
-            pitch.vision_target_pitch = pitch.vision_manual_pitch + vision_pitch;
+            if (vision_is_tracking)
+            {
+                // 视觉模式下的手动微调
+                pitch.vision_manual_pitch = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
+                pitch.vision_target_pitch = pitch.vision_manual_pitch + vision_pitch;
+            }
+            else
+                pitch.vision_target_pitch = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
 
             if (pitch.vision_target_pitch > PITCH_MAX)
             {
@@ -67,7 +75,7 @@ void Pitch_task(void const *argument)
             pitch_position_limit();
         }
 
-        // pitch_current_give();
+        pitch_current_give();
         osDelay(1);
     }
 }
