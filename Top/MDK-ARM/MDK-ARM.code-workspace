@@ -37,7 +37,9 @@
             "crc.h": "c",
             "rc_potocal.h": "c",
             "controller.h": "c",
-            "remote_control.h": "c"
+            "remote_control.h": "c",
+            "main.h": "c",
+            "robot.h": "c"
         }
     },
     "extensions": {}

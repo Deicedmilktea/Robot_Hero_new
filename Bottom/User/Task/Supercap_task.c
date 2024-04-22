@@ -4,6 +4,7 @@
 #include "string.h"
 
 extern UART_HandleTypeDef huart1;
+extern CAN_HandleTypeDef hcan2;
 extern uint16_t Hero_chassis_power_limit;
 extern uint16_t Hero_chassis_power_buffer;
 extern uint8_t Hero_level;

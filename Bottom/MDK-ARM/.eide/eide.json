@@ -272,6 +272,9 @@
             "path": "../Module/remote/remote_control.c"
           },
           {
+            "path": "../Module/Video/video_control.c"
+          },
+          {
             "path": "../User/AlgorithmLayer/CRC.c"
           },
           {
@@ -502,7 +505,8 @@
           "../Bsp/pwm",
           "../Module/remote",
           "../Bsp/usart",
-          "../Module/daemon"
+          "../Module/daemon",
+          "../Module/Video"
         ],
         "libList": [],
         "sourceDirList": [],

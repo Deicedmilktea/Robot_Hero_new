@@ -2,6 +2,7 @@
 #define SHOOT_TASK_H
 
 #include "pid.h"
+#include "Robot.h"
 
 typedef struct
 {

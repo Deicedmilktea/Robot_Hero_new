@@ -11,6 +11,7 @@
 #include "cmsis_os.h"
 #include "main.h"
 #include "remote_control.h"
+#include "video_control.h"
 
 #define FRICTION_MAX_SPEED 20000
 #define FRICTION_SPEED 6200
@@ -54,6 +55,7 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+#ifdef REMOTE_CONTROL
     // 右拨杆中，键鼠控制
     if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
     {
@@ -74,6 +76,12 @@ void Shoot_task(void const *argument)
         shoot_stop();
       }
     }
+#endif
+
+#ifdef VIDEO_CONTROL
+    shoot_start_all();
+    lens_judge();
+#endif
 
     shoot_current_give();
     osDelay(1);

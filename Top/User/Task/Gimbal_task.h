@@ -3,7 +3,7 @@
 
 #include "struct_typedef.h"
 #include "pid.h"
-#include "main.h"
+#include "Robot.h"
 
 typedef struct
 {

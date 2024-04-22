@@ -1,7 +1,6 @@
 #ifndef SHOOT_TASK_H
 #define SHOOT_TASK_H
 
-#include "Chassis_task.h"
 #include "pid.h"
 
 typedef struct

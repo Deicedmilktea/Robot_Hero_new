@@ -1,7 +1,7 @@
 /*
 **********Shoot_task射击任务**********
 包含对拨盘的控制
-拨盘为3508，ID = 5，CAN2控制, motor_can2[4]
+拨盘为3508，ID = 5，CAN2控制, motor_bottom[4]
 遥控器左边拨杆控制，拨到最上面启动 (从上到下分别为132)
 */
 
@@ -11,6 +11,8 @@
 #include "cmsis_os.h"
 #include <stdbool.h>
 #include "remote_control.h"
+#include "video_control.h"
+#include "Robot.h"
 
 #define TRIGGER_SINGLE_ANGLE 1140 // 19*360/6
 #define TRIGGER_ROTATE_SPEED 250
@@ -22,7 +24,8 @@ float current_time = 0;
 float last_time = 0;
 
 extern RC_ctrl_t rc_ctrl[2];
-extern motor_info_t motor_can2[6];
+extern motor_info_t motor_bottom[5];
+extern CAN_HandleTypeDef hcan2;
 
 // 初始化
 static void shoot_loop_init();
@@ -97,17 +100,17 @@ static void shoot_loop_init()
   trigger.pid_speed_value[1] = 0.1;
   trigger.pid_speed_value[2] = 0;
 
-  trigger.pid_angle_value[0] = 2;
-  trigger.pid_angle_value[1] = 0;
-  trigger.pid_angle_value[2] = 0;
+  trigger.pid_angle_value[0] = 20;
+  trigger.pid_angle_value[1] = 0.03;
+  trigger.pid_angle_value[2] = 500;
 
   // 初始化目标速度
   trigger.target_speed = 0;
-  trigger.target_angle = motor_can2[4].total_angle;
+  trigger.target_angle = motor_bottom[4].total_angle;
 
   // 初始化PID
   pid_init(&trigger.pid_speed, trigger.pid_speed_value, 20000, 30000); // trigger_speed
-  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 20000, 30000); // trigger_angle
+  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 10000, 20000); // trigger_angle
 }
 
 /***************射击模式*****************/
@@ -124,7 +127,7 @@ static void trigger_single_angle_move()
   if (current_time - last_time > 1000)
   {
     last_time = DWT_GetTimeline_ms();
-    trigger.target_angle = motor_can2[4].total_angle - TRIGGER_SINGLE_ANGLE;
+    trigger.target_angle = motor_bottom[4].total_angle - TRIGGER_SINGLE_ANGLE;
   }
 }
 
@@ -170,9 +173,9 @@ static void trigger_can2_cmd(int16_t v1)
 static void shoot_current_give()
 {
   if (is_angle_control)
-    motor_can2[4].set_current = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_can2[4].total_angle);
+    motor_bottom[4].set_current = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_bottom[4].total_angle);
   else
-    motor_can2[4].set_current = pid_calc(&trigger.pid_speed, trigger.target_speed, motor_can2[4].rotor_speed);
+    motor_bottom[4].set_current = pid_calc(&trigger.pid_speed, trigger.target_speed, motor_bottom[4].rotor_speed);
 
-  trigger_can2_cmd(motor_can2[4].set_current);
+  trigger_can2_cmd(motor_bottom[4].set_current);
 }

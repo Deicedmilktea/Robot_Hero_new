@@ -1,8 +1,9 @@
 /*
 *****Gimbal_task云台任务*****
-* 云台电机为6020，ID = 4
-* 云台电机为motor_top[3] // CAN1控制
+* 云台电机为6020，ID = 2
+* 云台电机为motor_top[5] CAN1控制
 * 遥控器控制：左拨杆左右
+* 键鼠控制：鼠标左右滑动
 */
 
 #include "Gimbal_task.h"
@@ -13,6 +14,7 @@
 #include "user_lib.h"
 #include "stdbool.h"
 #include "remote_control.h"
+#include "video_control.h"
 
 gimbal_t gimbal_gyro; // gimbal gyro
 
@@ -22,6 +24,7 @@ static float imu_err_yaw = 0; // 记录yaw飘移的数值便于进行校正
 
 extern CAN_HandleTypeDef hcan1;
 extern RC_ctrl_t rc_ctrl[2];
+extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS;
 extern motor_info_t motor_top[6];
 extern bool vision_is_tracking;
@@ -40,7 +43,7 @@ static void gimbal_control();
 static void detel_calc(float *angle);
 
 // can1发送电流
-static void gimbal_can2_cmd(int16_t v4);
+static void gimbal_can2_cmd(int16_t voltage);
 
 // 视觉控制
 static void gimbal_mode_vision();
@@ -55,7 +58,34 @@ void Gimbal_task(void const *pvParameters)
 
 	for (;;)
 	{
-		// gimbal_control();
+#ifdef REMOTE_CONTROL
+		// 视觉控制
+		if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
+		{
+			gimbal_mode_vision();
+		}
+
+		// 锁yaw模式
+		else // 左拨杆中或下
+		{
+			gimbal_mode_normal();
+		}
+#endif
+
+#ifdef VIDEO_CONTROL
+		// 视觉控制
+		if (video_ctrl[TEMP].key_data.right_button_down == 1) // 按住右键
+		{
+			gimbal_mode_vision();
+		}
+
+		// 锁yaw模式
+		else // 左拨杆中或下
+		{
+			gimbal_mode_normal();
+		}
+#endif
+
 		osDelay(1);
 	}
 }
@@ -147,18 +177,6 @@ static void Yaw_read_imu()
 /***************************** 处理接收遥控器数据控制云台旋转 *********************************/
 static void gimbal_control()
 {
-
-	// 视觉控制
-	if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
-	{
-		gimbal_mode_vision();
-	}
-
-	// 锁yaw模式
-	else // 左拨杆中或下
-	{
-		gimbal_mode_normal();
-	}
 }
 
 /**************************** 视觉控制 **********************************/
@@ -167,20 +185,39 @@ static void gimbal_mode_vision()
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
 
+#ifdef REMOTE_CONTROL
 	// 如果追踪到目标
 	if (vision_is_tracking)
 	{
 		// 视觉模式中加入手动微调
-		float normalized_input = (rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f) * 10; // 最大微调角度限制为5°
+		float normalized_input = (rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f) * 10.0f; // 最大微调角度限制为10°
 		gimbal_gyro.target_angle = vision_yaw - normalized_input;
 	}
 
 	else
 	{
 		// 使用非线性映射函数调整灵敏度
-		float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;
+		float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100.0f;
 		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 	}
+#endif
+
+#ifdef VIDEO_CONTROL
+	// 如果追踪到目标
+	if (vision_is_tracking)
+	{
+		// 视觉模式中加入手动微调
+		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 10.0f; // 最大微调角度限制为10°
+		gimbal_gyro.target_angle = vision_yaw - normalized_input;
+	}
+
+	else
+	{
+		// 使用非线性映射函数调整灵敏度
+		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100.0f;
+		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+	}
+#endif
 
 	detel_calc(&gimbal_gyro.target_angle);
 
@@ -200,9 +237,17 @@ static void gimbal_mode_normal()
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
 
+#ifdef REMOTE_CONTROL
 	// 使用非线性映射函数调整灵敏度
 	float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;
 	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.97) * sign(normalized_input) * 0.3;
+#endif
+
+#ifdef VIDEO_CONTROL
+	// 使用非线性映射函数调整灵敏度
+	float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100;
+	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+#endif
 
 	detel_calc(&gimbal_gyro.target_angle);
 
@@ -233,7 +278,7 @@ static void detel_calc(float *angle)
 }
 
 /********************************can2发送电流***************************/
-static void gimbal_can2_cmd(int16_t v4)
+static void gimbal_can2_cmd(int16_t voltage)
 {
 	uint32_t send_mail_box;
 	CAN_TxHeaderTypeDef tx_header;
@@ -247,12 +292,12 @@ static void gimbal_can2_cmd(int16_t v4)
 
 	tx_data[0] = NULL;
 	tx_data[1] = NULL;
-	tx_data[2] = NULL;
-	tx_data[3] = NULL;
+	tx_data[2] = (voltage >> 8) & 0xff;
+	tx_data[3] = (voltage) & 0xff;
 	tx_data[4] = NULL;
 	tx_data[5] = NULL;
-	tx_data[6] = (v4 >> 8) & 0xff;
-	tx_data[7] = (v4) & 0xff;
+	tx_data[6] = NULL;
+	tx_data[7] = NULL;
 
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
 }

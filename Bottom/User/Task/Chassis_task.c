@@ -12,6 +12,7 @@
 #include "exchange.h"
 #include "drv_can.h"
 #include "remote_control.h"
+#include "Robot.h"
 
 #define CHASSIS_SPEED_MAX_1 5000
 #define CHASSIS_SPEED_MAX_2 5500
@@ -30,7 +31,7 @@
 #define KEY_STOP_OFFSET 30
 #define FOLLOW_WEIGHT 160
 
-motor_info_t motor_can2[6]; // can2电机信息结构体, 0123：底盘，4：拨盘, 5: 云台
+motor_info_t motor_bottom[5]; // can2电机信息结构体, 0123：底盘，4：拨盘
 chassis_t chassis[4];
 uint8_t chassis_mode = 0;  // 判断底盘状态，用于UI编写
 uint8_t supercap_flag = 0; // 是否开启超级电容
@@ -55,6 +56,7 @@ extern uint8_t rx_buffer_c[49];
 extern uint8_t rx_buffer_d[128];
 extern uint8_t Hero_level;
 extern float powerdata[4];
+extern CAN_HandleTypeDef hcan2;
 
 // 功率限制算法的变量定义
 float Watch_Power_Max;                                                // 限制值
@@ -170,7 +172,7 @@ void Chassis_task(void const *pvParameters)
       }
     }
 
-    // 急停模式
+    // 停止模式
     else
     {
       chassis_mode_stop();
@@ -339,13 +341,13 @@ static void chassis_current_give()
   for (i = 0; i < 4; i++)
   {
     chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, chassis_speed_max);
-    motor_can2[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_can2[i].rotor_speed);
+    motor_bottom[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_bottom[i].rotor_speed);
   }
   // 在功率限制算法中，静止状态底盘锁不住，这时取消功率限制，保证发弹稳定性
   if (chassis[0].target_speed != 0 || chassis[1].target_speed != 0 || chassis[2].target_speed != 0 || chassis[3].target_speed != 0)
     Chassis_Power_Limit(4 * chassis_speed_max);
 
-  chassis_can2_cmd(motor_can2[0].set_current, motor_can2[1].set_current, motor_can2[2].set_current, motor_can2[3].set_current);
+  chassis_can2_cmd(motor_bottom[0].set_current, motor_bottom[1].set_current, motor_bottom[2].set_current, motor_bottom[3].set_current);
 }
 
 /**************************** CAN2发送信号 *****************************/
@@ -423,20 +425,20 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
   }
   else
   {
-    Chassis_pidout = (fabs(chassis[0].target_speed - motor_can2[0].rotor_speed) +
-                      fabs(chassis[1].target_speed - motor_can2[1].rotor_speed) +
-                      fabs(chassis[2].target_speed - motor_can2[2].rotor_speed) +
-                      fabs(chassis[3].target_speed - motor_can2[3].rotor_speed)); // fabs是求绝对值，这里获取了4个轮子的差值求和
+    Chassis_pidout = (fabs(chassis[0].target_speed - motor_bottom[0].rotor_speed) +
+                      fabs(chassis[1].target_speed - motor_bottom[1].rotor_speed) +
+                      fabs(chassis[2].target_speed - motor_bottom[2].rotor_speed) +
+                      fabs(chassis[3].target_speed - motor_bottom[3].rotor_speed)); // fabs是求绝对值，这里获取了4个轮子的差值求和
 
     //	Chassis_pidout_target = fabs(motor_speed_target[0]) + fabs(motor_speed_target[1]) + fabs(motor_speed_target[2]) + fabs(motor_speed_target[3]);
 
     /*期望滞后占比环，增益个体加速度*/
     if (Chassis_pidout)
     {
-      Scaling1 = (chassis[0].target_speed - motor_can2[0].rotor_speed) / Chassis_pidout;
-      Scaling2 = (chassis[1].target_speed - motor_can2[1].rotor_speed) / Chassis_pidout;
-      Scaling3 = (chassis[2].target_speed - motor_can2[2].rotor_speed) / Chassis_pidout;
-      Scaling4 = (chassis[3].target_speed - motor_can2[3].rotor_speed) / Chassis_pidout; // 求比例，4个scaling求和为1
+      Scaling1 = (chassis[0].target_speed - motor_bottom[0].rotor_speed) / Chassis_pidout;
+      Scaling2 = (chassis[1].target_speed - motor_bottom[1].rotor_speed) / Chassis_pidout;
+      Scaling3 = (chassis[2].target_speed - motor_bottom[2].rotor_speed) / Chassis_pidout;
+      Scaling4 = (chassis[3].target_speed - motor_bottom[3].rotor_speed) / Chassis_pidout; // 求比例，4个scaling求和为1
     }
     else
     {
@@ -495,10 +497,10 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
       //   Plimit = 0.5;
     }
 
-    motor_can2[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
-    motor_can2[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
-    motor_can2[2].set_current = Scaling3 * (Chassis_pidout_max * Klimit) * Plimit;
-    motor_can2[3].set_current = Scaling4 * (Chassis_pidout_max * Klimit) * Plimit; /*同比缩放电流*/
+    motor_bottom[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
+    motor_bottom[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
+    motor_bottom[2].set_current = Scaling3 * (Chassis_pidout_max * Klimit) * Plimit;
+    motor_bottom[3].set_current = Scaling4 * (Chassis_pidout_max * Klimit) * Plimit; /*同比缩放电流*/
   }
 }
 

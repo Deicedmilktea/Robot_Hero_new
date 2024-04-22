@@ -338,6 +338,9 @@
             "path": "../Module/remote/remote_control.c"
           },
           {
+            "path": "../Module/Video/video_control.c"
+          },
+          {
             "path": "../User/AlgorithmLayer/pid.c"
           },
           {
@@ -571,7 +574,8 @@
           "../Bsp/usart",
           "../Bsp/usb",
           "../Module/imu",
-          "../Module/remote"
+          "../Module/remote",
+          "../Module/Video"
         ],
         "libList": [],
         "sourceDirList": [],
