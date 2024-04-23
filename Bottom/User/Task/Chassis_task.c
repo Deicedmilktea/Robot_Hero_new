@@ -13,6 +13,8 @@
 #include "drv_can.h"
 #include "remote_control.h"
 #include "Robot.h"
+#include "referee_task.h"
+#include "remote_control.h"
 
 #define CHASSIS_SPEED_MAX_1 5000
 #define CHASSIS_SPEED_MAX_2 5500
@@ -44,17 +46,23 @@ static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz_acw, key_W
 static float imu_err_yaw = 0;                                                         // 记录yaw飘移的数值便于进行校正
 static int16_t chassis_speed_max = 0;
 static int16_t chassis_wz_max = 4000;
-static uint8_t cycle = 0; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
+static uint8_t cycle = 0;                  // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
+static RC_ctrl_t *rc_data;                 // 遥控器数据,初始化时返回
+static referee_info_t *referee_data;       // 用于获取裁判系统的数据
+static Referee_Interactive_info_t ui_data; // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
 
 extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
 extern INS_t INS_top;
-extern float Hero_chassis_power;
-extern uint16_t Hero_chassis_power_buffer;
+// extern float Hero_chassis_power;
+// extern uint16_t Hero_chassis_power_buffer;
+// extern uint8_t Hero_level;
+float Hero_chassis_power;
+uint16_t Hero_chassis_power_buffer;
+uint8_t Hero_level;
 extern int superop; // 超电
 extern uint8_t rx_buffer_c[49];
 extern uint8_t rx_buffer_d[128];
-extern uint8_t Hero_level;
 extern float powerdata[4];
 extern CAN_HandleTypeDef hcan2;
 
@@ -186,6 +194,9 @@ void Chassis_task(void const *pvParameters)
 
 static void Chassis_loop_Init()
 {
+  rc_data = RemoteControlInit(&huart3);         // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
+  referee_data = UITaskInit(&huart6, &ui_data); // 裁判系统初始化,会同时初始化UI
+
   for (uint8_t i = 0; i < 4; i++)
   {
     chassis[i].pid_value[0] = 30;

@@ -15,126 +15,73 @@
         "folders": []
       },
       {
-        "name": "Application",
+        "name": "Bsp",
         "files": [],
         "folders": [
           {
-            "name": "Applications",
-            "files": [],
-            "folders": []
-          },
-          {
-            "name": "Bsp",
-            "files": [],
-            "folders": [
-              {
-                "name": "dwt",
-                "files": [
-                  {
-                    "path": "../Bsp/dwt/bsp_dwt.c"
-                  }
-                ],
-                "folders": []
-              },
-              {
-                "name": "pwm",
-                "files": [
-                  {
-                    "path": "../Bsp/pwm/bsp_PWM.c"
-                  }
-                ],
-                "folders": []
-              },
-              {
-                "name": "usart",
-                "files": [
-                  {
-                    "path": "../Bsp/usart/bsp_usart.c"
-                  }
-                ],
-                "folders": []
-              }
-            ]
-          },
-          {
-            "name": "Components",
+            "name": "can",
             "files": [
               {
-                "path": "../Components/Algorithm/QuaternionEKF.c"
-              },
-              {
-                "path": "../Components/Controller/controller.c"
-              },
-              {
-                "path": "../Components/Devices/BMI088driver.c"
-              },
-              {
-                "path": "../Components/Devices/BMI088Middleware.c"
-              },
-              {
-                "path": "../Components/kalman_filter.c"
-              },
-              {
-                "path": "../Components/user_lib.c"
+                "path": "../User/DriverLayer/drv_can.c"
               }
             ],
             "folders": []
           },
           {
-            "name": "MDK-ARM",
+            "name": "dwt",
             "files": [
               {
-                "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
-              },
-              {
-                "path": "startup_stm32f407xx.s"
+                "path": "../Bsp/dwt/bsp_dwt.c"
               }
             ],
             "folders": []
           },
           {
-            "name": "User",
+            "name": "pwm",
             "files": [
               {
-                "path": "../Src/can.c"
-              },
+                "path": "../Bsp/pwm/bsp_PWM.c"
+              }
+            ],
+            "folders": []
+          },
+          {
+            "name": "usart",
+            "files": [
               {
-                "path": "../Src/dma.c"
-              },
-              {
-                "path": "../Src/freertos.c"
-              },
-              {
-                "path": "../Src/gpio.c"
-              },
-              {
-                "path": "../Src/i2c.c"
-              },
-              {
-                "path": "../Src/main.c"
-              },
-              {
-                "path": "../Src/spi.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_hal_msp.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_hal_timebase_tim.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_it.c"
-              },
-              {
-                "path": "../Src/tim.c"
-              },
-              {
-                "path": "../Src/usart.c"
+                "path": "../Bsp/usart/bsp_usart.c"
               }
             ],
             "folders": []
           }
         ]
+      },
+      {
+        "name": "Components",
+        "files": [
+          {
+            "path": "../Components/Algorithm/QuaternionEKF.c"
+          },
+          {
+            "path": "../Components/Controller/controller.c"
+          },
+          {
+            "path": "../Components/Devices/BMI088driver.c"
+          },
+          {
+            "path": "../Components/Devices/BMI088Middleware.c"
+          },
+          {
+            "path": "../Components/kalman_filter.c"
+          },
+          {
+            "path": "../Components/user_lib.c"
+          },
+          {
+            "path": "../User/AlgorithmLayer/pid.c"
+          }
+        ],
+        "folders": []
       },
       {
         "name": "Drivers",
@@ -218,6 +165,18 @@
         ]
       },
       {
+        "name": "MDK-ARM",
+        "files": [
+          {
+            "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
+          },
+          {
+            "path": "startup_stm32f407xx.s"
+          }
+        ],
+        "folders": []
+      },
+      {
         "name": "Middlewares",
         "files": [],
         "folders": [
@@ -273,24 +232,28 @@
           },
           {
             "path": "../Module/Video/video_control.c"
-          },
-          {
-            "path": "../User/AlgorithmLayer/CRC.c"
-          },
-          {
-            "path": "../User/AlgorithmLayer/pid.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_can.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_usart.c"
-          },
-          {
-            "path": "../User/PotocaLayer/judge.c"
           }
         ],
-        "folders": []
+        "folders": [
+          {
+            "name": "referee",
+            "files": [
+              {
+                "path": "../Module/referee/crc_ref.c"
+              },
+              {
+                "path": "../Module/referee/referee_task.c"
+              },
+              {
+                "path": "../Module/referee/referee_UI.c"
+              },
+              {
+                "path": "../Module/referee/rm_referee.c"
+              }
+            ],
+            "folders": []
+          }
+        ]
       },
       {
         "name": "RTOS TASK",
@@ -302,6 +265,9 @@
             "path": "../User/Task/exchange.c"
           },
           {
+            "path": "../User/Task/Robot.c"
+          },
+          {
             "path": "../User/Task/Shoot_task.c"
           },
           {
@@ -309,6 +275,48 @@
           },
           {
             "path": "../User/Task/UI_task.c"
+          }
+        ],
+        "folders": []
+      },
+      {
+        "name": "User",
+        "files": [
+          {
+            "path": "../Src/can.c"
+          },
+          {
+            "path": "../Src/dma.c"
+          },
+          {
+            "path": "../Src/freertos.c"
+          },
+          {
+            "path": "../Src/gpio.c"
+          },
+          {
+            "path": "../Src/i2c.c"
+          },
+          {
+            "path": "../Src/main.c"
+          },
+          {
+            "path": "../Src/spi.c"
+          },
+          {
+            "path": "../Src/stm32f4xx_hal_msp.c"
+          },
+          {
+            "path": "../Src/stm32f4xx_hal_timebase_tim.c"
+          },
+          {
+            "path": "../Src/stm32f4xx_it.c"
+          },
+          {
+            "path": "../Src/tim.c"
+          },
+          {
+            "path": "../Src/usart.c"
           }
         ],
         "folders": []
@@ -325,7 +333,11 @@
     "C_Board_Standard_Robot": {
       "excludeList": [
         "<virtual_root>/RTOS TASK/EXCHANGE.c",
-        "<virtual_root>/USER/rc_potocal.c"
+        "<virtual_root>/USER/rc_potocal.c",
+        "<virtual_root>/Module/judge.c",
+        "<virtual_root>/Module/drv_usart.c",
+        "<virtual_root>/Module/CRC.c",
+        "<virtual_root>/RTOS TASK/UI_task.c"
       ],
       "toolchain": "AC5",
       "compileConfig": {
@@ -506,7 +518,8 @@
           "../Module/remote",
           "../Bsp/usart",
           "../Module/daemon",
-          "../Module/Video"
+          "../Module/Video",
+          "../Module/referee"
         ],
         "libList": [],
         "sourceDirList": [],

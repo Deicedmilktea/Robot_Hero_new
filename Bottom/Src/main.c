@@ -30,8 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "INS_task.h"
-#include "drv_can.h"
-#include "drv_usart.h"
+#include "Robot.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -110,13 +109,11 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
+  Robot_init();
   HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
   HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
-  //	HAL_NVIC_SetPriority(SysTick_IRQn,1,1);
   CAN1_Init();
   CAN2_Init();
-  USART6_Init();
-  USART3_Init();
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim6); // 测试发弹速度
   // 开启USART1接收中断

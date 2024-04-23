@@ -150,8 +150,8 @@ void MX_FREERTOS_Init(void)
   osThreadDef(SupercapTask, Supercap_task, osPriorityNormal, 0, 128);
   SupercapTaskHandle = osThreadCreate(osThread(SupercapTask), NULL);
 
-  osThreadDef(UITask, UI_task, osPriorityNormal, 0, 128);
-  SupercapTaskHandle = osThreadCreate(osThread(UITask), NULL);
+  // osThreadDef(UITask, UI_task, osPriorityNormal, 0, 128);
+  // SupercapTaskHandle = osThreadCreate(osThread(UITask), NULL);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 }
