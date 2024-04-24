@@ -5,6 +5,7 @@
 #include "crc_ref.h"
 #include "referee_protocol.h"
 #include "drv_can.h"
+#include "stdbool.h"
 
 #define RE_RX_BUFFER_SIZE 255u // 裁判系统接收缓冲区大小
 
@@ -14,6 +15,9 @@ static uint8_t send_buff[8]; // 发送数据缓冲区
 // 图传拥有的串口实例,因为图传是单例,所以这里只有一个,就不封装了
 static USART_Instance *video_usart_instance;
 static DaemonInstance *video_daemon_instance;
+
+extern bool vision_is_tracking;
+extern uint8_t friction_flag;
 
 static void VideoDataContorl()
 {
@@ -86,6 +90,8 @@ static void VideoRead(uint8_t *buff)
                     can_remote(send_buff, 0x33);
 
                     memcpy(send_buff, buff + DATA_Offset + 8, 4);
+                    send_buff[4] = (uint8_t)vision_is_tracking;
+                    send_buff[5] = friction_flag;
                     can_remote(send_buff, 0x34);
 
                     *(uint16_t *)&video_ctrl[TEMP].key[KEY_PRESS] = video_ctrl[TEMP].key_data.keyboard_value;

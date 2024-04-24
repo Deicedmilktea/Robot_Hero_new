@@ -72,19 +72,19 @@ void Gimbal_task(void const *pvParameters)
 		}
 #endif
 
-#ifdef VIDEO_CONTROL
-		// 视觉控制
-		if (video_ctrl[TEMP].key_data.right_button_down == 1) // 按住右键
-		{
-			gimbal_mode_vision();
-		}
+		// #ifdef VIDEO_CONTROL
+		// 		// 视觉控制
+		// 		if (video_ctrl[TEMP].key_data.right_button_down == 1) // 按住右键
+		// 		{
+		// 			gimbal_mode_vision();
+		// 		}
 
-		// 锁yaw模式
-		else // 左拨杆中或下
-		{
-			gimbal_mode_normal();
-		}
-#endif
+		// 		// 锁yaw模式
+		// 		else // 左拨杆中或下
+		// 		{
+		// 			gimbal_mode_normal();
+		// 		}
+		// #endif
 
 		osDelay(1);
 	}

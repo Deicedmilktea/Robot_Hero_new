@@ -24,6 +24,11 @@ static USART_Instance *referee_usart_instance; // 裁判系统串口实例
 static DaemonInstance *referee_daemon;		   // 裁判系统守护进程
 static referee_info_t referee_info;			   // 裁判系统数据
 
+referee_hero_t referee_hero; // 裁判系统英雄机器人数据
+
+// 读取裁判系统数据到结构体
+static void judge_read();
+
 /**
  * @brief  读取裁判数据,中断中读取保证速度
  * @param  buff: 读取到的裁判系统原始数据
@@ -124,6 +129,7 @@ static void RefereeRxCallback()
 {
 	DaemonReload(referee_daemon);
 	JudgeReadData(referee_usart_instance->recv_buff);
+	judge_read();
 }
 
 // 裁判系统丢失回调函数,重新初始化裁判系统串口
@@ -164,4 +170,13 @@ void RefereeSend(uint8_t *send, uint16_t tx_len)
 {
 	USARTSend(referee_usart_instance, send, tx_len, USART_TRANSFER_DMA);
 	osDelay(115);
+}
+
+// 读取裁判系统数据到结构体
+static void judge_read()
+{
+	referee_hero.robot_level = referee_info.GameRobotState.robot_level;
+	referee_hero.chassis_power_limit = referee_info.GameRobotState.chassis_power_limit;
+	referee_hero.chassis_power = referee_info.PowerHeatData.chassis_power;
+	referee_hero.buffer_energy = referee_info.PowerHeatData.buffer_energy;
 }

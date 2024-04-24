@@ -2,12 +2,11 @@
 #include "Supercap_task.h"
 #include "usart.h"
 #include "string.h"
+#include "rm_referee.h"
 
 extern UART_HandleTypeDef huart1;
 extern CAN_HandleTypeDef hcan2;
-extern uint16_t Hero_chassis_power_limit;
-extern uint16_t Hero_chassis_power_buffer;
-extern uint8_t Hero_level;
+extern referee_hero_t referee_hero;
 
 static void supercap_can_transmit(int16_t poooower);
 
@@ -47,55 +46,55 @@ void Supercap_task(void const *argument)
 
 		// osDelay(10);
 
-		switch (Hero_level)
+		switch (referee_hero.robot_level)
 		{
 		case 1:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(5500);
 			else
 				supercap_can_transmit(6500);
 		case 2:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(6000);
 			else
 				supercap_can_transmit(7000);
 		case 3:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(6500);
 			else
 				supercap_can_transmit(7500);
 		case 4:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(7000);
 			else
 				supercap_can_transmit(8000);
 		case 5:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(7500);
 			else
 				supercap_can_transmit(9000);
 		case 6:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(8000);
 			else
 				supercap_can_transmit(9500);
 		case 7:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(8500);
 			else
 				supercap_can_transmit(10500);
 		case 8:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(9000);
 			else
 				supercap_can_transmit(11000);
 		case 9:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(10000);
 			else
 				supercap_can_transmit(13000);
 		case 10:
-			if (Hero_chassis_power_buffer < 10)
+			if (referee_hero.buffer_energy < 10)
 				supercap_can_transmit(12000);
 			else
 				supercap_can_transmit(13000);

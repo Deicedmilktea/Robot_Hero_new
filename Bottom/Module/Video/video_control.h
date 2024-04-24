@@ -5,27 +5,9 @@
 #include "main.h"
 #include "usart.h"
 #include "remote_control.h"
+#include "referee_protocol.h"
 
 #pragma pack(1)
-
-typedef struct
-{
-    uint8_t SOF;
-    uint16_t DataLength;
-    uint8_t Seq;
-    uint8_t CRC8;
-} xFrameHeader;
-
-typedef struct
-{
-    int16_t mouse_x;
-    int16_t mouse_y;
-    int16_t mouse_z;
-    uint8_t left_button_down;
-    uint8_t right_button_down;
-    uint16_t keyboard_value;
-    uint16_t reserved;
-} remote_control_t;
 
 typedef struct
 {

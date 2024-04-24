@@ -57,6 +57,7 @@
 osThreadId myTask02Handle;
 osThreadId SupercapTaskHandle;
 osThreadId UITaskHandle;
+osThreadId exchangeHandle;
 /* USER CODE END Variables */
 osThreadId INSTaskHandle;
 osThreadId ChassisTaskHandle;
@@ -66,6 +67,7 @@ osThreadId ShootTaskHandle;
 /* USER CODE BEGIN FunctionPrototypes */
 void Supercap_task(void const *argument);
 void UI_task(void const *argument);
+void exchange_task(void const *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartINSTask(void const *argument);
@@ -152,6 +154,9 @@ void MX_FREERTOS_Init(void)
 
   // osThreadDef(UITask, UI_task, osPriorityNormal, 0, 128);
   // SupercapTaskHandle = osThreadCreate(osThread(UITask), NULL);
+
+  osThreadDef(exchangeTask, exchange_task, osPriorityNormal, 0, 512);
+  exchangeHandle = osThreadCreate(osThread(exchangeTask), NULL);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 }

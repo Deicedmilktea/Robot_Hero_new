@@ -49,6 +49,14 @@ typedef struct
 
 } referee_info_t;
 
+typedef struct
+{
+	uint8_t robot_level;		  // 机器人等级
+	uint16_t chassis_power_limit; // 底盘功率上限
+	float chassis_power;		  // 底盘功率（单位：W）
+	uint16_t buffer_energy;		  // 缓冲能量（单位：J）
+} referee_hero_t;
+
 // 模式是否切换标志位，0为未切换，1为切换，static定义默认为0
 typedef struct
 {
@@ -58,6 +66,9 @@ typedef struct
 	uint32_t lid_flag : 1;
 	uint32_t friction_flag : 1;
 	uint32_t loader_flag : 1;
+	uint32_t supcap_flag : 1;
+	uint32_t top_flag : 1;
+	uint32_t pitch_flag : 1;
 	uint32_t Power_flag : 1;
 	uint32_t level_flag : 1;
 	uint32_t tracking_flag : 1;
@@ -71,12 +82,15 @@ typedef struct
 	chassis_mode_e chassis_mode;			 // 底盘模式
 	gimbal_mode_e gimbal_mode;				 // 云台模式
 	shoot_mode_e shoot_mode;				 // 发射模式设置
-	friction_mode_e friction_mode;			 // 摩擦轮关闭
+	friction_mode_e friction_mode;			 // 摩擦轮
 	lid_mode_e lid_mode;					 // 弹舱盖打开
 	loader_mode_e loader_mode;				 // 射频选择
+	supcap_mode_e supcap_mode;				 // 超级电容模式
+	top_mode_e top_mode;					 // 小陀螺转速模式
 	Chassis_Power_Data_s Chassis_Power_Data; // 功率控制
 	uint8_t level;							 // 等级显示
 	uint8_t is_tracking;					 // 视觉是否识别
+	float pitch;							 // 云台pitch角度
 
 	// 上一次的模式，用于flag判断
 	chassis_mode_e chassis_last_mode;
@@ -85,9 +99,12 @@ typedef struct
 	friction_mode_e friction_last_mode;
 	lid_mode_e lid_last_mode;
 	loader_mode_e loader_mode_last;
+	supcap_mode_e supcap_last_mode;
+	top_mode_e top_last_mode;
 	Chassis_Power_Data_s Chassis_last_Power_Data;
 	uint8_t level_last;
 	uint8_t is_tracking_last;
+	float pitch_last;
 
 } Referee_Interactive_info_t;
 

@@ -37,7 +37,8 @@
             "main.h": "c",
             "referee_task.h": "c",
             "robot.h": "c",
-            "stdint.h": "c"
+            "stdint.h": "c",
+            "rm_referee.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },

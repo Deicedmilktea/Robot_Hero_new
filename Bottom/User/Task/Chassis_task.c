@@ -15,6 +15,7 @@
 #include "Robot.h"
 #include "referee_task.h"
 #include "remote_control.h"
+#include "video_control.h"
 
 #define CHASSIS_SPEED_MAX_1 5000
 #define CHASSIS_SPEED_MAX_2 5500
@@ -44,22 +45,17 @@ static float relative_yaw = 0;
 static int yaw_correction_flag = 1;                                                   // yaw值校正标志
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz_acw, key_Wz_cw; // 键盘控制变量
 static float imu_err_yaw = 0;                                                         // 记录yaw飘移的数值便于进行校正
-static int16_t chassis_speed_max = 0;
-static int16_t chassis_wz_max = 4000;
-static uint8_t cycle = 0;                  // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
-static RC_ctrl_t *rc_data;                 // 遥控器数据,初始化时返回
-static referee_info_t *referee_data;       // 用于获取裁判系统的数据
-static Referee_Interactive_info_t ui_data; // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
+static int16_t chassis_speed_max = 0;                                                 // 底盘速度，不同等级对应不同速度
+static int16_t chassis_wz_max = 4000;                                                 // 小陀螺速度(两档切换)
+static uint8_t cycle = 0;                                                             // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
+static referee_info_t *referee_data;                                                  // 用于获取裁判系统的数据
+static Referee_Interactive_info_t ui_data;                                            // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
 
 extern RC_ctrl_t rc_ctrl[2];
+extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS;
 extern INS_t INS_top;
-// extern float Hero_chassis_power;
-// extern uint16_t Hero_chassis_power_buffer;
-// extern uint8_t Hero_level;
-float Hero_chassis_power;
-uint16_t Hero_chassis_power_buffer;
-uint8_t Hero_level;
+extern referee_hero_t referee_hero;
 extern int superop; // 超电
 extern uint8_t rx_buffer_c[49];
 extern uint8_t rx_buffer_d[128];
@@ -81,7 +77,7 @@ float data[6];
 float vi, vo, pi, ii, io, ps;
 
 // 读取键鼠数据控制底盘模式
-static void read_keyboard(void);
+static void read_keyboard();
 
 // 参数重置
 static void Chassis_loop_Init();
@@ -147,6 +143,7 @@ void Chassis_task(void const *pvParameters)
     // // 判断是否开启超电
     // supercap_judge();
 
+#ifdef REMOTE_CONTROL
     // 右拨杆下，遥控操作
     if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
     {
@@ -158,18 +155,17 @@ void Chassis_task(void const *pvParameters)
     {
       // 底盘模式读取
       read_keyboard();
+      key_control();
 
       // 底盘跟随云台模式，r键触发
       if (chassis_mode == 1)
       {
-        key_control();
         chassis_mode_follow();
       }
 
       // 正常运动模式，f键触发
       else if (chassis_mode == 2)
       {
-        key_control();
         manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
         chassis_mode_normal();
       }
@@ -185,8 +181,38 @@ void Chassis_task(void const *pvParameters)
     {
       chassis_mode_stop();
     }
+#endif
 
-    chassis_current_give();
+#ifdef VIDEO_CONTROL
+    // 底盘模式读取
+    read_keyboard();
+    key_control();
+
+    switch (ui_data.chassis_mode)
+    {
+    // 底盘跟随云台模式，r键触发
+    case CHASSIS_FOLLOW_GIMBAL_YAW:
+      chassis_mode_follow();
+      break;
+
+    // 正常运动模式，f键触发
+    case CHASSIS_NO_FOLLOW:
+      manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
+      chassis_mode_normal();
+      break;
+
+    // 停止模式
+    case CHASSIS_ZERO_FORCE:
+      chassis_mode_stop();
+      break;
+
+    default:
+      chassis_mode_stop();
+      break;
+    }
+#endif
+
+    // chassis_current_give();
     // datapy(); // 超电数据接收
     osDelay(1);
   }
@@ -194,7 +220,7 @@ void Chassis_task(void const *pvParameters)
 
 static void Chassis_loop_Init()
 {
-  rc_data = RemoteControlInit(&huart3);         // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
+  // rc_data = RemoteControlInit(&huart3);         // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
   referee_data = UITaskInit(&huart6, &ui_data); // 裁判系统初始化,会同时初始化UI
 
   for (uint8_t i = 0; i < 4; i++)
@@ -215,13 +241,16 @@ static void Chassis_loop_Init()
 }
 
 /****************************** 读取键鼠数据控制底盘模式 ****************************/
-static void read_keyboard(void)
+static void read_keyboard()
 {
+#ifdef REMOTE_CONTROL
   // F键控制底盘模式
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 2 == 1)
-    chassis_mode = 2; // 因为默认为1，这里保证第一次按下就能切换
+  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 1)
+    ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
+  else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 2)
+    ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
   else
-    chassis_mode = 1;
+    ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
 
   // C键控制超级电容
   if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
@@ -234,6 +263,29 @@ static void read_keyboard(void)
     chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
   else
     chassis_wz_max = CHASSIS_WZ_MAX_1;
+#endif
+
+#ifdef VIDEO_CONTROL
+  // F键控制底盘模式
+  if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 0)
+    ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
+  else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 3 == 1)
+    ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+  else
+    ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
+
+  // C键控制超级电容
+  if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 0)
+    supercap_flag = 0;
+  else
+    supercap_flag = 1;
+
+  // R键控制底盘小陀螺速度
+  if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
+    chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
+  else
+    chassis_wz_max = CHASSIS_WZ_MAX_1;
+#endif
 }
 
 /*************************************** 正常运动模式 ************************************/
@@ -421,8 +473,8 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
 {
   // 819.2/A，假设最大功率为120W，那么能够通过的最大电流为5A，取一个保守值：800.0 * 5 = 4000
   Watch_Power_Max = Klimit;
-  Watch_Power = Hero_chassis_power;
-  Watch_Buffer = Hero_chassis_power_buffer; // 限制值，功率值，缓冲能量值，初始值是1，0，0
+  Watch_Power = referee_hero.chassis_power;
+  Watch_Buffer = referee_hero.buffer_energy; // 限制值，功率值，缓冲能量值，初始值是1，0，0
   // get_chassis_power_and_buffer(&Power, &Power_Buffer, &Power_Max);//通过裁判系统和编码器值获取（限制值，实时功率，实时缓冲能量）
 
   Chassis_pidout_max = 32768; // 32768，40，960			15384 * 4，取了4个3508电机最大电流的一个保守值
@@ -537,6 +589,7 @@ static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_
 
 static void key_control(void)
 {
+#ifdef REMOTE_CONTROL
   if (rc_ctrl[TEMP].key[KEY_PRESS].d)
     key_x_fast += KEY_START_OFFSET;
   else
@@ -568,6 +621,41 @@ static void key_control(void)
     key_Wz_cw -= KEY_START_OFFSET;
   else
     key_Wz_cw += KEY_STOP_OFFSET;
+#endif
+
+#ifdef VIDEO_CONTROL
+  if (video_ctrl[TEMP].key[KEY_PRESS].d)
+    key_x_fast += KEY_START_OFFSET;
+  else
+    key_x_fast -= KEY_STOP_OFFSET;
+
+  if (video_ctrl[TEMP].key[KEY_PRESS].a)
+    key_x_slow += KEY_START_OFFSET;
+  else
+    key_x_slow -= KEY_STOP_OFFSET;
+
+  if (video_ctrl[TEMP].key[KEY_PRESS].w)
+    key_y_fast += KEY_START_OFFSET;
+  else
+    key_y_fast -= KEY_STOP_OFFSET;
+
+  if (video_ctrl[TEMP].key[KEY_PRESS].s)
+    key_y_slow += KEY_START_OFFSET;
+  else
+    key_y_slow -= KEY_STOP_OFFSET;
+
+  // 正转
+  if (video_ctrl[TEMP].key[KEY_PRESS].shift)
+    key_Wz_acw += KEY_START_OFFSET;
+  else
+    key_Wz_acw -= KEY_STOP_OFFSET;
+
+  // 反转
+  if (video_ctrl[TEMP].key[KEY_PRESS].ctrl)
+    key_Wz_cw -= KEY_START_OFFSET;
+  else
+    key_Wz_cw += KEY_STOP_OFFSET;
+#endif
 
   if (key_x_fast > chassis_speed_max)
     key_x_fast = chassis_speed_max;
@@ -642,9 +730,9 @@ static void datapy()
 // 判断机器人等级，赋值最大速度
 static void level_judge()
 {
-  if (Hero_level)
+  if (referee_hero.robot_level != 0)
   {
-    switch (Hero_level)
+    switch (referee_hero.robot_level)
     {
     case 1:
       if (!supercap_flag)

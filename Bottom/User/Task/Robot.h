@@ -4,8 +4,8 @@
 #include "stdio.h"
 #include "stdint.h"
 
-// #define REMOTE_CONTROL
-#define VIDEO_CONTROL
+#define REMOTE_CONTROL
+// #define VIDEO_CONTROL
 
 typedef struct
 {

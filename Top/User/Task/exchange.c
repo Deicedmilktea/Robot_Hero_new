@@ -5,6 +5,7 @@
 #include "miniPC_process.h"
 #include "remote_control.h"
 #include "video_control.h"
+#include "Robot.h"
 
 extern INS_t INS;
 

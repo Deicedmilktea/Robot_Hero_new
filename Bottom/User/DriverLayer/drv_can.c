@@ -16,6 +16,8 @@ INS_t INS_top;
 float powerdata[4];
 uint16_t pPowerdata[8];
 uint16_t setpower = 5500;
+uint8_t vision_is_tracking;
+uint8_t friction_mode;
 
 static uint8_t sbus_buf[18u]; // 遥控器接收的buffer
 static uint8_t video_buf[12]; // 图传接收的buffer
@@ -87,6 +89,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       sbus_to_rc(sbus_buf);
       // memcpy(&INS_top.Yaw, rx_data + 2, 2);
       INS_top.Yaw = ((rx_data[2] << 8) | rx_data[3]) / 100.0f;
+      vision_is_tracking = rx_data[4];
+      friction_mode = rx_data[5];
     }
 #endif
 
@@ -100,6 +104,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     {
       memcpy(video_buf + 8, rx_data, 4);
       VideoRead(video_buf);
+      vision_is_tracking = rx_data[4];
+      friction_mode = rx_data[5];
     }
 #endif
   }
@@ -149,6 +155,9 @@ void can_remote(uint8_t sbus_buf[], uint8_t can_send_id) // 调用can来发送�
   tx_header.IDE = CAN_ID_STD;    // 标准帧
   tx_header.RTR = CAN_RTR_DATA;  // 数据帧
   tx_header.DLC = 8;             // 发送数据长度（字节）
+  while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) == 0)
+  {
+  }
 
   HAL_CAN_AddTxMessage(&hcan1, &tx_header, sbus_buf, (uint32_t *)CAN_TX_MAILBOX0);
 }

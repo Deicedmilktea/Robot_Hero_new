@@ -6,11 +6,14 @@
 #include "daemon.h"
 #include "ins_task.h"
 #include "Robot.h"
+#include "stdbool.h"
 
 #define REMOTE_CONTROL_FRAME_SIZE 18u // 遥控器接收的buffer大小
 
 // 引用全局变量
 extern INS_t INS;
+extern bool vision_is_tracking;
+extern uint8_t friction_flag;
 
 static float yaw = 0; // 用于接收yaw的值
 
@@ -81,8 +84,8 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
 
     temp_remote[2] = ((int16_t)yaw >> 8) & 0xff;
     temp_remote[3] = (int16_t)yaw & 0xff;
-    temp_remote[4] = 0;
-    temp_remote[5] = 0;
+    temp_remote[4] = (uint8_t)vision_is_tracking;
+    temp_remote[5] = friction_flag;
     temp_remote[6] = 0;
     temp_remote[7] = 0;
 

@@ -99,13 +99,15 @@ typedef enum
 // 发射模式设置
 typedef enum
 {
-    SHOOT_OFF = 0,
-    SHOOT_ON,
+    SHOOT_NORMAL = 0,
+    SHOOT_BUFF, // 爆破发射
 } shoot_mode_e;
+
 typedef enum
 {
-    FRICTION_OFF = 0, // 摩擦轮关闭
-    FRICTION_ON,      // 摩擦轮开启
+    FRICTION_1, // 摩擦轮1档
+    FRICTION_2,
+    FRICTION_3,
 } friction_mode_e;
 
 typedef enum
@@ -128,6 +130,18 @@ typedef struct
 { // 功率控制
     float chassis_power_mx;
 } Chassis_Power_Data_s;
+
+typedef enum
+{
+    SUPCAP_OFF = 0,
+    SUPCAP_ON,
+} supcap_mode_e;
+
+typedef enum
+{
+    TOP_LOW = 0,
+    TOP_HIGH,
+} top_mode_e;
 
 /* ----------------CMD应用发布的控制数据,应当由gimbal/chassis/shoot订阅---------------- */
 /**

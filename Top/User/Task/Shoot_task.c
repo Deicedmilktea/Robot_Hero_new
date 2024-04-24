@@ -19,8 +19,9 @@
 
 motor_info_t motor_top[6]; //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
 
-static shoot_t shoot_motor[4];    // 摩擦轮can2，id = 56
-static uint8_t friction_flag = 0; // 开启摩擦轮的标志
+static shoot_t shoot_motor[4]; // 摩擦轮can2，id = 56
+
+uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
@@ -83,7 +84,7 @@ void Shoot_task(void const *argument)
     lens_judge();
 #endif
 
-    shoot_current_give();
+    // shoot_current_give();
     osDelay(1);
   }
 }
@@ -159,11 +160,12 @@ static void lens_judge()
 static void read_keyboard()
 {
   // 开启摩擦轮
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
-    friction_flag = 1;
-  // 关闭摩擦轮
+  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 3 == 0)
+    friction_flag = 1; // normal
+  else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 3 == 1)
+    friction_flag = 2; // high
   else
-    friction_flag = 0;
+    friction_flag = 0; // low
 }
 
 /********************************摩擦轮can2发送电流***************************/

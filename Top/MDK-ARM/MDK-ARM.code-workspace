@@ -39,7 +39,8 @@
             "controller.h": "c",
             "remote_control.h": "c",
             "main.h": "c",
-            "robot.h": "c"
+            "robot.h": "c",
+            "stdbool.h": "c"
         }
     },
     "extensions": {}

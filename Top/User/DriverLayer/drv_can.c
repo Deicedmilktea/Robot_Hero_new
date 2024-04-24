@@ -108,6 +108,9 @@ void can_remote(uint8_t sbus_buf[], uint32_t can_send_id) // 调用can来发送�
   tx_header.IDE = CAN_ID_STD;    // 标准帧
   tx_header.RTR = CAN_RTR_DATA;  // 数据帧
   tx_header.DLC = 8;             // 发送数据长度（字节）
+  while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) == 0)
+  {
+  }
 
   HAL_CAN_AddTxMessage(&hcan1, &tx_header, sbus_buf, (uint32_t *)CAN_TX_MAILBOX0);
 }
