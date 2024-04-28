@@ -61,6 +61,8 @@ extern uint8_t rx_buffer_c[49];
 extern uint8_t rx_buffer_d[128];
 extern float powerdata[4];
 extern CAN_HandleTypeDef hcan2;
+extern uint8_t trigger_flag;
+extern uint8_t friction_mode;
 
 // 功率限制算法的变量定义
 float Watch_Power_Max;                                                // 限制值
@@ -254,15 +256,47 @@ static void read_keyboard()
 
   // C键控制超级电容
   if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+  {
     supercap_flag = 1;
+    ui_data.supcap_mode = SUPCAP_ON;
+  }
   else
+  {
     supercap_flag = 0;
+    ui_data.supcap_mode = SUPCAP_OFF;
+  }
 
   // R键控制底盘小陀螺速度
   if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
+  {
     chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
+    ui_data.top_mode = TOP_HIGH;
+  }
   else
+  {
     chassis_wz_max = CHASSIS_WZ_MAX_1;
+    ui_data.top_mode = TOP_LOW;
+  }
+
+  // Q键切换发射模式，单发和爆破
+  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+    ui_data.shoot_mode = SHOOT_BUFF;
+  else
+    ui_data.shoot_mode = SHOOT_NORMAL;
+
+  // E键切换摩擦轮速度，012分别为low，normal，high
+  switch (friction_mode)
+  {
+  case 0:
+    ui_data.friction_mode = FRICTION_LOW;
+    break;
+  case 1:
+    ui_data.friction_mode = FRICTION_NORMAL;
+    break;
+  case 2:
+    ui_data.friction_mode = FRICTION_HIGH;
+    break;
+  }
 #endif
 
 #ifdef VIDEO_CONTROL

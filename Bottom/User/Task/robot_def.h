@@ -105,9 +105,9 @@ typedef enum
 
 typedef enum
 {
-    FRICTION_1, // 摩擦轮1档
-    FRICTION_2,
-    FRICTION_3,
+    FRICTION_LOW, // 摩擦轮1档
+    FRICTION_NORMAL,
+    FRICTION_HIGH,
 } friction_mode_e;
 
 typedef enum

@@ -14,12 +14,15 @@
 #include "video_control.h"
 
 #define FRICTION_MAX_SPEED 20000
-#define FRICTION_SPEED 6200
+#define FRICTION_SPEED_NORMAL 6200
+#define FRICTION_SPEED_LOW 6000
+#define FRICTION_SPEED_HIGH 6500
 #define FRICTION_LENS_SPEED 1000
 
 motor_info_t motor_top[6]; //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
 
 static shoot_t shoot_motor[4]; // 摩擦轮can2，id = 56
+static int16_t friction_speed = 0;
 
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 
@@ -28,6 +31,9 @@ extern RC_ctrl_t rc_ctrl[2];
 
 // 初始化
 static void shoot_loop_init();
+
+// 读取摩擦轮速度
+static void read_keyboard();
 
 // 左右摩擦轮开启模式
 static void shoot_start_lr();
@@ -56,6 +62,7 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+    read_keyboard();
 #ifdef REMOTE_CONTROL
     // 右拨杆中，键鼠控制
     if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
@@ -125,19 +132,40 @@ static void shoot_loop_init()
   pid_init(&shoot_motor[3].pid, shoot_motor[3].pid_value, 1000, FRICTION_MAX_SPEED); // lens
 }
 
+// 读取摩擦轮速度
+static void read_keyboard()
+{
+  // E键切换摩擦轮速度
+  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 1)
+  {
+    friction_speed = FRICTION_SPEED_LOW;
+    friction_flag = 0;
+  }
+  else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 2)
+  {
+    friction_speed = FRICTION_SPEED_HIGH;
+    friction_flag = 2;
+  }
+  else
+  {
+    friction_speed = FRICTION_SPEED_NORMAL;
+    friction_flag = 1;
+  }
+}
+
 /*************** 左右摩擦轮开启模式 *****************/
 static void shoot_start_lr()
 {
-  shoot_motor[0].target_speed = FRICTION_SPEED;
-  shoot_motor[1].target_speed = -FRICTION_SPEED;
+  shoot_motor[0].target_speed = friction_speed;
+  shoot_motor[1].target_speed = -friction_speed;
   shoot_motor[2].target_speed = 0;
 }
 
 /**************** 三摩擦轮开启模式 *****************/
 static void shoot_start_all()
 {
-  shoot_motor[0].target_speed = FRICTION_SPEED;
-  shoot_motor[1].target_speed = -FRICTION_SPEED;
+  shoot_motor[0].target_speed = friction_speed;
+  shoot_motor[1].target_speed = -friction_speed;
   shoot_motor[2].target_speed = -FRICTION_LENS_SPEED;
 }
 
@@ -154,18 +182,6 @@ static void lens_judge()
 {
   if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 2 == 1)
     return;
-}
-
-/*************** 读取键鼠是否开启摩擦轮 **************/
-static void read_keyboard()
-{
-  // 开启摩擦轮
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 3 == 0)
-    friction_flag = 1; // normal
-  else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 3 == 1)
-    friction_flag = 2; // high
-  else
-    friction_flag = 0; // low
 }
 
 /********************************摩擦轮can2发送电流***************************/

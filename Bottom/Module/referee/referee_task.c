@@ -90,108 +90,51 @@ void MyUIInit()
     UIGraphRefresh(&referee_recv_info->referee_id, 5, UI_shoot_line[0], UI_shoot_line[1], UI_shoot_line[2], UI_shoot_line[3], UI_shoot_line[4]);
 
     // 绘制车辆状态标志指示
-    UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 8, UI_Color_Main, 15, 2, 150, 750, "chassis:"); // 底盘模式
+    UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 8, UI_Color_Main, 25, 4, 150, 750, "chassis-f:"); // 底盘模式
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[0]);
-    UICharDraw(&UI_State_sta[1], "ss1", UI_Graph_ADD, 8, UI_Color_Yellow, 15, 2, 150, 700, "supcap:"); // 超电开关
+    UICharDraw(&UI_State_sta[1], "ss1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 150, 700, "supcap-c:"); // 超电开关
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[1]);
-    UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 8, UI_Color_Orange, 15, 2, 150, 650, "frict:"); // 摩擦轮转速
+    UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 8, UI_Color_Orange, 25, 4, 150, 650, "frict-e:"); // 摩擦轮转速
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[2]);
-    UICharDraw(&UI_State_sta[3], "ss3", UI_Graph_ADD, 8, UI_Color_Pink, 15, 2, 150, 600, "shoot:"); // 拨盘模式
+    UICharDraw(&UI_State_sta[3], "ss3", UI_Graph_ADD, 8, UI_Color_Pink, 25, 4, 150, 600, "shoot-q:"); // 拨盘模式
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[3]);
-    UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 8, UI_Color_Pink, 15, 2, 150, 550, "top:"); // 小陀螺转速
+    UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 8, UI_Color_Pink, 25, 4, 150, 550, "top-r:"); // 小陀螺转速
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[4]);
 
     // 绘制车辆状态标志，动态
     // 由于初始化时xxx_last_mode默认为0，所以此处对应UI也应该设为0时对应的UI，防止模式不变的情况下无法置位flag，导致UI无法刷新
-    UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_ADD, 8, UI_Color_Main, 15, 2, 270, 750, "stop");
+    UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_ADD, 8, UI_Color_Main, 25, 4, 390, 750, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[0]);
-    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 15, 2, 270, 700, "off");
+    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "off");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
-    UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Orange, 15, 2, 270, 650, "normal");
+    UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Orange, 25, 4, 340, 650, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
-    UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_ADD, 8, UI_Color_Pink, 15, 2, 270, 600, "normal");
+    UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_ADD, 8, UI_Color_Pink, 25, 4, 340, 600, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
-    UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_ADD, 8, UI_Color_Pink, 15, 2, 270, 550, "low");
+    UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_ADD, 8, UI_Color_Pink, 25, 4, 290, 550, "low");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[4]);
 
     // 底盘功率显示，静态
-    UICharDraw(&UI_State_sta[5], "ss5", UI_Graph_ADD, 7, UI_Color_Green, 18, 2, 620, 230, "Power:");
+    UICharDraw(&UI_State_sta[5], "ss5", UI_Graph_ADD, 7, UI_Color_Green, 18, 3, 870, 210, "Power:");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[5]);
 
     // 能量条框
     UIRectangleDraw(&UI_Energy[0], "ss6", UI_Graph_ADD, 7, UI_Color_Green, 2, 720, 140, 1220, 180);
     UIGraphRefresh(&referee_recv_info->referee_id, 1, UI_Energy[0]);
 
-    // 底盘功率显示,动态
-    UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_ADD, 8, UI_Color_Green, 18, 2, 2, 750, 230, 24000);
+    // 超电电压显示,动态
+    UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_ADD, 8, UI_Color_Green, 18, 2, 3, 970, 210, 24000);
 
     // 能量条初始状态
-    UILineDraw(&UI_Energy[2], "sd6", UI_Graph_ADD, 8, UI_Color_Pink, 30, 720, 160, 1020, 160);
+    UILineDraw(&UI_Energy[2], "sd6", UI_Graph_ADD, 8, UI_Color_Pink, 36, 722, 160, 1218, 160);
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_Energy[1], UI_Energy[2]);
 
     // pitch角度显示
-    UICharDraw(&UI_State_sta[6], "ss7", UI_Graph_ADD, 8, UI_Color_Green, 18, 2, 820, 230, "Pitch:");
+    UICharDraw(&UI_State_sta[6], "ss7", UI_Graph_ADD, 8, UI_Color_Green, 18, 2, 1050, 630, "Pitch:");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[6]);
-    UIFloatDraw(&UI_pitch, "sd7", UI_Graph_ADD, 8, UI_Color_Green, 18, 2, 2, 620, 230, 0); // pitch角度
+    UIFloatDraw(&UI_pitch, "sd7", UI_Graph_ADD, 8, UI_Color_Green, 18, 2, 2, 1150, 630, 0); // pitch角度
     UIGraphRefresh(&referee_recv_info->referee_id, 1, UI_pitch);
 }
-
-// // 测试用函数，实现模式自动变化,用于检查该任务和裁判系统是否连接正常
-// static uint8_t count = 0;
-// static uint16_t count1 = 0;
-// static void RobotModeTest(Referee_Interactive_info_t *_Interactive_data) // 测试用函数，实现模式自动变化
-// {
-//     count++;
-//     if (count >= 50)
-//     {
-//         count = 0;
-//         count1++;
-//     }
-//     switch (count1 % 4)
-//     {
-//     case 0:
-//     {
-//         _Interactive_data->chassis_mode = CHASSIS_ZERO_FORCE;
-//         _Interactive_data->gimbal_mode = GIMBAL_ZERO_FORCE;
-//         _Interactive_data->shoot_mode = SHOOT_ON;
-//         _Interactive_data->friction_mode = FRICTION_1;
-//         _Interactive_data->lid_mode = LID_OPEN;
-//         _Interactive_data->Chassis_Power_Data.chassis_power_mx += 3.5;
-//         if (_Interactive_data->Chassis_Power_Data.chassis_power_mx >= 18)
-//             _Interactive_data->Chassis_Power_Data.chassis_power_mx = 0;
-//         break;
-//     }
-//     case 1:
-//     {
-//         _Interactive_data->chassis_mode = CHASSIS_ROTATE;
-//         _Interactive_data->gimbal_mode = GIMBAL_FREE_MODE;
-//         _Interactive_data->shoot_mode = SHOOT_OFF;
-//         _Interactive_data->friction_mode = FRICTION_;
-//         _Interactive_data->lid_mode = LID_CLOSE;
-//         break;
-//     }
-//     case 2:
-//     {
-//         _Interactive_data->chassis_mode = CHASSIS_NO_FOLLOW;
-//         _Interactive_data->gimbal_mode = GIMBAL_GYRO_MODE;
-//         _Interactive_data->shoot_mode = SHOOT_ON;
-//         _Interactive_data->friction_mode = FRICTION_ON;
-//         _Interactive_data->lid_mode = LID_OPEN;
-//         break;
-//     }
-//     case 3:
-//     {
-//         _Interactive_data->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
-//         _Interactive_data->gimbal_mode = GIMBAL_ZERO_FORCE;
-//         _Interactive_data->shoot_mode = SHOOT_OFF;
-//         _Interactive_data->friction_mode = FRICTION_OFF;
-//         _Interactive_data->lid_mode = LID_CLOSE;
-//         break;
-//     }
-//     default:
-//         break;
-//     }
-// }
 
 static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_info_t *_Interactive_data)
 {
@@ -202,17 +145,17 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
         switch (_Interactive_data->chassis_mode)
         {
         case CHASSIS_ZERO_FORCE:
-            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "stop  ");
+            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 25, 4, 390, 750, "stop  ");
             break;
         case CHASSIS_ROTATE:
-            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "rotate");
+            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 25, 4, 390, 750, "rotate");
             // 此处注意字数对齐问题，字数相同才能覆盖掉
             break;
         case CHASSIS_NO_FOLLOW:
-            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "normal");
+            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 25, 4, 390, 750, "normal");
             break;
         case CHASSIS_FOLLOW_GIMBAL_YAW:
-            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 15, 2, 270, 750, "follow");
+            UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_Change, 8, UI_Color_Main, 25, 4, 390, 750, "follow");
             break;
         }
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[0]);
@@ -222,7 +165,7 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // supercap
     if (_Interactive_data->Referee_Interactive_Flag.supcap_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 15, 2, 270, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off" : "on ");
+        UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off" : "on ");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 0;
     }
@@ -232,19 +175,19 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     {
         switch (_Interactive_data->friction_mode)
         {
-        case FRICTION_1:
+        case FRICTION_LOW:
         {
-            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 15, 2, 270, 650, "low   ");
+            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "low   ");
             break;
         }
-        case FRICTION_2:
+        case FRICTION_NORMAL:
         {
-            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 15, 2, 270, 650, "normal");
+            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "normal");
             break;
         }
-        case FRICTION_3:
+        case FRICTION_HIGH:
         {
-            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 15, 2, 270, 650, "high  ");
+            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "high  ");
             break;
         }
         }
@@ -252,10 +195,10 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
         _Interactive_data->Referee_Interactive_Flag.friction_flag = 0;
     }
 
-    // shoot
+    // trigger
     if (_Interactive_data->Referee_Interactive_Flag.shoot_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_Change, 8, UI_Color_Pink, 15, 2, 270, 600, _Interactive_data->friction_mode == SHOOT_NORMAL ? "normal" : "buff  ");
+        UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_Change, 8, UI_Color_Pink, 25, 4, 340, 600, _Interactive_data->shoot_mode == SHOOT_NORMAL ? "normal" : "buff  ");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
         _Interactive_data->Referee_Interactive_Flag.shoot_flag = 0;
     }
@@ -263,7 +206,7 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // top
     if (_Interactive_data->Referee_Interactive_Flag.top_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_Change, 8, UI_Color_Pink, 15, 2, 270, 550, _Interactive_data->lid_mode == TOP_LOW ? "low " : "high");
+        UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_Change, 8, UI_Color_Pink, 25, 4, 290, 550, _Interactive_data->top_mode == TOP_LOW ? "low " : "high");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[4]);
         _Interactive_data->Referee_Interactive_Flag.top_flag = 0;
     }
@@ -272,7 +215,7 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     if (_Interactive_data->Referee_Interactive_Flag.Power_flag == 1)
     {
         UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 750, 230, _Interactive_data->Chassis_Power_Data.chassis_power_mx * 1000);
-        UILineDraw(&UI_Energy[2], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 30, 720, 160, (uint32_t)750 + _Interactive_data->Chassis_Power_Data.chassis_power_mx * 30, 160);
+        UILineDraw(&UI_Energy[2], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 30, 722, 160, (uint32_t)750 + _Interactive_data->Chassis_Power_Data.chassis_power_mx * 30, 160);
         UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_Energy[1], UI_Energy[2]);
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 0;
     }
@@ -280,9 +223,18 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // pitch
     if (_Interactive_data->Referee_Interactive_Flag.pitch_flag == 1)
     {
-        UIFloatDraw(&UI_pitch, "sd7", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 620, 230, _Interactive_data->pitch * 1000);
+        UIFloatDraw(&UI_pitch, "sd7", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 1150, 630, _Interactive_data->pitch * 1000);
         UIGraphRefresh(&referee_recv_info->referee_id, 1, UI_pitch);
         _Interactive_data->Referee_Interactive_Flag.pitch_flag = 0;
+    }
+
+    // is_tracking
+    if (_Interactive_data->Referee_Interactive_Flag.tracking_flag == 1)
+    {
+        UILineDraw(&UI_shoot_line[0], "sl0", UI_Graph_Change, 8, _Interactive_data->is_tracking == 1 ? UI_Color_Pink : UI_Color_White, 3, 710, shoot_line_location[0], 1210, shoot_line_location[0]);
+        UILineDraw(&UI_shoot_line[1], "sl1", UI_Graph_Change, 8, _Interactive_data->is_tracking == 1 ? UI_Color_Pink : UI_Color_White, 3, shoot_line_location[1], 340, shoot_line_location[1], 740);
+        UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[0], UI_shoot_line[1]);
+        _Interactive_data->Referee_Interactive_Flag.tracking_flag = 0;
     }
 }
 

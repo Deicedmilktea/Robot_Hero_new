@@ -15,7 +15,8 @@ extern INS_t INS;
 extern bool vision_is_tracking;
 extern uint8_t friction_flag;
 
-static float yaw = 0; // 用于接收yaw的值
+int16_t yaw = 0; // 用于接收yaw的值
+static int16_t pitch = 0;
 
 // 遥控器数据
 RC_ctrl_t rc_ctrl[2];            //[0]:当前数据TEMP,[1]:上一次的数据LAST.用于按键持续按下和切换的判断
@@ -80,14 +81,15 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
     temp_remote[0] = sbus_buf[16];
     temp_remote[1] = sbus_buf[17];
 
-    yaw = 100 * INS.yaw_update; // 使之接收带上小数点
+    yaw = 50 * INS.yaw_update; // 使之接收带上小数点
+    pitch = 50 * INS.Roll;
 
-    temp_remote[2] = ((int16_t)yaw >> 8) & 0xff;
-    temp_remote[3] = (int16_t)yaw & 0xff;
-    temp_remote[4] = (uint8_t)vision_is_tracking;
-    temp_remote[5] = friction_flag;
-    temp_remote[6] = 0;
-    temp_remote[7] = 0;
+    temp_remote[2] = (yaw >> 8) & 0xff;
+    temp_remote[3] = yaw & 0xff;
+    temp_remote[4] = (pitch >> 8) & 0xff;
+    temp_remote[5] = pitch & 0xff;
+    temp_remote[6] = (uint8_t)vision_is_tracking;
+    temp_remote[7] = friction_flag;
 
     can_remote(temp_remote, 0x35);
 
