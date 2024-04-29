@@ -58,33 +58,37 @@ void Gimbal_task(void const *pvParameters)
 
 	for (;;)
 	{
-#ifdef REMOTE_CONTROL
-		// 视觉控制
-		if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
+		// 遥控链路
+		if (rc_ctrl[TEMP].rc.switch_left)
 		{
-			gimbal_mode_vision();
+			// 视觉控制
+			if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
+			{
+				gimbal_mode_vision();
+			}
+
+			// 锁yaw模式
+			else // 左拨杆中或下
+			{
+				gimbal_mode_normal();
+			}
 		}
 
-		// 锁yaw模式
-		else // 左拨杆中或下
+		// 图传链路
+		else
 		{
-			gimbal_mode_normal();
+			// 视觉控制
+			if (video_ctrl[TEMP].key_data.right_button_down == 1) // 按住右键
+			{
+				gimbal_mode_vision();
+			}
+
+			// 锁yaw模式
+			else // 左拨杆中或下
+			{
+				gimbal_mode_normal();
+			}
 		}
-#endif
-
-		// #ifdef VIDEO_CONTROL
-		// 		// 视觉控制
-		// 		if (video_ctrl[TEMP].key_data.right_button_down == 1) // 按住右键
-		// 		{
-		// 			gimbal_mode_vision();
-		// 		}
-
-		// 		// 锁yaw模式
-		// 		else // 左拨杆中或下
-		// 		{
-		// 			gimbal_mode_normal();
-		// 		}
-		// #endif
 
 		osDelay(1);
 	}
@@ -174,50 +178,49 @@ static void Yaw_read_imu()
 	INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
 }
 
-/***************************** 处理接收遥控器数据控制云台旋转 *********************************/
-static void gimbal_control()
-{
-}
-
 /**************************** 视觉控制 **********************************/
 static void gimbal_mode_vision()
 {
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
 
-#ifdef REMOTE_CONTROL
-	// 如果追踪到目标
-	if (vision_is_tracking)
+	// 遥控器链路
+	if (rc_ctrl[TEMP].rc.switch_left)
 	{
-		// 视觉模式中加入手动微调
-		float normalized_input = (rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f) * 10.0f; // 最大微调角度限制为10°
-		gimbal_gyro.target_angle = vision_yaw - normalized_input;
+		// 如果追踪到目标
+		if (vision_is_tracking)
+		{
+			// 视觉模式中加入手动微调
+			float normalized_input = (rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f) * 10.0f; // 最大微调角度限制为10°
+			gimbal_gyro.target_angle = vision_yaw - normalized_input;
+		}
+
+		else
+		{
+			// 使用非线性映射函数调整灵敏度
+			float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100.0f;
+			gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+		}
 	}
 
+	// 图传链路
 	else
 	{
-		// 使用非线性映射函数调整灵敏度
-		float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100.0f;
-		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
-	}
-#endif
+		// 如果追踪到目标
+		if (vision_is_tracking)
+		{
+			// 视觉模式中加入手动微调
+			float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 10.0f; // 最大微调角度限制为10°
+			gimbal_gyro.target_angle = vision_yaw - normalized_input;
+		}
 
-#ifdef VIDEO_CONTROL
-	// 如果追踪到目标
-	if (vision_is_tracking)
-	{
-		// 视觉模式中加入手动微调
-		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 10.0f; // 最大微调角度限制为10°
-		gimbal_gyro.target_angle = vision_yaw - normalized_input;
+		else
+		{
+			// 使用非线性映射函数调整灵敏度
+			float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100.0f;
+			gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+		}
 	}
-
-	else
-	{
-		// 使用非线性映射函数调整灵敏度
-		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100.0f;
-		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
-	}
-#endif
 
 	detel_calc(&gimbal_gyro.target_angle);
 
@@ -237,17 +240,21 @@ static void gimbal_mode_normal()
 	// 接收Yaw轴imu数据
 	Yaw_read_imu();
 
-#ifdef REMOTE_CONTROL
-	// 使用非线性映射函数调整灵敏度
-	float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;
-	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.97) * sign(normalized_input) * 0.3;
-#endif
+	// 遥控器链路
+	if (rc_ctrl[TEMP].rc.switch_left)
+	{
+		// 使用非线性映射函数调整灵敏度
+		float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;
+		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.97) * sign(normalized_input) * 0.3;
+	}
 
-#ifdef VIDEO_CONTROL
-	// 使用非线性映射函数调整灵敏度
-	float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100;
-	gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
-#endif
+	// 图传链路
+	else
+	{
+		// 使用非线性映射函数调整灵敏度
+		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100;
+		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+	}
 
 	detel_calc(&gimbal_gyro.target_angle);
 

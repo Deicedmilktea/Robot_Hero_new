@@ -336,8 +336,7 @@
         "<virtual_root>/USER/rc_potocal.c",
         "<virtual_root>/Module/judge.c",
         "<virtual_root>/Module/drv_usart.c",
-        "<virtual_root>/Module/CRC.c",
-        "<virtual_root>/RTOS TASK/UI_task.c"
+        "<virtual_root>/Module/CRC.c"
       ],
       "toolchain": "AC5",
       "compileConfig": {

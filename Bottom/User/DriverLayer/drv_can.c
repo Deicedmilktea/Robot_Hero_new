@@ -72,7 +72,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can1 data
 
-#ifdef REMOTE_CONTROL
     if (rx_header.StdId == 0x33) // 接收上C传来的遥控器数据
     {
       memcpy(sbus_buf, rx_data, 8);
@@ -93,22 +92,20 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       vision_is_tracking = rx_data[6];
       friction_mode = rx_data[7];
     }
-#endif
 
-#ifdef VIDEO_CONTROL
-    if (rx_header.StdId == 0x33) // 接收上C传来的图传数据
+    if (rx_header.StdId == 0x36) // 接收上C传来的图传数据
     {
       memcpy(video_buf, rx_data, 8);
     }
 
-    if (rx_header.StdId == 0x34) // 接收上C传来的图传数据
+    if (rx_header.StdId == 0x37) // 接收上C传来的图传数据
     {
       memcpy(video_buf + 8, rx_data, 4);
       VideoRead(video_buf);
-      vision_is_tracking = rx_data[4];
-      friction_mode = rx_data[5];
+      INS_top.Pitch = (int16_t)((rx_data[4] << 8) | rx_data[5]) / 50.0f;
+      vision_is_tracking = rx_data[6];
+      friction_mode = rx_data[7];
     }
-#endif
   }
 
   // can2电机信息接收

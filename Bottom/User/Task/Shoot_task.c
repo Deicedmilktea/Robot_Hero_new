@@ -25,6 +25,7 @@ float last_time = 0;
 uint8_t trigger_flag = 0;
 
 extern RC_ctrl_t rc_ctrl[2];
+extern Video_ctrl_t video_ctrl[2];
 extern motor_info_t motor_bottom[5];
 extern CAN_HandleTypeDef hcan2;
 
@@ -58,59 +59,61 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
-
-#ifdef REMOTE_CONTROL
-    // 右拨杆下，遥控器控制
-    if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
+    // 遥控器链路
+    if (rc_ctrl[TEMP].rc.switch_left)
     {
-      // 遥控器左边拨到上，电机启动
-      if (switch_is_up(rc_ctrl[TEMP].rc.switch_left))
+      // 右拨杆下，遥控器控制
+      if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
       {
-        is_angle_control = false;
-        shoot_start();
+        // 遥控器左边拨到上，电机启动
+        if (switch_is_up(rc_ctrl[TEMP].rc.switch_left))
+        {
+          is_angle_control = false;
+          shoot_start();
+        }
+      }
+
+      // 右拨杆中，键鼠控制
+      else if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
+      {
+        // 鼠标左键按下，控制拨盘旋转固定角度
+        if (rc_ctrl[TEMP].mouse.press_l)
+        {
+          is_angle_control = true;
+          trigger_single_angle_move();
+        }
+
+        // z键按下，反转
+        else if (rc_ctrl[TEMP].key[KEY_PRESS].z)
+        {
+          is_angle_control = false;
+          shoot_reverse();
+        }
+      }
+
+      else
+      {
+        shoot_stop();
       }
     }
 
-    // 右拨杆中，键鼠控制
-    else if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
+    // 图传链路
+    else
     {
       // 鼠标左键按下，控制拨盘旋转固定角度
-      if (rc_ctrl[TEMP].mouse.press_l)
+      if (video_ctrl[TEMP].key_data.left_button_down)
       {
         is_angle_control = true;
         trigger_single_angle_move();
       }
 
       // z键按下，反转
-      else if (rc_ctrl[TEMP].key[KEY_PRESS].z)
+      else if (video_ctrl[TEMP].key[KEY_PRESS].z)
       {
         is_angle_control = false;
         shoot_reverse();
       }
     }
-
-    else
-    {
-      shoot_stop();
-    }
-
-#endif
-
-#ifdef VIDEO_CONTROL
-    // 鼠标左键按下，控制拨盘旋转固定角度
-    if (video_ctrl[TEMP].mouse.press_l)
-    {
-      is_angle_control = true;
-      trigger_single_angle_move();
-    }
-
-    // z键按下，反转
-    else if (video_ctrl[TEMP].key[KEY_PRESS].z)
-    {
-      is_angle_control = false;
-      shoot_reverse();
-    }
-#endif
 
     // shoot_current_give();
     osDelay(1);
@@ -146,11 +149,25 @@ static void shoot_start()
 // 读取键盘
 static void read_keyboard()
 {
-  // Q键切换发射模式，单发和爆破
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
-    trigger_flag = 1;
+  // 遥控器链路
+  if (rc_ctrl[TEMP].rc.switch_left)
+  {
+    // Q键切换发射模式，单发和爆破
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+      trigger_flag = 1;
+    else
+      trigger_flag = 0;
+  }
+
+  // 图传链路
   else
-    trigger_flag = 0;
+  {
+    // Q键切换发射模式，单发和爆破
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+      trigger_flag = 1;
+    else
+      trigger_flag = 0;
+  }
 }
 
 /*************拨盘旋转固定角度***********/

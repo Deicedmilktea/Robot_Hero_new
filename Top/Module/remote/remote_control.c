@@ -62,36 +62,39 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
     rc_ctrl[TEMP].mouse.press_l = sbus_buf[12];                 //!< Mouse Left Is Press ?
     rc_ctrl[TEMP].mouse.press_r = sbus_buf[13];                 //!< Mouse Right Is Press ?
 
-    // CAN发送遥控器数据给下C板
-    // 遥控器数据
-    for (int i = 0; i <= 7; i++)
+    if (rc_ctrl[TEMP].rc.switch_left)
     {
-        temp_remote[i] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+        // CAN发送遥控器数据给下C板
+        // 遥控器数据
+        for (int i = 0; i <= 7; i++)
+        {
+            temp_remote[i] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+        }
+        can_remote(temp_remote, 0x33);
+
+        // 键鼠数据
+        for (int i = 8; i <= 15; i++)
+        {
+            temp_remote[i - 8] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+        }
+        can_remote(temp_remote, 0x34);
+
+        // 零碎数据（yaw）
+        temp_remote[0] = sbus_buf[16];
+        temp_remote[1] = sbus_buf[17];
+
+        yaw = 50 * INS.yaw_update; // 使之接收带上小数点
+        pitch = 50 * INS.Roll;
+
+        temp_remote[2] = (yaw >> 8) & 0xff;
+        temp_remote[3] = yaw & 0xff;
+        temp_remote[4] = (pitch >> 8) & 0xff;
+        temp_remote[5] = pitch & 0xff;
+        temp_remote[6] = (uint8_t)vision_is_tracking;
+        temp_remote[7] = friction_flag;
+
+        can_remote(temp_remote, 0x35);
     }
-    can_remote(temp_remote, 0x33);
-
-    // 键鼠数据
-    for (int i = 8; i <= 15; i++)
-    {
-        temp_remote[i - 8] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
-    }
-    can_remote(temp_remote, 0x34);
-
-    // 零碎数据（yaw）
-    temp_remote[0] = sbus_buf[16];
-    temp_remote[1] = sbus_buf[17];
-
-    yaw = 50 * INS.yaw_update; // 使之接收带上小数点
-    pitch = 50 * INS.Roll;
-
-    temp_remote[2] = (yaw >> 8) & 0xff;
-    temp_remote[3] = yaw & 0xff;
-    temp_remote[4] = (pitch >> 8) & 0xff;
-    temp_remote[5] = pitch & 0xff;
-    temp_remote[6] = (uint8_t)vision_is_tracking;
-    temp_remote[7] = friction_flag;
-
-    can_remote(temp_remote, 0x35);
 
     // 位域的按键值解算,直接memcpy即可,注意小端低字节在前,即lsb在第一位,msb在最后
     *(uint16_t *)&rc_ctrl[TEMP].key[KEY_PRESS] = (uint16_t)(sbus_buf[14] | (sbus_buf[15] << 8));

@@ -47,45 +47,49 @@ void Pitch_task(void const *argument)
         // 在非平地起作用，使用相对角度保证软件限位依旧有效
         pitch.relative_pitch = INS.Roll - INS_bottom.Pitch;
 
-#ifdef REMOTE_CONTROL
-        // 视觉识别，右拨杆上/鼠标右键
-        if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r == 1)
+        // 遥控器链路
+        if (rc_ctrl[TEMP].rc.switch_left)
         {
-            if (vision_is_tracking)
+            // 视觉识别，右拨杆上/鼠标右键
+            if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r == 1)
             {
-                // 视觉模式下的手动微调
+                if (vision_is_tracking)
+                {
+                    // 视觉模式下的手动微调
+                    float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
+                    pitch.target_angle = vision_pitch + normalized_input;
+                }
+            }
+
+            else
+            {
+                // 使用非线性映射函数调整灵敏度
                 float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
-                pitch.target_angle = vision_pitch + normalized_input;
+                pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
             }
         }
 
+        // 图传链路
         else
         {
-            // 使用非线性映射函数调整灵敏度
-            float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
-            pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
-        }
-#endif
-
-#ifdef VIDEO_CONTROL
-        // 视觉识别，鼠标右键
-        if (video_ctrl[TEMP].key_data.right_button_down == 1)
-        {
-            if (vision_is_tracking)
+            // 视觉识别，鼠标右键
+            if (video_ctrl[TEMP].key_data.right_button_down == 1)
             {
-                // 视觉模式下的手动微调
-                float normalized_input = (video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * 100.0f;
-                pitch.target_angle = vision_pitch + normalized_input;
+                if (vision_is_tracking)
+                {
+                    // 视觉模式下的手动微调
+                    float normalized_input = (video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * 100.0f;
+                    pitch.target_angle = vision_pitch + normalized_input;
+                }
+            }
+
+            else
+            {
+                // 使用非线性映射函数调整灵敏度
+                float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
+                pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
             }
         }
-
-        else
-        {
-            // 使用非线性映射函数调整灵敏度
-            float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
-            pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
-        }
-#endif
 
         pitch_position_limit();
         // pitch_current_give();

@@ -28,6 +28,7 @@ uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
+extern Video_ctrl_t video_ctrl[2];
 
 // 初始化
 static void shoot_loop_init();
@@ -63,33 +64,38 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     read_keyboard();
-#ifdef REMOTE_CONTROL
-    // 右拨杆中，键鼠控制
-    if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
+
+    // 遥控器链路
+    if (rc_ctrl[TEMP].rc.switch_left)
+    {
+      // 右拨杆中，键鼠控制
+      if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
+      {
+        shoot_start_all();
+        lens_judge();
+      }
+
+      // 右拨杆下，遥控器控制
+      else
+      {
+        // 遥控器左边拨到上和中，电机启动
+        if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
+        {
+          shoot_start_all();
+        }
+        else
+        {
+          shoot_stop();
+        }
+      }
+    }
+
+    // 图传链路
+    else
     {
       shoot_start_all();
       lens_judge();
     }
-
-    // 右拨杆下，遥控器控制
-    else
-    {
-      // 遥控器左边拨到上和中，电机启动
-      if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
-      {
-        shoot_start_all();
-      }
-      else
-      {
-        shoot_stop();
-      }
-    }
-#endif
-
-#ifdef VIDEO_CONTROL
-    shoot_start_all();
-    lens_judge();
-#endif
 
     // shoot_current_give();
     osDelay(1);
@@ -135,21 +141,46 @@ static void shoot_loop_init()
 // 读取摩擦轮速度
 static void read_keyboard()
 {
-  // E键切换摩擦轮速度
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 1)
+  // 遥控器链路
+  if (rc_ctrl[TEMP].rc.switch_left)
   {
-    friction_speed = FRICTION_SPEED_LOW;
-    friction_flag = 0;
+    // E键切换摩擦轮速度
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 1)
+    {
+      friction_speed = FRICTION_SPEED_LOW;
+      friction_flag = 0;
+    }
+    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 2)
+    {
+      friction_speed = FRICTION_SPEED_HIGH;
+      friction_flag = 2;
+    }
+    else
+    {
+      friction_speed = FRICTION_SPEED_NORMAL;
+      friction_flag = 1;
+    }
   }
-  else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 2)
-  {
-    friction_speed = FRICTION_SPEED_HIGH;
-    friction_flag = 2;
-  }
+
+  // 图传链路
   else
   {
-    friction_speed = FRICTION_SPEED_NORMAL;
-    friction_flag = 1;
+    // E键切换摩擦轮速度
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 1)
+    {
+      friction_speed = FRICTION_SPEED_LOW;
+      friction_flag = 0;
+    }
+    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 2)
+    {
+      friction_speed = FRICTION_SPEED_HIGH;
+      friction_flag = 2;
+    }
+    else
+    {
+      friction_speed = FRICTION_SPEED_NORMAL;
+      friction_flag = 1;
+    }
   }
 }
 
@@ -180,8 +211,17 @@ static void shoot_stop()
 /***************** 判断开关镜 *******************/
 static void lens_judge()
 {
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 2 == 1)
-    return;
+  // 遥控器链路
+  if (rc_ctrl[TEMP].rc.switch_left)
+  {
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 2 == 1)
+      return;
+  }
+
+  // 图传链路
+  else
+  {
+  }
 }
 
 /********************************摩擦轮can2发送电流***************************/

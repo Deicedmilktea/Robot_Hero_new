@@ -76,7 +76,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
 
     if (rx_header.StdId == 0x55)
     {
-      INS_bottom.Pitch = ((rx_data[0] << 8) | rx_data[1]) / 100.0f;
+      INS_bottom.Pitch = ((rx_data[0] << 8) | rx_data[1]) / 50.0f;
     }
   }
 

@@ -41,7 +41,8 @@
             "main.h": "c",
             "robot.h": "c",
             "stdbool.h": "c"
-        }
+        },
+        "cortex-debug.variableUseNaturalFormat": true
     },
     "extensions": {}
 }

@@ -35,7 +35,7 @@
 #define FOLLOW_WEIGHT 160
 
 motor_info_t motor_bottom[5]; // can2电机信息结构体, 0123：底盘，4：拨盘
-chassis_t chassis[4];
+chassis_t chassis_motor[4];
 uint8_t chassis_mode = 0;  // 判断底盘状态，用于UI编写
 uint8_t supercap_flag = 0; // 是否开启超级电容
 
@@ -145,74 +145,78 @@ void Chassis_task(void const *pvParameters)
     // // 判断是否开启超电
     // supercap_judge();
 
-#ifdef REMOTE_CONTROL
-    // 右拨杆下，遥控操作
-    if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
+    // 遥控器链路
+    if (rc_ctrl[TEMP].rc.switch_left)
     {
-      chassis_mode_follow();
-    }
-
-    // 右拨杆中，键鼠操作
-    else if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
-    {
-      // 底盘模式读取
-      read_keyboard();
-      key_control();
-
-      // 底盘跟随云台模式，r键触发
-      if (chassis_mode == 1)
+      // 右拨杆下，遥控操作
+      if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
       {
         chassis_mode_follow();
       }
 
-      // 正常运动模式，f键触发
-      else if (chassis_mode == 2)
+      // 右拨杆中，键鼠操作
+      else if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
-        manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
-        chassis_mode_normal();
+        // 底盘模式读取
+        read_keyboard();
+        key_control();
+
+        // 底盘跟随云台模式，r键触发
+        if (chassis_mode == 1)
+        {
+          chassis_mode_follow();
+        }
+
+        // 正常运动模式，f键触发
+        else if (chassis_mode == 2)
+        {
+          manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
+          chassis_mode_normal();
+        }
+
+        else
+        {
+          chassis_mode_stop();
+        }
       }
 
+      // 停止模式
       else
       {
         chassis_mode_stop();
       }
     }
 
-    // 停止模式
+    // 图传链路
     else
     {
-      chassis_mode_stop();
+      // 底盘模式读取
+      read_keyboard();
+      key_control();
+
+      switch (ui_data.chassis_mode)
+      {
+      // 底盘跟随云台模式，r键触发
+      case CHASSIS_FOLLOW_GIMBAL_YAW:
+        chassis_mode_follow();
+        break;
+
+      // 正常运动模式，f键触发
+      case CHASSIS_NO_FOLLOW:
+        manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
+        chassis_mode_normal();
+        break;
+
+      // 停止模式
+      case CHASSIS_ZERO_FORCE:
+        chassis_mode_stop();
+        break;
+
+      default:
+        chassis_mode_stop();
+        break;
+      }
     }
-#endif
-
-#ifdef VIDEO_CONTROL
-    // 底盘模式读取
-    read_keyboard();
-    key_control();
-
-    switch (ui_data.chassis_mode)
-    {
-    // 底盘跟随云台模式，r键触发
-    case CHASSIS_FOLLOW_GIMBAL_YAW:
-      chassis_mode_follow();
-      break;
-
-    // 正常运动模式，f键触发
-    case CHASSIS_NO_FOLLOW:
-      manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
-      chassis_mode_normal();
-      break;
-
-    // 停止模式
-    case CHASSIS_ZERO_FORCE:
-      chassis_mode_stop();
-      break;
-
-    default:
-      chassis_mode_stop();
-      break;
-    }
-#endif
 
     // chassis_current_give();
     // datapy(); // 超电数据接收
@@ -227,14 +231,14 @@ static void Chassis_loop_Init()
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    chassis[i].pid_value[0] = 30;
-    chassis[i].pid_value[1] = 0.5;
-    chassis[i].pid_value[2] = 0;
+    chassis_motor[i].pid_value[0] = 30;
+    chassis_motor[i].pid_value[1] = 0.5;
+    chassis_motor[i].pid_value[2] = 0;
   }
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    pid_init(&chassis[i].pid, chassis[i].pid_value, 12000, 12000);
+    pid_init(&chassis_motor[i].pid, chassis_motor[i].pid_value, 12000, 12000);
   }
 
   Vx = 0;
@@ -245,81 +249,117 @@ static void Chassis_loop_Init()
 /****************************** 读取键鼠数据控制底盘模式 ****************************/
 static void read_keyboard()
 {
-#ifdef REMOTE_CONTROL
-  // F键控制底盘模式
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 1)
-    ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
-  else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 2)
-    ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
-  else
-    ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
-
-  // C键控制超级电容
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+  // 遥控器链路
+  if (rc_ctrl[TEMP].rc.switch_left)
   {
-    supercap_flag = 1;
-    ui_data.supcap_mode = SUPCAP_ON;
+    // F键控制底盘模式
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 1)
+      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
+    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 2)
+      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+    else
+      ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
+
+    // C键控制超级电容
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+    {
+      supercap_flag = 1;
+      ui_data.supcap_mode = SUPCAP_ON;
+    }
+    else
+    {
+      supercap_flag = 0;
+      ui_data.supcap_mode = SUPCAP_OFF;
+    }
+
+    // R键控制底盘小陀螺速度
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
+    {
+      chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
+      ui_data.top_mode = TOP_HIGH;
+    }
+    else
+    {
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
+      ui_data.top_mode = TOP_LOW;
+    }
+
+    // Q键切换发射模式，单发和爆破
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+      ui_data.shoot_mode = SHOOT_BUFF;
+    else
+      ui_data.shoot_mode = SHOOT_NORMAL;
+
+    // E键切换摩擦轮速度，012分别为low，normal，high
+    switch (friction_mode)
+    {
+    case 0:
+      ui_data.friction_mode = FRICTION_LOW;
+      break;
+    case 1:
+      ui_data.friction_mode = FRICTION_NORMAL;
+      break;
+    case 2:
+      ui_data.friction_mode = FRICTION_HIGH;
+      break;
+    }
   }
+
+  // 图传链路
   else
   {
-    supercap_flag = 0;
-    ui_data.supcap_mode = SUPCAP_OFF;
+    // F键控制底盘模式
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 1)
+      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
+    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 2)
+      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+    else
+      ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
+
+    // C键控制超级电容
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+    {
+      supercap_flag = 1;
+      ui_data.supcap_mode = SUPCAP_ON;
+    }
+    else
+    {
+      supercap_flag = 0;
+      ui_data.supcap_mode = SUPCAP_OFF;
+    }
+
+    // R键控制底盘小陀螺速度
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
+    {
+      chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
+      ui_data.top_mode = TOP_HIGH;
+    }
+    else
+    {
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
+      ui_data.top_mode = TOP_LOW;
+    }
+
+    // Q键切换发射模式，单发和爆破
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+      ui_data.shoot_mode = SHOOT_BUFF;
+    else
+      ui_data.shoot_mode = SHOOT_NORMAL;
+
+    // E键切换摩擦轮速度，012分别为low，normal，high
+    switch (friction_mode)
+    {
+    case 0:
+      ui_data.friction_mode = FRICTION_LOW;
+      break;
+    case 1:
+      ui_data.friction_mode = FRICTION_NORMAL;
+      break;
+    case 2:
+      ui_data.friction_mode = FRICTION_HIGH;
+      break;
+    }
   }
-
-  // R键控制底盘小陀螺速度
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
-  {
-    chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
-    ui_data.top_mode = TOP_HIGH;
-  }
-  else
-  {
-    chassis_wz_max = CHASSIS_WZ_MAX_1;
-    ui_data.top_mode = TOP_LOW;
-  }
-
-  // Q键切换发射模式，单发和爆破
-  if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
-    ui_data.shoot_mode = SHOOT_BUFF;
-  else
-    ui_data.shoot_mode = SHOOT_NORMAL;
-
-  // E键切换摩擦轮速度，012分别为low，normal，high
-  switch (friction_mode)
-  {
-  case 0:
-    ui_data.friction_mode = FRICTION_LOW;
-    break;
-  case 1:
-    ui_data.friction_mode = FRICTION_NORMAL;
-    break;
-  case 2:
-    ui_data.friction_mode = FRICTION_HIGH;
-    break;
-  }
-#endif
-
-#ifdef VIDEO_CONTROL
-  // F键控制底盘模式
-  if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 0)
-    ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
-  else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 3 == 1)
-    ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
-  else
-    ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
-
-  // C键控制超级电容
-  if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 0)
-    supercap_flag = 0;
-  else
-    supercap_flag = 1;
-
-  // R键控制底盘小陀螺速度
-  if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
-    chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
-  else
-    chassis_wz_max = CHASSIS_WZ_MAX_1;
-#endif
 }
 
 /*************************************** 正常运动模式 ************************************/
@@ -338,10 +378,10 @@ static void chassis_mode_normal()
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
   Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
-  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
-  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 
   cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 }
@@ -362,15 +402,15 @@ static void chassis_mode_top()
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
   Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
-  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
-  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 
-  // chassis[0].target_speed = 0;
-  // chassis[1].target_speed = 0;
-  // chassis[2].target_speed = 0;
-  // chassis[3].target_speed = 0;
+  // chassis_motor[0].target_speed = 0;
+  // chassis_motor[1].target_speed = 0;
+  // chassis_motor[2].target_speed = 0;
+  // chassis_motor[3].target_speed = 0;
 
   cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 }
@@ -415,19 +455,19 @@ static void chassis_mode_follow()
   Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
   Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
 
-  chassis[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
-  chassis[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
+  chassis_motor[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 }
 
 /*************************** 急停模式 ****************************/
 static void chassis_mode_stop()
 {
-  chassis[0].target_speed = 0;
-  chassis[1].target_speed = 0;
-  chassis[2].target_speed = 0;
-  chassis[3].target_speed = 0;
+  chassis_motor[0].target_speed = 0;
+  chassis_motor[1].target_speed = 0;
+  chassis_motor[2].target_speed = 0;
+  chassis_motor[3].target_speed = 0;
 }
 
 /*************************** 电机电流控制 ****************************/
@@ -437,11 +477,11 @@ static void chassis_current_give()
 
   for (i = 0; i < 4; i++)
   {
-    chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, chassis_speed_max);
-    motor_bottom[i].set_current = pid_calc(&chassis[i].pid, chassis[i].target_speed, motor_bottom[i].rotor_speed);
+    chassis_motor[i].target_speed = Motor_Speed_limiting(chassis_motor[i].target_speed, chassis_speed_max);
+    motor_bottom[i].set_current = pid_calc(&chassis_motor[i].pid, chassis_motor[i].target_speed, motor_bottom[i].rotor_speed);
   }
   // 在功率限制算法中，静止状态底盘锁不住，这时取消功率限制，保证发弹稳定性
-  if (chassis[0].target_speed != 0 || chassis[1].target_speed != 0 || chassis[2].target_speed != 0 || chassis[3].target_speed != 0)
+  if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
     Chassis_Power_Limit(4 * chassis_speed_max);
 
   chassis_can2_cmd(motor_bottom[0].set_current, motor_bottom[1].set_current, motor_bottom[2].set_current, motor_bottom[3].set_current);
@@ -517,25 +557,25 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
   {
     for (uint8_t i = 0; i < 4; i++)
     {
-      chassis[i].target_speed = Motor_Speed_limiting(chassis[i].target_speed, 4096); // 限制最大速度 ;//5*4*24;先以最大电流启动，后平滑改变，不知道为啥一开始用的Power>960,可以观测下这个值，看看能不能压榨缓冲功率
+      chassis_motor[i].target_speed = Motor_Speed_limiting(chassis_motor[i].target_speed, 4096); // 限制最大速度 ;//5*4*24;先以最大电流启动，后平滑改变，不知道为啥一开始用的Power>960,可以观测下这个值，看看能不能压榨缓冲功率
     }
   }
   else
   {
-    Chassis_pidout = (fabs(chassis[0].target_speed - motor_bottom[0].rotor_speed) +
-                      fabs(chassis[1].target_speed - motor_bottom[1].rotor_speed) +
-                      fabs(chassis[2].target_speed - motor_bottom[2].rotor_speed) +
-                      fabs(chassis[3].target_speed - motor_bottom[3].rotor_speed)); // fabs是求绝对值，这里获取了4个轮子的差值求和
+    Chassis_pidout = (fabs(chassis_motor[0].target_speed - motor_bottom[0].rotor_speed) +
+                      fabs(chassis_motor[1].target_speed - motor_bottom[1].rotor_speed) +
+                      fabs(chassis_motor[2].target_speed - motor_bottom[2].rotor_speed) +
+                      fabs(chassis_motor[3].target_speed - motor_bottom[3].rotor_speed)); // fabs是求绝对值，这里获取了4个轮子的差值求和
 
     //	Chassis_pidout_target = fabs(motor_speed_target[0]) + fabs(motor_speed_target[1]) + fabs(motor_speed_target[2]) + fabs(motor_speed_target[3]);
 
     /*期望滞后占比环，增益个体加速度*/
     if (Chassis_pidout)
     {
-      Scaling1 = (chassis[0].target_speed - motor_bottom[0].rotor_speed) / Chassis_pidout;
-      Scaling2 = (chassis[1].target_speed - motor_bottom[1].rotor_speed) / Chassis_pidout;
-      Scaling3 = (chassis[2].target_speed - motor_bottom[2].rotor_speed) / Chassis_pidout;
-      Scaling4 = (chassis[3].target_speed - motor_bottom[3].rotor_speed) / Chassis_pidout; // 求比例，4个scaling求和为1
+      Scaling1 = (chassis_motor[0].target_speed - motor_bottom[0].rotor_speed) / Chassis_pidout;
+      Scaling2 = (chassis_motor[1].target_speed - motor_bottom[1].rotor_speed) / Chassis_pidout;
+      Scaling3 = (chassis_motor[2].target_speed - motor_bottom[2].rotor_speed) / Chassis_pidout;
+      Scaling4 = (chassis_motor[3].target_speed - motor_bottom[3].rotor_speed) / Chassis_pidout; // 求比例，4个scaling求和为1
     }
     else
     {
@@ -623,73 +663,77 @@ static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_
 
 static void key_control(void)
 {
-#ifdef REMOTE_CONTROL
-  if (rc_ctrl[TEMP].key[KEY_PRESS].d)
-    key_x_fast += KEY_START_OFFSET;
-  else
-    key_x_fast -= KEY_STOP_OFFSET;
+  // 遥控器链路
+  if (rc_ctrl[TEMP].rc.switch_left)
+  {
+    if (rc_ctrl[TEMP].key[KEY_PRESS].d)
+      key_x_fast += KEY_START_OFFSET;
+    else
+      key_x_fast -= KEY_STOP_OFFSET;
 
-  if (rc_ctrl[TEMP].key[KEY_PRESS].a)
-    key_x_slow += KEY_START_OFFSET;
-  else
-    key_x_slow -= KEY_STOP_OFFSET;
+    if (rc_ctrl[TEMP].key[KEY_PRESS].a)
+      key_x_slow += KEY_START_OFFSET;
+    else
+      key_x_slow -= KEY_STOP_OFFSET;
 
-  if (rc_ctrl[TEMP].key[KEY_PRESS].w)
-    key_y_fast += KEY_START_OFFSET;
-  else
-    key_y_fast -= KEY_STOP_OFFSET;
+    if (rc_ctrl[TEMP].key[KEY_PRESS].w)
+      key_y_fast += KEY_START_OFFSET;
+    else
+      key_y_fast -= KEY_STOP_OFFSET;
 
-  if (rc_ctrl[TEMP].key[KEY_PRESS].s)
-    key_y_slow += KEY_START_OFFSET;
-  else
-    key_y_slow -= KEY_STOP_OFFSET;
+    if (rc_ctrl[TEMP].key[KEY_PRESS].s)
+      key_y_slow += KEY_START_OFFSET;
+    else
+      key_y_slow -= KEY_STOP_OFFSET;
 
-  // 正转
-  if (rc_ctrl[TEMP].key[KEY_PRESS].shift)
-    key_Wz_acw += KEY_START_OFFSET;
-  else
-    key_Wz_acw -= KEY_STOP_OFFSET;
+    // 正转
+    if (rc_ctrl[TEMP].key[KEY_PRESS].shift)
+      key_Wz_acw += KEY_START_OFFSET;
+    else
+      key_Wz_acw -= KEY_STOP_OFFSET;
 
-  // 反转
-  if (rc_ctrl[TEMP].key[KEY_PRESS].ctrl)
-    key_Wz_cw -= KEY_START_OFFSET;
-  else
-    key_Wz_cw += KEY_STOP_OFFSET;
-#endif
+    // 反转
+    if (rc_ctrl[TEMP].key[KEY_PRESS].ctrl)
+      key_Wz_cw -= KEY_START_OFFSET;
+    else
+      key_Wz_cw += KEY_STOP_OFFSET;
+  }
 
-#ifdef VIDEO_CONTROL
-  if (video_ctrl[TEMP].key[KEY_PRESS].d)
-    key_x_fast += KEY_START_OFFSET;
+  // 图传链路
   else
-    key_x_fast -= KEY_STOP_OFFSET;
+  {
+    if (video_ctrl[TEMP].key[KEY_PRESS].d)
+      key_x_fast += KEY_START_OFFSET;
+    else
+      key_x_fast -= KEY_STOP_OFFSET;
 
-  if (video_ctrl[TEMP].key[KEY_PRESS].a)
-    key_x_slow += KEY_START_OFFSET;
-  else
-    key_x_slow -= KEY_STOP_OFFSET;
+    if (video_ctrl[TEMP].key[KEY_PRESS].a)
+      key_x_slow += KEY_START_OFFSET;
+    else
+      key_x_slow -= KEY_STOP_OFFSET;
 
-  if (video_ctrl[TEMP].key[KEY_PRESS].w)
-    key_y_fast += KEY_START_OFFSET;
-  else
-    key_y_fast -= KEY_STOP_OFFSET;
+    if (video_ctrl[TEMP].key[KEY_PRESS].w)
+      key_y_fast += KEY_START_OFFSET;
+    else
+      key_y_fast -= KEY_STOP_OFFSET;
 
-  if (video_ctrl[TEMP].key[KEY_PRESS].s)
-    key_y_slow += KEY_START_OFFSET;
-  else
-    key_y_slow -= KEY_STOP_OFFSET;
+    if (video_ctrl[TEMP].key[KEY_PRESS].s)
+      key_y_slow += KEY_START_OFFSET;
+    else
+      key_y_slow -= KEY_STOP_OFFSET;
 
-  // 正转
-  if (video_ctrl[TEMP].key[KEY_PRESS].shift)
-    key_Wz_acw += KEY_START_OFFSET;
-  else
-    key_Wz_acw -= KEY_STOP_OFFSET;
+    // 正转
+    if (video_ctrl[TEMP].key[KEY_PRESS].shift)
+      key_Wz_acw += KEY_START_OFFSET;
+    else
+      key_Wz_acw -= KEY_STOP_OFFSET;
 
-  // 反转
-  if (video_ctrl[TEMP].key[KEY_PRESS].ctrl)
-    key_Wz_cw -= KEY_START_OFFSET;
-  else
-    key_Wz_cw += KEY_STOP_OFFSET;
-#endif
+    // 反转
+    if (video_ctrl[TEMP].key[KEY_PRESS].ctrl)
+      key_Wz_cw -= KEY_START_OFFSET;
+    else
+      key_Wz_cw += KEY_STOP_OFFSET;
+  }
 
   if (key_x_fast > chassis_speed_max)
     key_x_fast = chassis_speed_max;
