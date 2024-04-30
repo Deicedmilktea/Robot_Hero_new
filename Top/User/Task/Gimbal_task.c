@@ -252,7 +252,7 @@ static void gimbal_mode_normal()
 	else
 	{
 		// 使用非线性映射函数调整灵敏度
-		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 100;
+		float normalized_input = video_ctrl[TEMP].key_data.mouse_x / 16384.0f * 50;
 		gimbal_gyro.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
 	}
 
@@ -297,14 +297,22 @@ static void gimbal_can2_cmd(int16_t voltage)
 
 	tx_header.DLC = 8; // 发送数据长度（字节）
 
+	// tx_data[0] = NULL;
+	// tx_data[1] = NULL;
+	// tx_data[2] = (voltage >> 8) & 0xff;
+	// tx_data[3] = (voltage) & 0xff;
+	// tx_data[4] = NULL;
+	// tx_data[5] = NULL;
+	// tx_data[6] = NULL;
+	// tx_data[7] = NULL;
 	tx_data[0] = NULL;
 	tx_data[1] = NULL;
-	tx_data[2] = (voltage >> 8) & 0xff;
-	tx_data[3] = (voltage) & 0xff;
+	tx_data[2] = NULL;
+	tx_data[3] = NULL;
 	tx_data[4] = NULL;
 	tx_data[5] = NULL;
-	tx_data[6] = NULL;
-	tx_data[7] = NULL;
+	tx_data[6] = (voltage >> 8) & 0xff;
+	tx_data[7] = (voltage) & 0xff;
 
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
 }

@@ -69,13 +69,13 @@ void Pitch_task(void const *argument)
                 }
                 else
                 {
-                    pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 200 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
+                    pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 20 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
                 }
             }
 
             else
             {
-                pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 200 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
+                pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 20 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
             }
         }
 
@@ -88,28 +88,28 @@ void Pitch_task(void const *argument)
                 if (vision_is_tracking)
                 {
                     // 视觉模式下的遥控器微调
-                    pitch.vision_remote_pitch = (video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * 100.0f;
+                    pitch.vision_remote_pitch = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 20.0f;
                     pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
                     // pitch.vision_target_pitch = vision_pitch;
 
-                    pitch.target_speed = -pid_calc(&pitch.vision_pid_angle, pitch.vision_target_pitch, INS.Roll);
+                    pitch.target_speed = pid_calc(&pitch.vision_pid_angle, pitch.vision_target_pitch, INS.Roll);
 
-                    // target_speed 的计算必须加上负号（想要符合给正值抬头，负值低头的话），与3508的旋转方向相关，否则pitch会疯转
+                    // target_speed 这个跟遥控器链路不一样，鼠标返回值和那个是反的，终于正回来了
                 }
                 else
                 {
-                    pitch.target_speed = -(200 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * pitch.speed_max;
+                    pitch.target_speed = 20 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
                 }
             }
 
             else
             {
-                pitch.target_speed = -(200 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * pitch.speed_max;
+                pitch.target_speed = 20 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
             }
         }
 
         pitch_position_limit();
-        // pitch_current_give();
+        pitch_current_give();
         osDelay(1);
     }
 }
@@ -117,7 +117,7 @@ void Pitch_task(void const *argument)
 /*************************** 初始化 *************************/
 static void pitch_loop_init()
 {
-    pitch.speed_pid_value[0] = 3;
+    pitch.speed_pid_value[0] = 10;
     pitch.speed_pid_value[1] = 0;
     pitch.speed_pid_value[2] = 0;
 

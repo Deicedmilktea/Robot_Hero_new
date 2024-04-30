@@ -69,14 +69,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can1 data
 
     // yaw
-    if ((rx_header.StdId == 0x206))
+    if ((rx_header.StdId == 0x209))
     {
       motor_read(YAW_INDEX, rx_data);
     }
 
     if (rx_header.StdId == 0x55)
     {
-      INS_bottom.Pitch = ((rx_data[0] << 8) | rx_data[1]) / 50.0f;
+      INS_bottom.Pitch = (int16_t)((rx_data[0] << 8) | rx_data[1]) / 50.0f;
     }
   }
 
@@ -93,7 +93,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     }
 
     // pitch
-    if (rx_header.StdId == 0x208)
+    if (rx_header.StdId == 0x205)
     {
       motor_read(PITCH_INDEX, rx_data);
     }

@@ -14,6 +14,7 @@ Video_ctrl_t video_ctrl[2]; // 用于存储图传链路的控制数据,[0]:当�
 static uint8_t is_init;
 static uint8_t send_buff[8]; // 发送数据缓冲区
 static int16_t pitch;
+static int16_t yaw;
 
 // 图传拥有的串口实例,因为图传是单例,所以这里只有一个,就不封装了
 static USART_Instance *video_usart_instance;
@@ -99,11 +100,16 @@ static void VideoRead(uint8_t *buff)
 
                         memcpy(send_buff, buff + DATA_Offset + 8, 4);
                         pitch = INS.Roll * 50;
+                        yaw = INS.yaw_update * 50;
                         send_buff[4] = (pitch >> 8) & 0xff;
                         send_buff[5] = pitch & 0xff;
-                        send_buff[6] = (uint8_t)vision_is_tracking;
-                        send_buff[7] = friction_flag;
+                        send_buff[6] = (yaw >> 8) & 0xff;
+                        send_buff[7] = yaw & 0xff;
                         can_remote(send_buff, 0x37);
+
+                        send_buff[0] = (uint8_t)vision_is_tracking;
+                        send_buff[1] = friction_flag;
+                        can_remote(send_buff, 0x38);
                     }
 
                     *(uint16_t *)&video_ctrl[TEMP].key[KEY_PRESS] = video_ctrl[TEMP].key_data.keyboard_value;

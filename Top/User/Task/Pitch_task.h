@@ -5,8 +5,8 @@
 #include "pid.h"
 #include "Robot.h"
 
-// #define PITCH_3508
-#define PITCH_6020
+#define PITCH_3508
+// #define PITCH_6020
 
 #ifdef PITCH_3508
 

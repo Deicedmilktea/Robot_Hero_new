@@ -103,8 +103,13 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       memcpy(video_buf + 8, rx_data, 4);
       VideoRead(video_buf);
       INS_top.Pitch = (int16_t)((rx_data[4] << 8) | rx_data[5]) / 50.0f;
-      vision_is_tracking = rx_data[6];
-      friction_mode = rx_data[7];
+      INS_top.Yaw = (int16_t)((rx_data[6] << 8) | rx_data[7]) / 50.0f;
+    }
+
+    if (rx_header.StdId == 0x38) // 接收上C传来的图传数据
+    {
+      vision_is_tracking = rx_data[0];
+      friction_mode = rx_data[1];
     }
   }
 
