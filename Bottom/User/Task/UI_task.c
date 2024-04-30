@@ -2,7 +2,7 @@
 
 void UI_task(void const *argument)
 {
-    while (1)
+    for (;;)
     {
         UITask();
         osDelay(1);

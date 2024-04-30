@@ -26,9 +26,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "arm_math.h"
 #include "INS_task.h"
-#include "exchange.h"
+#include "daemon.h"
+#include "bsp_dwt.h"
 #include "stm32f4xx_it.h"
 /* USER CODE END Includes */
 
@@ -63,19 +63,19 @@ void exchange_task(void const *argument);
 void StartDAEMONTASK(void const *argument);
 /* USER CODE END FunctionPrototypes */
 
-void StartINSTask(void const * argument);
-void Shoot_task(void const * argument);
-void Pitch_task(void const * argument);
-void Gimbal_task(void const * argument);
+void StartINSTask(void const *argument);
+void Shoot_task(void const *argument);
+void Pitch_task(void const *argument);
+void Gimbal_task(void const *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize);
 
 /* GetTimerTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize );
+void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize);
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -104,11 +104,12 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackT
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
-void MX_FREERTOS_Init(void) {
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -154,7 +155,6 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(DaemonTask, StartDAEMONTASK, osPriorityNormal, 0, 128);
   DaemonTaskHandle = osThreadCreate(osThread(DaemonTask), NULL);
   /* USER CODE END RTOS_THREADS */
-
 }
 
 /* USER CODE BEGIN Header_StartINSTask */
@@ -164,12 +164,13 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartINSTask */
-void StartINSTask(void const * argument)
+void StartINSTask(void const *argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartINSTask */
   INS_Init();
+  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
   /* Infinite loop */
   for (;;)
   {
@@ -186,7 +187,7 @@ void StartINSTask(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_Shoot_task */
-__weak void Shoot_task(void const * argument)
+__weak void Shoot_task(void const *argument)
 {
   /* USER CODE BEGIN Shoot_task */
   /* Infinite loop */
@@ -204,7 +205,7 @@ __weak void Shoot_task(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_Pitch_task */
-__weak void Pitch_task(void const * argument)
+__weak void Pitch_task(void const *argument)
 {
   /* USER CODE BEGIN Pitch_task */
   /* Infinite loop */
@@ -222,7 +223,7 @@ __weak void Pitch_task(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_Gimbal_task */
-__weak void Gimbal_task(void const * argument)
+__weak void Gimbal_task(void const *argument)
 {
   /* USER CODE BEGIN Gimbal_task */
   /* Infinite loop */
@@ -235,17 +236,17 @@ __weak void Gimbal_task(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-// void StartDefaultTask(void const *argument)
-// {
-//   /* USER CODE BEGIN StartDefaultTask */
-//   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
-//   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_10, GPIO_PIN_SET);
-//   // uint8_t TIM1_flag = 1;
-//   /* Infinite loop */
-//   for (;;)
-//   {
-//     osDelay(1);
-//   }
-//   /* USER CODE END StartDefaultTask */
-// }
+__attribute__((noreturn)) void StartDAEMONTASK(void const *argument)
+{
+  static float daemon_dt;
+  static float daemon_start;
+  for (;;)
+  {
+    // 100Hz
+    daemon_start = DWT_GetTimeline_ms();
+    DaemonTask();
+    daemon_dt = DWT_GetTimeline_ms() - daemon_start;
+    osDelay(10);
+  }
+}
 /* USER CODE END Application */

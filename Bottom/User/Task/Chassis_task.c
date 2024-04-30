@@ -611,20 +611,27 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     // }
     if (!supercap_flag)
     {
-      if (powerdata[1] < 24 && powerdata[1] > 23)
-        Plimit = 0.9;
-      else if (powerdata[1] < 23 && powerdata[1] > 22)
-        Plimit = 0.8;
-      else if (powerdata[1] < 22 && powerdata[1] > 21)
-        Plimit = 0.7;
-      else if (powerdata[1] < 21 && powerdata[1] > 20)
-        Plimit = 0.6;
-      else if (powerdata[1] < 20 && powerdata[1] > 18)
-        Plimit = 0.5;
-      else if (powerdata[1] < 18 && powerdata[1] > 15)
-        Plimit = 0.3;
-      else if (powerdata[1] < 15)
-        Plimit = 0.1;
+      if (powerdata[1]) // 如果接入supercap
+      {
+        if (powerdata[1] < 24 && powerdata[1] > 23)
+          Plimit = 0.9;
+        else if (powerdata[1] < 23 && powerdata[1] > 22)
+          Plimit = 0.8;
+        else if (powerdata[1] < 22 && powerdata[1] > 21)
+          Plimit = 0.7;
+        else if (powerdata[1] < 21 && powerdata[1] > 20)
+          Plimit = 0.6;
+        else if (powerdata[1] < 20 && powerdata[1] > 18)
+          Plimit = 0.5;
+        else if (powerdata[1] < 18 && powerdata[1] > 15)
+          Plimit = 0.3;
+        else if (powerdata[1] < 15)
+          Plimit = 0.1;
+      }
+      else // 防止不接入supercap时，Plimit为0.1
+      {
+        Plimit = 1;
+      }
     }
     else
     {

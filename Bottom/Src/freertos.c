@@ -26,14 +26,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "remote_control.h"
-#include "arm_math.h"
 #include "INS_task.h"
-#include "exchange.h"
-#include "Chassis_task.h"
-#include "super_cap.h"
-#include "UI_task.h"
-#include "stm32f4xx_it.h"
+#include "Daemon.h"
+#include "bsp_dwt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,11 +48,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-// osThreadId Chassis_taskHandle;
-osThreadId myTask02Handle;
 osThreadId SupercapTaskHandle;
 osThreadId UITaskHandle;
 osThreadId exchangeHandle;
+osThreadId daemonTaskHandle;
 /* USER CODE END Variables */
 osThreadId INSTaskHandle;
 osThreadId ChassisTaskHandle;
@@ -68,6 +62,7 @@ osThreadId ShootTaskHandle;
 void Supercap_task(void const *argument);
 void UI_task(void const *argument);
 void exchange_task(void const *argument);
+void StartDAEMONTASK(void const *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartINSTask(void const *argument);
@@ -152,11 +147,14 @@ void MX_FREERTOS_Init(void)
   osThreadDef(SupercapTask, Supercap_task, osPriorityNormal, 0, 128);
   SupercapTaskHandle = osThreadCreate(osThread(SupercapTask), NULL);
 
-  osThreadDef(UITask, UI_task, osPriorityNormal, 0, 128);
+  osThreadDef(UITask, UI_task, osPriorityNormal, 0, 512);
   SupercapTaskHandle = osThreadCreate(osThread(UITask), NULL);
 
-  osThreadDef(exchangeTask, exchange_task, osPriorityNormal, 0, 512);
+  osThreadDef(exchangeTask, exchange_task, osPriorityNormal, 0, 128);
   exchangeHandle = osThreadCreate(osThread(exchangeTask), NULL);
+
+  osThreadDef(daemontask, StartDAEMONTASK, osPriorityNormal, 0, 128);
+  daemonTaskHandle = osThreadCreate(osThread(daemontask), NULL);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 }
@@ -172,6 +170,7 @@ void StartINSTask(void const *argument)
 {
   /* USER CODE BEGIN StartINSTask */
   INS_Init();
+  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
   /* Infinite loop */
   for (;;)
   {
@@ -219,17 +218,17 @@ __weak void Shoot_task(void const *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void StartDefaultTask(void const *argument)
+__attribute__((noreturn)) void StartDAEMONTASK(void const *argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_11, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_10, GPIO_PIN_SET);
-  uint8_t TIM1_flag = 1;
-  /* Infinite loop */
+  static float daemon_dt;
+  static float daemon_start;
   for (;;)
   {
-    osDelay(1);
+    // 100Hz
+    daemon_start = DWT_GetTimeline_ms();
+    DaemonTask();
+    daemon_dt = DWT_GetTimeline_ms() - daemon_start;
+    osDelay(10);
   }
-  /* USER CODE END StartDefaultTask */
 }
 /* USER CODE END Application */

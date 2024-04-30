@@ -15,126 +15,55 @@
         "folders": []
       },
       {
-        "name": "Application",
-        "files": [],
-        "folders": [
+        "name": "Bsp",
+        "files": [
           {
-            "name": "Applications",
-            "files": [],
-            "folders": []
+            "path": "../Bsp/dwt/bsp_dwt.c"
           },
           {
-            "name": "Bsp",
-            "files": [
-              {
-                "path": "../Bsp/dwt/bsp_dwt.c"
-              },
-              {
-                "path": "../Bsp/miniPC_process/miniPC_process.c"
-              },
-              {
-                "path": "../Bsp/pwm/bsp_PWM.c"
-              },
-              {
-                "path": "../Bsp/usart/bsp_usart.c"
-              },
-              {
-                "path": "../Bsp/usb/bsp_usb.c"
-              }
-            ],
-            "folders": []
+            "path": "../Bsp/miniPC_process/miniPC_process.c"
           },
           {
-            "name": "Components",
-            "files": [
-              {
-                "path": "../Components/Algorithm/QuaternionEKF.c"
-              },
-              {
-                "path": "../Components/Controller/controller.c"
-              },
-              {
-                "path": "../Components/Devices/BMI088driver.c"
-              },
-              {
-                "path": "../Components/Devices/BMI088Middleware.c"
-              },
-              {
-                "path": "../Components/kalman_filter.c"
-              },
-              {
-                "path": "../Components/user_lib.c"
-              }
-            ],
-            "folders": []
+            "path": "../Bsp/pwm/bsp_PWM.c"
           },
           {
-            "name": "MDK-ARM",
-            "files": [
-              {
-                "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
-              },
-              {
-                "path": "startup_stm32f407xx.s"
-              }
-            ],
-            "folders": []
+            "path": "../Bsp/usart/bsp_usart.c"
           },
           {
-            "name": "User",
-            "files": [
-              {
-                "path": "../Src/can.c"
-              },
-              {
-                "path": "../Src/dma.c"
-              },
-              {
-                "path": "../Src/freertos.c"
-              },
-              {
-                "path": "../Src/gpio.c"
-              },
-              {
-                "path": "../Src/i2c.c"
-              },
-              {
-                "path": "../Src/main.c"
-              },
-              {
-                "path": "../Src/spi.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_hal_msp.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_hal_timebase_tim.c"
-              },
-              {
-                "path": "../Src/stm32f4xx_it.c"
-              },
-              {
-                "path": "../Src/tim.c"
-              },
-              {
-                "path": "../Src/usart.c"
-              },
-              {
-                "path": "../Src/usb_device.c"
-              },
-              {
-                "path": "../Src/usbd_cdc_if.c"
-              },
-              {
-                "path": "../Src/usbd_conf.c"
-              },
-              {
-                "path": "../Src/usbd_desc.c"
-              }
-            ],
-            "folders": []
+            "path": "../Bsp/usb/bsp_usb.c"
+          },
+          {
+            "path": "../User/DriverLayer/drv_can.c"
           }
-        ]
+        ],
+        "folders": []
+      },
+      {
+        "name": "Components",
+        "files": [
+          {
+            "path": "../Components/Algorithm/QuaternionEKF.c"
+          },
+          {
+            "path": "../Components/Controller/controller.c"
+          },
+          {
+            "path": "../Components/Devices/BMI088driver.c"
+          },
+          {
+            "path": "../Components/Devices/BMI088Middleware.c"
+          },
+          {
+            "path": "../Components/kalman_filter.c"
+          },
+          {
+            "path": "../Components/user_lib.c"
+          },
+          {
+            "path": "../User/AlgorithmLayer/pid.c"
+          }
+        ],
+        "folders": []
       },
       {
         "name": "Drivers",
@@ -225,6 +154,18 @@
             "folders": []
           }
         ]
+      },
+      {
+        "name": "MDK-ARM",
+        "files": [
+          {
+            "path": "../Drivers/CMSIS/Lib/ARM/arm_cortexM4lf_math.lib"
+          },
+          {
+            "path": "startup_stm32f407xx.s"
+          }
+        ],
+        "folders": []
       },
       {
         "name": "Middlewares",
@@ -339,12 +280,6 @@
           },
           {
             "path": "../Module/Video/video_control.c"
-          },
-          {
-            "path": "../User/AlgorithmLayer/pid.c"
-          },
-          {
-            "path": "../User/DriverLayer/drv_can.c"
           }
         ],
         "folders": []
@@ -352,9 +287,6 @@
       {
         "name": "RTOS TASK",
         "files": [
-          {
-            "path": "../User/Task/Daemon_task.c"
-          },
           {
             "path": "../User/Task/exchange.c"
           },
@@ -366,6 +298,60 @@
           },
           {
             "path": "../User/Task/Shoot_task.c"
+          }
+        ],
+        "folders": []
+      },
+      {
+        "name": "User",
+        "files": [
+          {
+            "path": "../Src/can.c"
+          },
+          {
+            "path": "../Src/dma.c"
+          },
+          {
+            "path": "../Src/freertos.c"
+          },
+          {
+            "path": "../Src/gpio.c"
+          },
+          {
+            "path": "../Src/i2c.c"
+          },
+          {
+            "path": "../Src/main.c"
+          },
+          {
+            "path": "../Src/spi.c"
+          },
+          {
+            "path": "../Src/stm32f4xx_hal_msp.c"
+          },
+          {
+            "path": "../Src/stm32f4xx_hal_timebase_tim.c"
+          },
+          {
+            "path": "../Src/stm32f4xx_it.c"
+          },
+          {
+            "path": "../Src/tim.c"
+          },
+          {
+            "path": "../Src/usart.c"
+          },
+          {
+            "path": "../Src/usb_device.c"
+          },
+          {
+            "path": "../Src/usbd_cdc_if.c"
+          },
+          {
+            "path": "../Src/usbd_conf.c"
+          },
+          {
+            "path": "../Src/usbd_desc.c"
           }
         ],
         "folders": []
@@ -552,7 +538,6 @@
           "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F",
           "../Drivers/CMSIS/Device/ST/STM32F4xx/Include",
           "../Drivers/CMSIS/Include",
-          "../Application",
           "../Components",
           "../Components/Algorithm",
           "../Components/Controller",
