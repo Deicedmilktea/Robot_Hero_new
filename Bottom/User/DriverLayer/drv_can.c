@@ -86,7 +86,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     {
       memcpy(sbus_buf + 16, rx_data, 2);
       sbus_to_rc(sbus_buf);
-      // memcpy(&INS_top.Yaw, rx_data + 2, 2);
       INS_top.Yaw = (int16_t)((rx_data[2] << 8) | rx_data[3]) / 50.0f;
       INS_top.Pitch = (int16_t)((rx_data[4] << 8) | rx_data[5]) / 50.0f;
       vision_is_tracking = rx_data[6];

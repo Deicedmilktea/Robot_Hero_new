@@ -71,6 +71,11 @@ void Shoot_task(void const *argument)
           is_angle_control = false;
           shoot_start();
         }
+        else
+        {
+          is_angle_control = false;
+          shoot_stop();
+        }
       }
 
       // 右拨杆中，键鼠控制
@@ -88,6 +93,12 @@ void Shoot_task(void const *argument)
         {
           is_angle_control = false;
           shoot_reverse();
+        }
+
+        else
+        {
+          is_angle_control = false;
+          shoot_stop();
         }
       }
 
@@ -113,9 +124,15 @@ void Shoot_task(void const *argument)
         is_angle_control = false;
         shoot_reverse();
       }
+
+      else
+      {
+        is_angle_control = false;
+        shoot_stop();
+      }
     }
 
-    // shoot_current_give();
+    shoot_current_give();
     osDelay(1);
   }
 }

@@ -19,8 +19,7 @@
 #define FRICTION_SPEED_HIGH 6500
 #define FRICTION_LENS_SPEED 1000
 
-motor_info_t motor_top[6]; //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
-
+motor_info_t motor_top[6];     //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
 static shoot_t shoot_motor[4]; // 摩擦轮can2，id = 56
 static int16_t friction_speed = 0;
 
@@ -97,7 +96,7 @@ void Shoot_task(void const *argument)
       lens_judge();
     }
 
-    // shoot_current_give();
+    shoot_current_give();
     osDelay(1);
   }
 }
