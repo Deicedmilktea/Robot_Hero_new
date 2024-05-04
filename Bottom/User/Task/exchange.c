@@ -24,7 +24,7 @@ void exchange_task()
 		send_buffer[6] = 0;
 		send_buffer[7] = 0;
 		can_remote(send_buffer, 0x55);
-		// UITask();
+
 		osDelay(1);
 	}
 }

@@ -16,23 +16,7 @@
 #include "referee_task.h"
 #include "remote_control.h"
 #include "video_control.h"
-
-#define CHASSIS_SPEED_MAX_1 5000
-#define CHASSIS_SPEED_MAX_2 5500
-#define CHASSIS_SPEED_MAX_3 6000
-#define CHASSIS_SPEED_MAX_4 6500
-#define CHASSIS_SPEED_MAX_5 7500
-#define CHASSIS_SPEED_MAX_6 8500
-#define CHASSIS_SPEED_MAX_7 9000
-#define CHASSIS_SPEED_MAX_8 10000
-#define CHASSIS_SPEED_MAX_9 11000
-#define CHASSIS_SPEED_MAX_10 12000
-#define CHASSIS_SPEED_SUPERCAP 10000
-#define CHASSIS_WZ_MAX_1 4000 // 低速，g键触发
-#define CHASSIS_WZ_MAX_2 6000 // 高速，b键触发
-#define KEY_START_OFFSET 20
-#define KEY_STOP_OFFSET 30
-#define FOLLOW_WEIGHT 160
+#include "Supercap_task.h"
 
 motor_info_t motor_bottom[5]; // can2电机信息结构体, 0123：底盘，4：拨盘
 chassis_t chassis_motor[4];
@@ -56,10 +40,7 @@ extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS;
 extern INS_t INS_top;
 extern referee_hero_t referee_hero;
-extern int superop; // 超电
-extern uint8_t rx_buffer_c[49];
-extern uint8_t rx_buffer_d[128];
-extern float powerdata[4];
+extern SupercapRxData_t SupercapRxData; // 超电接收数据
 extern CAN_HandleTypeDef hcan2;
 extern uint8_t trigger_flag;
 extern uint8_t friction_mode;
@@ -74,62 +55,23 @@ static double Scaling1 = 0, Scaling2 = 0, Scaling3 = 0, Scaling4 = 0; // 比例
 float Klimit = 1;                                                     // 限制值
 float Plimit = 0;                                                     // 约束比例
 float Chassis_pidout_max;                                             // 输出值限制
-// 超电
-float data[6];
-float vi, vo, pi, ii, io, ps;
 
-// 读取键鼠数据控制底盘模式
-static void read_keyboard();
-
-// 参数重置
-static void Chassis_loop_Init();
-
-// 正常运动模式
-static void chassis_mode_normal();
-
-// 小陀螺模式
-static void chassis_mode_top();
-
-// 底盘跟随云台模式
-static void chassis_mode_follow();
-
-// 急停模式
-static void chassis_mode_stop();
-
-// yaw值校正
-static void yaw_correct();
-
-// 手动yaw值校正（仅在正常运动模式生效）
-static void manual_yaw_correct();
-
-// 电机电流控制
-static void chassis_current_give(void);
-
-// chassis CAN2发送信号
-static void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
-
-// 速度限制
-static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed);
-
-// 功率限制
-static void Chassis_Power_Limit(double Chassis_pidout_target_limit);
-
-// 键鼠控制
-static void key_control(void);
-
-// 角度范围限制
-static void detel_calc(fp32 *angle);
-
-// 关于
-static void parse_data(char *data_string);
-
-static void datapy();
-
-// 判断机器人等级，赋值最大速度
-static void level_judge();
-
-// 判断是否开启超级电容
-static void supercap_judge();
+static void read_keyboard();                                                            // 读取键鼠数据控制底盘模式
+static void Chassis_loop_Init();                                                        // 参数重置
+static void chassis_mode_normal();                                                      // 正常运动模式
+static void chassis_mode_top();                                                         // 小陀螺模式
+static void chassis_mode_follow();                                                      // 底盘跟随云台模式
+static void chassis_mode_stop();                                                        // 急停模式
+static void yaw_correct();                                                              // yaw值校正
+static void manual_yaw_correct();                                                       // 手动yaw值校正（仅在正常运动模式生效）
+static void chassis_current_give(void);                                                 // 电机电流控制
+static void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);           // chassis CAN2发送信号
+static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed); // 速度限制
+static void Chassis_Power_Limit(double Chassis_pidout_target_limit);                    // 功率限制
+static void key_control(void);                                                          // 键鼠控制
+static void detel_calc(float *angle);                                                   // 角度范围限制
+static void level_judge();                                                              // 判断机器人等级，赋值最大速度
+static void supercap_judge();                                                           // 判断是否开启超级电容
 
 void Chassis_task(void const *pvParameters)
 {
@@ -145,7 +87,7 @@ void Chassis_task(void const *pvParameters)
     // // 判断是否开启超电
     // supercap_judge();
 
-    // 遥控器链路
+    /**********************遥控器链路********************/
     if (rc_ctrl[TEMP].rc.switch_left)
     {
       // 右拨杆下，遥控操作
@@ -187,7 +129,7 @@ void Chassis_task(void const *pvParameters)
       }
     }
 
-    // 图传链路
+    /****************图传链路***************/
     else
     {
       // 底盘模式读取
@@ -219,7 +161,6 @@ void Chassis_task(void const *pvParameters)
     }
 
     chassis_current_give();
-    // datapy(); // 超电数据接收
     osDelay(1);
   }
 }
@@ -611,21 +552,21 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     // }
     if (!supercap_flag)
     {
-      if (powerdata[1]) // 如果接入supercap
+      if (SupercapRxData.voltage) // 如果接入supercap
       {
-        if (powerdata[1] < 24 && powerdata[1] > 23)
+        if (SupercapRxData.voltage < 24 && SupercapRxData.voltage > 23)
           Plimit = 0.9;
-        else if (powerdata[1] < 23 && powerdata[1] > 22)
+        else if (SupercapRxData.voltage < 23 && SupercapRxData.voltage > 22)
           Plimit = 0.8;
-        else if (powerdata[1] < 22 && powerdata[1] > 21)
+        else if (SupercapRxData.voltage < 22 && SupercapRxData.voltage > 21)
           Plimit = 0.7;
-        else if (powerdata[1] < 21 && powerdata[1] > 20)
+        else if (SupercapRxData.voltage < 21 && SupercapRxData.voltage > 20)
           Plimit = 0.6;
-        else if (powerdata[1] < 20 && powerdata[1] > 18)
+        else if (SupercapRxData.voltage < 20 && SupercapRxData.voltage > 18)
           Plimit = 0.5;
-        else if (powerdata[1] < 18 && powerdata[1] > 15)
+        else if (SupercapRxData.voltage < 18 && SupercapRxData.voltage > 15)
           Plimit = 0.3;
-        else if (powerdata[1] < 15)
+        else if (SupercapRxData.voltage < 15)
           Plimit = 0.1;
       }
       else // 防止不接入supercap时，Plimit为0.1
@@ -635,9 +576,9 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     }
     else
     {
-      // if (powerdata[1] < 24 && powerdata[1] > 16)
+      // if (SupercapRxData.voltage < 24 && SupercapRxData.voltage > 16)
       Plimit = 1;
-      // else if (powerdata[1] < 16 && powerdata[1] > 12)
+      // else if (SupercapRxData.voltage < 16 && SupercapRxData.voltage > 12)
       //   Plimit = 0.5;
     }
 
@@ -768,7 +709,7 @@ static void key_control(void)
     key_Wz_cw = 0;
 }
 
-static void detel_calc(fp32 *angle)
+static void detel_calc(float *angle)
 {
   // 如果角度大于180度，则减去360度
   if (*angle > 180)
@@ -781,35 +722,6 @@ static void detel_calc(fp32 *angle)
   {
     *angle += 360;
   }
-}
-
-static void parse_data(char *data_string)
-{
-  sscanf(data_string, "Vi:%f Vo:%f Pi:%f Ii:%f Io:%f Ps:%f", &data[0], &data[1], &data[2], &data[3], &data[4], &data[5]);
-  vi = data[0]; // Vi输入电压（电池电压）
-  vo = data[1]; // Vo输出电压（超级电容电压）
-  pi = data[2]; // Pi输入功率
-  ii = data[3]; // Ii输入电流（电池电流）
-  io = data[4]; // Io输出电流（负载电流）
-  ps = data[5]; // Ps参考恒功率值
-}
-
-static void datapy()
-{
-  int index;
-
-  for (int i = 0; i < 128; i++)
-  {
-    if ((rx_buffer_d[i] == 0x56) && (rx_buffer_d[i + 1] == 'i'))
-    {
-      index = i;
-      break;
-    }
-  }
-
-  memcpy(rx_buffer_c, &rx_buffer_d[index], 49);
-
-  parse_data(rx_buffer_c);
 }
 
 // 判断机器人等级，赋值最大速度

@@ -3,6 +3,7 @@
 #include "remote_control.h"
 #include "video_control.h"
 #include "Robot.h"
+#include "Supercap_task.h"
 
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
 #define ECD_ANGLE_COEF 0.043945f // (360/8192),将编码器值转化为角度制
@@ -13,9 +14,7 @@ extern RC_ctrl_t rc_ctrl[2];
 extern motor_info_t motor_bottom[5];
 
 INS_t INS_top;
-float powerdata[4];
-uint16_t pPowerdata[8];
-uint16_t setpower = 5500;
+SupercapRxData_t SupercapRxData;
 uint8_t vision_is_tracking;
 uint8_t friction_mode;
 
@@ -137,14 +136,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       motor_bottom[index].total_angle = motor_bottom[index].total_round * 360 + motor_bottom[index].angle_single_round;
     }
 
-    if (rx_header.StdId == 0x211) // superpower
+    if (rx_header.StdId == 0x301) // superpower
     {
-      uint16_t *pPowerdata = (uint16_t *)rx_data;
-
-      powerdata[0] = (float)pPowerdata[0] / 100.f; // 输入电压
-      powerdata[1] = (float)pPowerdata[1] / 100.f; // 电容电压
-      powerdata[2] = (float)pPowerdata[2] / 100.f; // 输入电流
-      powerdata[3] = (float)pPowerdata[3] / 100.f; // P
+      SupercapRxData.voltage = (uint16_t)((rx_data[0] << 8) | rx_data[1]);
+      SupercapRxData.power = (uint16_t)((rx_data[2] << 8) | rx_data[3]);
+      SupercapRxData.state = rx_data[4];
     }
   }
 }

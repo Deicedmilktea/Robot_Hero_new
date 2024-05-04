@@ -6,6 +6,23 @@
 #include "remote_control.h"
 #include "main.h"
 
+#define CHASSIS_SPEED_MAX_1 5000
+#define CHASSIS_SPEED_MAX_2 5500
+#define CHASSIS_SPEED_MAX_3 6000
+#define CHASSIS_SPEED_MAX_4 6500
+#define CHASSIS_SPEED_MAX_5 7500
+#define CHASSIS_SPEED_MAX_6 8500
+#define CHASSIS_SPEED_MAX_7 9000
+#define CHASSIS_SPEED_MAX_8 10000
+#define CHASSIS_SPEED_MAX_9 11000
+#define CHASSIS_SPEED_MAX_10 12000
+#define CHASSIS_SPEED_SUPERCAP 10000
+#define CHASSIS_WZ_MAX_1 4000 // 低速，g键触发
+#define CHASSIS_WZ_MAX_2 6000 // 高速，b键触发
+#define KEY_START_OFFSET 20
+#define KEY_STOP_OFFSET 30
+#define FOLLOW_WEIGHT 160
+
 typedef struct
 {
     pid_struct_t pid;     // 底盘电机speed的pid结构体

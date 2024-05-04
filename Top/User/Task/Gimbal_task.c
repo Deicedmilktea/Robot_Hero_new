@@ -62,7 +62,7 @@ void Gimbal_task(void const *pvParameters)
 		if (rc_ctrl[TEMP].rc.switch_left)
 		{
 			// 视觉控制
-			if (rc_ctrl[TEMP].rc.switch_left == 1 || rc_ctrl[TEMP].mouse.press_r == 1) // 左拨杆上 || 按住右键
+			if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r) // 左拨杆上 || 按住右键
 			{
 				gimbal_mode_vision();
 			}
@@ -78,7 +78,7 @@ void Gimbal_task(void const *pvParameters)
 		else
 		{
 			// 视觉控制
-			if (video_ctrl[TEMP].key_data.right_button_down == 1) // 按住右键
+			if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
 			{
 				gimbal_mode_vision();
 			}

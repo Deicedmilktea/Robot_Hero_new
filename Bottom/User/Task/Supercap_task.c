@@ -4,118 +4,50 @@
 #include "string.h"
 #include "rm_referee.h"
 
+SupercapTxData_t SupercapTxData;
+
 extern UART_HandleTypeDef huart1;
 extern CAN_HandleTypeDef hcan2;
 extern referee_hero_t referee_hero;
 
-static void supercap_can_transmit(int16_t poooower);
-
-// int superop = 0;
+static void supercap_can_transmit(SupercapTxData_t TxData);
+static void supercap_data_set(uint16_t buffer, uint16_t power, uint8_t state);
 
 void Supercap_task(void const *argument)
 {
 	while (1)
 	{
-		// uint8_t iuy[7] = "P055P\r\n";
-		// int power = (int)Hero_chassis_power_limit;
-		// if (power == 55)
-		// 	strcpy(iuy, "P055P\r\n");
-		// else if (power == 60)
-		// 	strcpy(iuy, "P060P\r\n");
-		// else if (power == 65)
-		// 	strcpy(iuy, "P065P\r\n");
-		// else if (power == 70)
-		// 	strcpy(iuy, "P070P\r\n");
-		// else if (power == 75)
-		// 	strcpy(iuy, "P075P\r\n");
-		// else if (power == 80)
-		// 	strcpy(iuy, "P080P\r\n");
-		// else if (power == 85)
-		// 	strcpy(iuy, "P085P\r\n");
-		// else if (power == 90)
-		// 	strcpy(iuy, "P090P\r\n");
-		// else if (power == 100 || power == 120)
-		// 	strcpy(iuy, "P100P\r\n");
-		// else
-		// 	strcpy(iuy, "P055P\r\n");
-
-		// uint8_t scon[7] = "PVONP\r\n";
-		// uint8_t scoff[7] = "PVOFP\r\n";
-
-		// HAL_UART_Transmit(&huart1, (uint8_t *)iuy, 7, 0xff);
-
-		// osDelay(10);
-
-		switch (referee_hero.robot_level)
-		{
-		case 1:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(5500);
-			else
-				supercap_can_transmit(6500);
-		case 2:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(6000);
-			else
-				supercap_can_transmit(7000);
-		case 3:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(6500);
-			else
-				supercap_can_transmit(7500);
-		case 4:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(7000);
-			else
-				supercap_can_transmit(8000);
-		case 5:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(7500);
-			else
-				supercap_can_transmit(9000);
-		case 6:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(8000);
-			else
-				supercap_can_transmit(9500);
-		case 7:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(8500);
-			else
-				supercap_can_transmit(10500);
-		case 8:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(9000);
-			else
-				supercap_can_transmit(11000);
-		case 9:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(10000);
-			else
-				supercap_can_transmit(13000);
-		case 10:
-			if (referee_hero.buffer_energy < 10)
-				supercap_can_transmit(12000);
-			else
-				supercap_can_transmit(13000);
-		}
-
-		osDelay(1);
+		supercap_data_set(referee_hero.buffer_energy, referee_hero.chassis_power, 0);
+		supercap_can_transmit(SupercapTxData);
+		osDelay(5);
 	}
 }
 
-static void supercap_can_transmit(int16_t poooower)
+static void supercap_can_transmit(SupercapTxData_t TxData)
 {
-	uint32_t CAN_TX_MAILBOX01;
 	CAN_TxHeaderTypeDef tx_header;
 
-	uint8_t power[2];
-	tx_header.StdId = 0x210;
+	uint8_t send_buffer[5];
+	tx_header.StdId = 0x302;
 	tx_header.IDE = CAN_ID_STD;	  // 标准帧
 	tx_header.RTR = CAN_RTR_DATA; // 数据帧
 
-	tx_header.DLC = 2; // 发送数据长度（字节）
-	power[0] = poooower >> 8;
-	power[1] = poooower;
-	HAL_CAN_AddTxMessage(&hcan2, &tx_header, power, (uint32_t *)CAN_TX_MAILBOX0);
+	tx_header.DLC = 5; // 发送数据长度（字节）
+	send_buffer[0] = (TxData.buffer >> 8) & 0xff;
+	send_buffer[1] = TxData.buffer & 0xff;
+	send_buffer[2] = (TxData.power >> 8) & 0xff;
+	send_buffer[3] = TxData.power & 0xff;
+	send_buffer[4] = TxData.state;
+
+	while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan2) == 0) // 等待发送邮箱空闲
+	{
+	}
+	HAL_CAN_AddTxMessage(&hcan2, &tx_header, send_buffer, (uint32_t *)CAN_TX_MAILBOX0);
+}
+
+static void supercap_data_set(uint16_t buffer, uint16_t power, uint8_t state)
+{
+	SupercapTxData.buffer = buffer;
+	SupercapTxData.power = power;
+	SupercapTxData.state = state;
 }

@@ -32,12 +32,6 @@
 /* USER CODE BEGIN TD */
 uint16_t TIM1_Count = 0;
 uint8_t TIM1_flag = 1;
-
-#define RX_BUFFER_SIZE 128
-
-uint8_t rx_buffer[128];
-uint8_t rx_buffer_c[49];
-uint8_t rx_buffer_d[128];
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -374,11 +368,11 @@ void SPI1_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  memcpy(rx_buffer_d, rx_buffer, 128);
+
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-  HAL_UART_Receive_IT(&huart1, (uint8_t *)rx_buffer, sizeof(rx_buffer));
+
   /* USER CODE END USART1_IRQn 1 */
 }
 

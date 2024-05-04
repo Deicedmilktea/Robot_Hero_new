@@ -41,7 +41,8 @@
             "main.h": "c",
             "robot.h": "c",
             "stdbool.h": "c",
-            "video_control.h": "c"
+            "video_control.h": "c",
+            "usart.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },
