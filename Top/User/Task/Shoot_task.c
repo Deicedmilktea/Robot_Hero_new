@@ -148,22 +148,22 @@ static void read_keyboard()
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
     {
       friction_speed = FRICTION_SPEED_NORMAL;
-      friction_flag = 0;
+      friction_flag = FRICTION_NORMAL;
     }
     else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
     {
       friction_speed = FRICTION_SPEED_LOW;
-      friction_flag = 1;
+      friction_flag = FRICTION_LOW;
     }
     else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
     {
       friction_speed = FRICTION_SPEED_HIGH;
-      friction_flag = 2;
+      friction_flag = FRICTION_HIGH;
     }
     else
     {
       friction_speed = FRICTION_SPEED_STOP;
-      friction_flag = 3;
+      friction_flag = FRICTION_STOP;
     }
   }
 
@@ -173,23 +173,23 @@ static void read_keyboard()
     // E键切换摩擦轮速度
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
     {
-      friction_speed = FRICTION_SPEED_LOW;
-      friction_flag = 0;
+      friction_speed = FRICTION_SPEED_NORMAL;
+      friction_flag = FRICTION_NORMAL;
     }
     else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
     {
-      friction_speed = FRICTION_SPEED_HIGH;
-      friction_flag = 2;
+      friction_speed = FRICTION_SPEED_LOW;
+      friction_flag = FRICTION_LOW;
     }
     else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
     {
-      friction_speed = FRICTION_SPEED_NORMAL;
-      friction_flag = 1;
+      friction_speed = FRICTION_SPEED_HIGH;
+      friction_flag = FRICTION_HIGH;
     }
     else
     {
-      friction_speed = 0;
-      friction_flag = 3;
+      friction_speed = FRICTION_SPEED_STOP;
+      friction_flag = FRICTION_STOP;
     }
   }
 }
