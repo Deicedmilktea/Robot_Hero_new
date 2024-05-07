@@ -256,7 +256,7 @@
         ]
       },
       {
-        "name": "RTOS TASK",
+        "name": "Task",
         "files": [
           {
             "path": "../User/Task/Chassis_task.c"

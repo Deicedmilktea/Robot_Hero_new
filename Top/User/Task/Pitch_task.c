@@ -69,13 +69,13 @@ void Pitch_task(void const *argument)
                 }
                 else
                 {
-                    pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 20 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
+                    pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 40 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
                 }
             }
 
             else
             {
-                pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 20 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
+                pitch.target_speed = -(rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - 40 * rc_ctrl[TEMP].mouse.y / 16384.0f) * pitch.speed_max;
             }
         }
 
@@ -98,13 +98,13 @@ void Pitch_task(void const *argument)
                 }
                 else
                 {
-                    pitch.target_speed = 20 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
+                    pitch.target_speed = 40 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
                 }
             }
 
             else
             {
-                pitch.target_speed = 20 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
+                pitch.target_speed = 40 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
             }
         }
 

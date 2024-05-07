@@ -14,9 +14,10 @@
 #include "video_control.h"
 
 #define FRICTION_MAX_SPEED 20000
-#define FRICTION_SPEED_NORMAL 6200
+#define FRICTION_SPEED_NORMAL 6100
 #define FRICTION_SPEED_LOW 6000
 #define FRICTION_SPEED_HIGH 6500
+#define FRICTION_SPEED_STOP 0
 #define FRICTION_LENS_SPEED 1000
 
 motor_info_t motor_top[6];     //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
@@ -144,20 +145,25 @@ static void read_keyboard()
   if (rc_ctrl[TEMP].rc.switch_left)
   {
     // E键切换摩擦轮速度
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 1)
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
     {
-      friction_speed = FRICTION_SPEED_LOW;
+      friction_speed = FRICTION_SPEED_NORMAL;
       friction_flag = 0;
     }
-    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 2)
+    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
+    {
+      friction_speed = FRICTION_SPEED_LOW;
+      friction_flag = 1;
+    }
+    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
     {
       friction_speed = FRICTION_SPEED_HIGH;
       friction_flag = 2;
     }
     else
     {
-      friction_speed = FRICTION_SPEED_NORMAL;
-      friction_flag = 1;
+      friction_speed = FRICTION_SPEED_STOP;
+      friction_flag = 3;
     }
   }
 
@@ -165,20 +171,25 @@ static void read_keyboard()
   else
   {
     // E键切换摩擦轮速度
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 1)
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
     {
       friction_speed = FRICTION_SPEED_LOW;
       friction_flag = 0;
     }
-    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 3 == 2)
+    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
     {
       friction_speed = FRICTION_SPEED_HIGH;
       friction_flag = 2;
     }
-    else
+    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
     {
       friction_speed = FRICTION_SPEED_NORMAL;
       friction_flag = 1;
+    }
+    else
+    {
+      friction_speed = 0;
+      friction_flag = 3;
     }
   }
 }

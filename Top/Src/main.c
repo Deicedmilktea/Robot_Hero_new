@@ -112,9 +112,6 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
-  // HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
-  //	HAL_NVIC_SetPriority(SysTick_IRQn,1,1);
   CAN1_Init();
   CAN2_Init();
   HAL_TIM_Base_Start_IT(&htim1);

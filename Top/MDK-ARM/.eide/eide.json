@@ -285,7 +285,7 @@
         "folders": []
       },
       {
-        "name": "RTOS TASK",
+        "name": "Task",
         "files": [
           {
             "path": "../User/Task/exchange.c"

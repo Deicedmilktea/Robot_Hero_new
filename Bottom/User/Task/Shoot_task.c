@@ -154,7 +154,7 @@ static void shoot_loop_init()
 
   // 初始化PID
   pid_init(&trigger.pid_speed, trigger.pid_speed_value, 20000, 30000); // trigger_speed
-  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 10000, 20000); // trigger_angle
+  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 6000, 6000);   // trigger_angle
 }
 
 /***************射击模式*****************/

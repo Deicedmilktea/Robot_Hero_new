@@ -175,19 +175,24 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     {
         switch (_Interactive_data->friction_mode)
         {
-        case FRICTION_LOW:
-        {
-            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "low   ");
-            break;
-        }
         case FRICTION_NORMAL:
         {
             UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "normal");
             break;
         }
+        case FRICTION_LOW:
+        {
+            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "low   ");
+            break;
+        }
         case FRICTION_HIGH:
         {
             UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "high  ");
+            break;
+        }
+        case FRICTION_STOP:
+        {
+            UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_Change, 8, UI_Color_Orange, 25, 4, 340, 650, "stop  ");
             break;
         }
         }

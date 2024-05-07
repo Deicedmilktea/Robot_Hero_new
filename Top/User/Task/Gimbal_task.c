@@ -16,7 +16,7 @@
 #include "remote_control.h"
 #include "video_control.h"
 
-gimbal_t gimbal_gyro; // gimbal gyro
+static gimbal_t gimbal_gyro; // gimbal gyro
 
 // yaw_correct
 static uint8_t Update_yaw_flag = 1;
