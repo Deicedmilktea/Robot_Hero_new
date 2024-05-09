@@ -374,20 +374,29 @@ static void chassis_mode_follow()
   // 保证切换回这个模式的时候，头在初始方向上，速度移动最快，方便逃跑(●'◡'●)
   relative_yaw = INS.yaw_update - INS_top.Yaw;
 
-  // 消除静态旋转
-  if (relative_yaw > -5 && relative_yaw < 5)
+  // 便于小陀螺操作
+  if (key_Wz_acw || key_Wz_cw)
   {
-    Wz = 0;
+    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max + key_Wz_acw + key_Wz_cw; // rotate
   }
+
   else
   {
-    detel_calc(&relative_yaw);
-    Wz = -relative_yaw * FOLLOW_WEIGHT;
+    // 消除静态旋转
+    if (relative_yaw > -5 && relative_yaw < 5)
+    {
+      Wz = 0;
+    }
+    else
+    {
+      detel_calc(&relative_yaw);
+      Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-    if (Wz > 2 * chassis_wz_max)
-      Wz = 2 * chassis_wz_max;
-    if (Wz < -2 * chassis_wz_max)
-      Wz = -2 * chassis_wz_max;
+      if (Wz > 2 * chassis_wz_max)
+        Wz = 2 * chassis_wz_max;
+      if (Wz < -2 * chassis_wz_max)
+        Wz = -2 * chassis_wz_max;
+    }
   }
 
   int16_t Temp_Vx = Vx;
@@ -461,14 +470,26 @@ static void yaw_correct()
   }
   // Wz为负，顺时针旋转，陀螺仪飘 60°/min（以3000为例转出的，根据速度不同调整）
   // 解决yaw偏移，完成校正
-  if (rc_ctrl[TEMP].key[KEY_PRESS].shift || rc_ctrl[TEMP].key[KEY_PRESS].ctrl)
+  if (rc_ctrl[TEMP].key[KEY_PRESS].shift || rc_ctrl[TEMP].key[KEY_PRESS].ctrl || video_ctrl[TEMP].key[KEY_PRESS].shift || video_ctrl[TEMP].key[KEY_PRESS].ctrl)
   {
-    if (Wz > 500)
-      imu_err_yaw -= 0.001f;
-    // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
-    if (Wz < -500)
-      imu_err_yaw += 0.001f;
-    // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
+    if (chassis_wz_max == CHASSIS_WZ_MAX_1)
+    {
+      if (Wz > 500)
+        imu_err_yaw -= 0.001f;
+      // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
+      if (Wz < -500)
+        imu_err_yaw += 0.001f;
+      // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
+    }
+    else
+    {
+      if (Wz > 500)
+        imu_err_yaw -= 0.0015f;
+      // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
+      if (Wz < -500)
+        imu_err_yaw += 0.0015f;
+      // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
+    }
   }
 
   INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
@@ -477,7 +498,7 @@ static void yaw_correct()
 /***************** 手动yaw值校正（仅在正常运动模式生效） ******************/
 static void manual_yaw_correct()
 {
-  if (rc_ctrl[TEMP].key[KEY_PRESS].v)
+  if (rc_ctrl[TEMP].key[KEY_PRESS].v || video_ctrl[TEMP].key[KEY_PRESS].v)
   {
     float manual_err_yaw = INS.yaw_update - INS_top.Yaw;
     imu_err_yaw -= manual_err_yaw;
