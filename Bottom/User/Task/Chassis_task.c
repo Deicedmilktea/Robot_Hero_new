@@ -431,8 +431,8 @@ static void chassis_current_give()
     motor_bottom[i].set_current = pid_calc(&chassis_motor[i].pid, chassis_motor[i].target_speed, motor_bottom[i].rotor_speed);
   }
   // 在功率限制算法中，静止状态底盘锁不住，这时取消功率限制，保证发弹稳定性
-  // if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
-  Chassis_Power_Limit(4 * chassis_speed_max);
+  if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
+    Chassis_Power_Limit(4 * chassis_speed_max);
 
   chassis_can2_cmd(motor_bottom[0].set_current, motor_bottom[1].set_current, motor_bottom[2].set_current, motor_bottom[3].set_current);
 }

@@ -63,14 +63,13 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
-    read_keyboard();
-
     // 遥控器链路
     if (rc_ctrl[TEMP].rc.switch_left)
     {
       // 右拨杆中，键鼠控制
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
+        read_keyboard();
         shoot_start_all();
         lens_judge();
       }
@@ -81,6 +80,7 @@ void Shoot_task(void const *argument)
         // 遥控器左边拨到上和中，电机启动
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
         {
+          friction_speed = FRICTION_SPEED_NORMAL;
           shoot_start_all();
         }
         else
@@ -93,6 +93,7 @@ void Shoot_task(void const *argument)
     // 图传链路
     else
     {
+      read_keyboard();
       shoot_start_all();
       lens_judge();
     }

@@ -93,7 +93,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     }
 
     // pitch
-    if (rx_header.StdId == 0x205)
+    if (rx_header.StdId == 0x205 || rx_header.StdId == 0x206) // 新旧英雄都在这樂，后续作分离
     {
       motor_read(PITCH_INDEX, rx_data);
     }

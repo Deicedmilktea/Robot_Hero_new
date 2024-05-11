@@ -326,10 +326,10 @@ static void pitch_can2_cmd(int16_t voltage)
 
     tx_header.DLC = 8; // 发送数据长度（字节）
 
-    tx_data[0] = (voltage >> 8) & 0xff;
-    tx_data[1] = (voltage) & 0xff;
-    tx_data[2] = NULL;
-    tx_data[3] = NULL;
+    tx_data[0] = NULL;
+    tx_data[1] = NULL;
+    tx_data[2] = (voltage >> 8) & 0xff;
+    tx_data[3] = (voltage) & 0xff;
     tx_data[4] = NULL;
     tx_data[5] = NULL;
     tx_data[6] = NULL;
