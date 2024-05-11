@@ -6,13 +6,13 @@
 
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
 #define ECD_ANGLE_COEF 0.043945f // (360/8192),将编码器值转化为角度制
-#define PITCH_INDEX 4
-#define YAW_INDEX 5
+#define PITCH_INDEX 5
+#define YAW_INDEX 6
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
-extern motor_info_t motor_top[6];
+extern motor_info_t motor_top[7];
 
 INS_t INS_bottom; // 下C板的imu数据
 
@@ -85,15 +85,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
   {
     uint8_t rx_data[8];
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can2 data
-    if ((rx_header.StdId >= 0x201)                                 // 201-204
-        && (rx_header.StdId <= 0x204))                             // 判断标识符，标识符为0x200+ID
+    if ((rx_header.StdId >= 0x201)                                 // 201-205
+        && (rx_header.StdId <= 0x205))                             // 判断标识符，标识符为0x200+ID
     {
       uint8_t index = rx_header.StdId - 0x201; // get motor index by can_id
       motor_read(index, rx_data);
     }
 
     // pitch
-    if (rx_header.StdId == 0x205 || rx_header.StdId == 0x206) // 新旧英雄都在这樂，后续作分离
+    if (rx_header.StdId == 0x206) // 新旧英雄都在这樂，后续作分离
     {
       motor_read(PITCH_INDEX, rx_data);
     }

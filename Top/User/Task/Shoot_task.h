@@ -6,10 +6,17 @@
 
 typedef struct
 {
-    pid_struct_t pid;  // 摩擦轮speed的pid结构体
-    fp32 pid_value[3]; // 摩擦轮speed的pid参数
-    fp32 target_speed; // 摩擦轮的目标速度
+    pid_struct_t pid;   // 摩擦轮speed的pid结构体
+    float pid_value[3]; // 摩擦轮speed的pid参数
+    float target_speed; // 摩擦轮的目标速度
 } shoot_t;
+
+typedef struct
+{
+    pid_struct_t pid;   // 摩擦轮speed的pid结构体
+    float pid_value[3]; // 摩擦轮speed的pid参数
+    float target_angle; // 摩擦轮的目标速度
+} lens_t;
 
 typedef enum
 {

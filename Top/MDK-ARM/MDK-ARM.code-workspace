@@ -42,7 +42,10 @@
             "robot.h": "c",
             "stdbool.h": "c",
             "video_control.h": "c",
-            "usart.h": "c"
+            "usart.h": "c",
+            "compare": "c",
+            "limits": "c",
+            "*.tcc": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },
