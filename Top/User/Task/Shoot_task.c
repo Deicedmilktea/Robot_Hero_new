@@ -13,25 +13,12 @@
 #include "remote_control.h"
 #include "video_control.h"
 
-#define FRICTION_MAX_SPEED 20000
-#define FRICTION_UP_SPEED 1000
-#define FRICTION_SPEED_NORMAL 6200
-#define FRICTION_SPEED_LOW 6000
-#define FRICTION_SPEED_HIGH 6500
-#define FRICTION_SPEED_STOP 0
+motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
+uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 
-#define LENS_ANGLE_ON -45
-#define LENS_ANGLE_OFF 2200
-
-#define LENS_ANGLE_HIGH -520
-#define LENS_ANGLE_LOW 310
-
-motor_info_t motor_top[7];     //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
 static int16_t friction_speed = 0;
-
-uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
@@ -60,7 +47,7 @@ void Shoot_task(void const *argument)
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
         read_keyboard();
-        shoot_start_all();
+        // shoot_start_all();
         lens_judge();
       }
 
@@ -224,13 +211,29 @@ static void lens_judge()
   // 遥控器链路
   if (rc_ctrl[TEMP].rc.switch_left)
   {
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 2 == 1)
-      return;
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
+      lens_motor[0].target_angle = LENS_ANGLE_ON;
+    else
+      lens_motor[0].target_angle = LENS_ANGLE_OFF;
+
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
+      lens_motor[1].target_angle = LENS_ANGLE_HIGH;
+    else
+      lens_motor[1].target_angle = LENS_ANGLE_LOW;
   }
 
   // 图传链路
   else
   {
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
+      lens_motor[0].target_angle = LENS_ANGLE_ON;
+    else
+      lens_motor[0].target_angle = LENS_ANGLE_OFF;
+
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
+      lens_motor[1].target_angle = LENS_ANGLE_HIGH;
+    else
+      lens_motor[1].target_angle = LENS_ANGLE_LOW;
   }
 }
 
@@ -267,9 +270,9 @@ static void shoot_current_give()
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
   motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);
 
-  motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[3].target_angle, motor_top[3].total_angle);
-  motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[4].target_angle, motor_top[4].total_angle);
+  motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+  motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
 
-  // shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
-  // shoot_can2_cmd(1, motor_top[4].set_current, 0, 0, 0);
+  shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
+  shoot_can2_cmd(1, motor_top[4].set_current, motor_top[5].set_current, 0, 0);
 }

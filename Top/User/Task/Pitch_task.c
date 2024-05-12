@@ -14,8 +14,8 @@
 #include "stdbool.h"
 #include "user_lib.h"
 
-#define PITCH_MAX 30
-#define PITCH_MIN -5
+#define PITCH_MAX 38
+#define PITCH_MIN -8
 
 static pitch_t pitch;
 
@@ -27,17 +27,10 @@ extern INS_t INS_bottom;
 extern float vision_pitch;
 extern bool vision_is_tracking;
 
-// 初始化
-static void pitch_loop_init();
-
-/*can1发送电流*/
-static void pitch_can2_cmd(int16_t voltage);
-
-// PID计算速度并发送电流
-static void pitch_current_give();
-
-// 判断pitch位置
-static void pitch_position_limit();
+static void pitch_loop_init();               // 初始化
+static void pitch_can2_cmd(int16_t voltage); // can1发送电流
+static void pitch_current_give();            // PID计算速度并发送电流
+static void pitch_position_limit();          // 限制pitch位置
 
 void Pitch_task(void const *argument)
 {
@@ -57,22 +50,22 @@ void Pitch_task(void const *argument)
                 if (vision_is_tracking)
                 {
                     // 视觉模式下的手动微调
-                    float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
+                    float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 10.0f) * 10.0f; // 微调幅度10°
                     pitch.target_angle = vision_pitch + normalized_input;
                 }
                 else
                 {
                     // 使用非线性映射函数调整灵敏度
-                    float normalized_input = (rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f) * 100.0f;
-                    pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.3;
+                    float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 100.0f;
+                    pitch.target_angle += pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.1f;
                 }
             }
 
             else
             {
                 // 使用非线性映射函数调整灵敏度
-                float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f;
-                pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.1f;
+                float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 100.0f;
+                pitch.target_angle += pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.1f;
             }
         }
 
@@ -85,15 +78,15 @@ void Pitch_task(void const *argument)
                 if (vision_is_tracking)
                 {
                     // 视觉模式下的手动微调
-                    float normalized_input = (video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * 100.0f;
+                    float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 100.0f;
                     pitch.target_angle = vision_pitch + normalized_input;
                 }
 
                 else
                 {
                     // 使用非线性映射函数调整灵敏度
-                    float normalized_input = (video_ctrl[TEMP].key_data.mouse_y / 16384.0f) * 100.0f;
-                    pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.1;
+                    float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 10.0f;
+                    pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input);
                 }
             }
         }
@@ -111,7 +104,7 @@ static void pitch_loop_init()
     pitch.angle_pid_value[1] = 0;
     pitch.angle_pid_value[2] = 0;
 
-    pitch.speed_pid_value[0] = 200;
+    pitch.speed_pid_value[0] = 300;
     pitch.speed_pid_value[1] = 0.05;
     pitch.speed_pid_value[2] = 0;
 
@@ -122,57 +115,25 @@ static void pitch_loop_init()
     pid_init(&pitch.pid_speed, pitch.speed_pid_value, 30000, 30000);
 }
 
-/************************** can1发送电流 ***************************/
-static void pitch_can2_cmd(int16_t voltage)
-{
-    uint32_t send_mail_box;
-    CAN_TxHeaderTypeDef tx_header;
-    uint8_t tx_data[8];
-
-    tx_header.StdId = 0x1FF;
-    tx_header.IDE = CAN_ID_STD;   // 标准帧
-    tx_header.RTR = CAN_RTR_DATA; // 数据帧
-
-    tx_header.DLC = 8; // 发送数据长度（字节）
-
-    tx_data[0] = NULL;
-    tx_data[1] = NULL;
-    tx_data[2] = (voltage >> 8) & 0xff;
-    tx_data[3] = (voltage) & 0xff;
-    tx_data[4] = NULL;
-    tx_data[5] = NULL;
-    tx_data[6] = NULL;
-    tx_data[7] = NULL;
-
-    HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
-}
-
 /**************** PID计算速度并发送电流 ***************/
 static void pitch_current_give()
 {
     pitch.target_speed = pid_calc(&pitch.pid_angle, pitch.target_angle, INS.Roll);
     motor_top[5].set_current = pid_calc(&pitch.pid_speed, pitch.target_speed, INS.Gyro[1] * 57.3f); // 此处速度需具体测量
-
-    pitch_can2_cmd(motor_top[5].set_current);
+    // 在shoot_task.c中发送电流，防止一下发多个电流给电机
 }
 
 /*************** 判断pitch位置 ******************/
 static void pitch_position_limit()
 {
-    if (pitch.relative_pitch > PITCH_MAX)
+    if ((pitch.target_angle > PITCH_MAX + INS_bottom.Pitch) && (pitch.target_speed > 0))
     {
         pitch.target_angle = PITCH_MAX + INS_bottom.Pitch;
+        pitch.target_speed = 0;
     }
-    if (pitch.relative_pitch < PITCH_MIN)
+    if ((pitch.target_angle < PITCH_MIN + INS_bottom.Pitch) && (pitch.target_speed < 0))
     {
         pitch.target_angle = PITCH_MIN + INS_bottom.Pitch;
+        pitch.target_speed = 0;
     }
-    // if (pitch.target_angle > PITCH_MAX)
-    // {
-    //     pitch.target_angle = PITCH_MAX;
-    // }
-    // if (pitch.target_angle < PITCH_MIN)
-    // {
-    //     pitch.target_angle = PITCH_MIN;
-    // }
 }
