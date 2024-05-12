@@ -26,7 +26,6 @@ extern CAN_HandleTypeDef hcan1;
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS;
-extern motor_info_t motor_top[6];
 extern bool vision_is_tracking;
 extern float vision_yaw;
 

@@ -18,10 +18,9 @@
 #define FRICTION_SPEED_LOW 6000
 #define FRICTION_SPEED_HIGH 6500
 #define FRICTION_SPEED_STOP 0
-#define FRICTION_LENS_SPEED 1000
 
-motor_info_t motor_top[6];     //[0]-[3]:left, right, up, [4]:pitch, [5]:yaw
-static shoot_t shoot_motor[4]; // 摩擦轮can2，id = 56
+motor_info_t motor_top[4];     //[0]-[1]:left, [2]:pitch, [3]:yaw
+static shoot_t shoot_motor[2]; // 摩擦轮can2，id = 56
 static int16_t friction_speed = 0;
 
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
@@ -36,17 +35,11 @@ static void shoot_loop_init();
 // 读取摩擦轮速度
 static void read_keyboard();
 
-// 左右摩擦轮开启模式
-static void shoot_start_lr();
-
-// 三摩擦轮开启模式
-static void shoot_start_all();
+// 摩擦轮开启模式
+static void shoot_start();
 
 // 摩擦轮关闭模式
 static void shoot_stop();
-
-// 判断开关镜
-static void lens_judge();
 
 // can2发送电流
 static void shoot_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
@@ -70,8 +63,7 @@ void Shoot_task(void const *argument)
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
         read_keyboard();
-        shoot_start_all();
-        lens_judge();
+        shoot_start();
       }
 
       // 右拨杆下，遥控器控制
@@ -81,7 +73,7 @@ void Shoot_task(void const *argument)
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
         {
           friction_speed = FRICTION_SPEED_NORMAL;
-          shoot_start_all();
+          shoot_start();
         }
         else
         {
@@ -94,8 +86,7 @@ void Shoot_task(void const *argument)
     else
     {
       read_keyboard();
-      shoot_start_all();
-      lens_judge();
+      shoot_start();
     }
 
     shoot_current_give();
@@ -116,27 +107,13 @@ static void shoot_loop_init()
   shoot_motor[1].pid_value[1] = 0;
   shoot_motor[1].pid_value[2] = 0;
 
-  // friction_up
-  shoot_motor[2].pid_value[0] = 20;
-  shoot_motor[2].pid_value[1] = 0;
-  shoot_motor[2].pid_value[2] = 0;
-
-  // lens
-  shoot_motor[3].pid_value[0] = 20;
-  shoot_motor[3].pid_value[1] = 0;
-  shoot_motor[3].pid_value[2] = 0;
-
   // 初始化目标速度
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
-  shoot_motor[2].target_speed = 0;
-  shoot_motor[3].target_speed = 0;
 
   // 初始化PID
   pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
-  pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, FRICTION_MAX_SPEED); // friction_up
-  pid_init(&shoot_motor[3].pid, shoot_motor[3].pid_value, 1000, FRICTION_MAX_SPEED); // lens
 }
 
 // 读取摩擦轮速度
@@ -195,20 +172,11 @@ static void read_keyboard()
   }
 }
 
-/*************** 左右摩擦轮开启模式 *****************/
-static void shoot_start_lr()
+/**************** 摩擦轮开启模式 *****************/
+static void shoot_start()
 {
   shoot_motor[0].target_speed = friction_speed;
   shoot_motor[1].target_speed = -friction_speed;
-  shoot_motor[2].target_speed = 0;
-}
-
-/**************** 三摩擦轮开启模式 *****************/
-static void shoot_start_all()
-{
-  shoot_motor[0].target_speed = friction_speed;
-  shoot_motor[1].target_speed = -friction_speed;
-  shoot_motor[2].target_speed = -FRICTION_LENS_SPEED;
 }
 
 /*************** 摩擦轮关闭模式 **************/
@@ -216,23 +184,6 @@ static void shoot_stop()
 {
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
-  shoot_motor[2].target_speed = 0;
-}
-
-/***************** 判断开关镜 *******************/
-static void lens_judge()
-{
-  // 遥控器链路
-  if (rc_ctrl[TEMP].rc.switch_left)
-  {
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 2 == 1)
-      return;
-  }
-
-  // 图传链路
-  else
-  {
-  }
 }
 
 /********************************摩擦轮can2发送电流***************************/
@@ -266,8 +217,6 @@ static void shoot_current_give()
 
   motor_top[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_top[0].rotor_speed);
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
-  motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);
-  motor_top[3].set_current = pid_calc(&shoot_motor[3].pid, shoot_motor[3].target_speed, motor_top[3].rotor_speed);
 
   shoot_can2_cmd(motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
 }

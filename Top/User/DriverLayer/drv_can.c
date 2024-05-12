@@ -6,13 +6,13 @@
 
 #define RC_CH_VALUE_OFFSET ((uint16_t)1024)
 #define ECD_ANGLE_COEF 0.043945f // (360/8192),将编码器值转化为角度制
-#define PITCH_INDEX 4
-#define YAW_INDEX 5
+#define PITCH_INDEX 2
+#define YAW_INDEX 3
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
-extern motor_info_t motor_top[6];
+extern motor_info_t motor_top[4];
 
 INS_t INS_bottom; // 下C板的imu数据
 
