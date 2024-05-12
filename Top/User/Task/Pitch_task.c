@@ -7,8 +7,6 @@
 */
 
 #include "Pitch_task.h"
-
-#include "Pitch_task.h"
 #include "drv_can.h"
 #include "remote_control.h"
 #include "video_control.h"
@@ -19,7 +17,7 @@
 #define PITCH_MAX 30
 #define PITCH_MIN -5
 
-pitch_t pitch;
+static pitch_t pitch;
 
 extern CAN_HandleTypeDef hcan2;
 extern motor_info_t motor_top[7];
@@ -161,20 +159,20 @@ static void pitch_current_give()
 /*************** 判断pitch位置 ******************/
 static void pitch_position_limit()
 {
-    // if (pitch.relative_pitch > PITCH_MAX)
-    // {
-    //     pitch.target_angle = PITCH_MAX + INS_bottom.Pitch;
-    // }
-    // if (pitch.relative_pitch < PITCH_MIN)
-    // {
-    //     pitch.target_angle = PITCH_MIN + INS_bottom.Pitch;
-    // }
-    if (pitch.target_angle > PITCH_MAX)
+    if (pitch.relative_pitch > PITCH_MAX)
     {
-        pitch.target_angle = PITCH_MAX;
+        pitch.target_angle = PITCH_MAX + INS_bottom.Pitch;
     }
-    if (pitch.target_angle < PITCH_MIN)
+    if (pitch.relative_pitch < PITCH_MIN)
     {
-        pitch.target_angle = PITCH_MIN;
+        pitch.target_angle = PITCH_MIN + INS_bottom.Pitch;
     }
+    // if (pitch.target_angle > PITCH_MAX)
+    // {
+    //     pitch.target_angle = PITCH_MAX;
+    // }
+    // if (pitch.target_angle < PITCH_MIN)
+    // {
+    //     pitch.target_angle = PITCH_MIN;
+    // }
 }

@@ -7,7 +7,6 @@
 
 typedef struct
 {
-    motor_info_t motor_info;         // 电机信息结构体
     pid_struct_t pid_angle;          // 云台电机angle的pid结构体
     pid_struct_t pid_speed;          // 云台电机speed的pid结构体
     pid_struct_t pid_angle_vision;   // 云台电机vision_angle的pid结构体

@@ -235,13 +235,19 @@ static void read_keyboard()
     switch (friction_mode)
     {
     case 0:
-      ui_data.friction_mode = FRICTION_LOW;
+      ui_data.friction_mode = FRICTION_STOP;
       break;
     case 1:
       ui_data.friction_mode = FRICTION_NORMAL;
       break;
     case 2:
+      ui_data.friction_mode = FRICTION_LOW;
+      break;
+    case 3:
       ui_data.friction_mode = FRICTION_HIGH;
+      break;
+    default:
+      ui_data.friction_mode = FRICTION_STOP;
       break;
     }
   }
@@ -291,13 +297,19 @@ static void read_keyboard()
     switch (friction_mode)
     {
     case 0:
-      ui_data.friction_mode = FRICTION_LOW;
+      ui_data.friction_mode = FRICTION_STOP;
       break;
     case 1:
       ui_data.friction_mode = FRICTION_NORMAL;
       break;
     case 2:
+      ui_data.friction_mode = FRICTION_LOW;
+      break;
+    case 3:
       ui_data.friction_mode = FRICTION_HIGH;
+      break;
+    default:
+      ui_data.friction_mode = FRICTION_STOP;
       break;
     }
   }
