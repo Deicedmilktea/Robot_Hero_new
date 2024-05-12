@@ -47,7 +47,7 @@ void Shoot_task(void const *argument)
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
         read_keyboard();
-        // shoot_start_all();
+        shoot_start_all();
         lens_judge();
       }
 
