@@ -5,10 +5,12 @@
 
 typedef struct
 {
-    pid_struct_t pid_speed;   // 拨盘speed的pid结构体
-    pid_struct_t pid_angle;   // 拨盘angle的pid结构体
-    float pid_speed_value[3]; // 拨盘speed的pid参数
-    float pid_angle_value[3]; // 拨盘angle的pid参数
+    pid_struct_t pid;         // 拨盘speed的pid结构体
+    pid_struct_t pid_angle;   // 单发angle的pid结构体
+    pid_struct_t pid_speed;   // 单发speed的pid结构体
+    float pid_value[3];       // 拨盘speed的pid参数
+    float pid_angle_value[3]; // 单发angle的pid参数
+    float pid_speed_value[3]; // 单发speed的pid参数
     float target_speed;       // 拨盘的目标速度
     float target_angle;       // 拨盘的目标角度
 } trigger_t;

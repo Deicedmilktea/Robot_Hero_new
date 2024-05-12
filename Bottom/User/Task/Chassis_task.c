@@ -46,15 +46,15 @@ extern uint8_t trigger_flag;
 extern uint8_t friction_mode;
 
 // 功率限制算法的变量定义
-float Watch_Power_Max;                                                // 限制值
-float Watch_Power;                                                    // 实时功率
-float Watch_Buffer;                                                   // 缓冲能量值
-double Chassis_pidout;                                                // 输出值
-double Chassis_pidout_target;                                         // 目标值
+static float Watch_Power_Max;                                         // 限制值
+static float Watch_Power;                                             // 实时功率
+static float Watch_Buffer;                                            // 缓冲能量值
+static double Chassis_pidout;                                         // 输出值
+static double Chassis_pidout_target;                                  // 目标值
 static double Scaling1 = 0, Scaling2 = 0, Scaling3 = 0, Scaling4 = 0; // 比例
-float Klimit = 1;                                                     // 限制值
-float Plimit = 0;                                                     // 约束比例
-float Chassis_pidout_max;                                             // 输出值限制
+static float Klimit = 1;                                              // 限制值
+static float Plimit = 0;                                              // 约束比例
+static float Chassis_pidout_max;                                      // 输出值限制
 
 static void read_keyboard();                                                            // 读取键鼠数据控制底盘模式
 static void Chassis_loop_Init();                                                        // 参数重置
@@ -71,7 +71,8 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit);            
 static void key_control(void);                                                          // 键鼠控制
 static void detel_calc(float *angle);                                                   // 角度范围限制
 static void level_judge();                                                              // 判断机器人等级，赋值最大速度
-static void supercap_judge();                                                           // 判断是否开启超级电容
+static void rc_mode_choose();                                                           // 遥控器链路选择底盘模式
+static void video_mode_choose();                                                        // 图传链路选择底盘模式
 
 void Chassis_task(void const *pvParameters)
 {
@@ -80,85 +81,14 @@ void Chassis_task(void const *pvParameters)
 
   for (;;)
   {
-    // 等级判断，获取最大速度
-    level_judge();
-    // 校正yaw值
-    yaw_correct();
-    // // 判断是否开启超电
-    // supercap_judge();
+    level_judge(); // 等级判断，获取最大速度
+    yaw_correct(); // 校正yaw值
 
-    /**********************遥控器链路********************/
-    if (rc_ctrl[TEMP].rc.switch_left)
-    {
-      // 右拨杆下，遥控操作
-      if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
-      {
-        chassis_mode_follow();
-      }
+    if (rc_ctrl[TEMP].rc.switch_left) // 遥控器链路
+      rc_mode_choose();
 
-      // 右拨杆中，键鼠操作
-      else if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
-      {
-        // 底盘模式读取
-        read_keyboard();
-        key_control();
-
-        // 底盘跟随云台模式，r键触发
-        if (chassis_mode == 1)
-        {
-          chassis_mode_follow();
-        }
-
-        // 正常运动模式，f键触发
-        else if (chassis_mode == 2)
-        {
-          manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
-          chassis_mode_normal();
-        }
-
-        else
-        {
-          chassis_mode_stop();
-        }
-      }
-
-      // 停止模式
-      else
-      {
-        chassis_mode_stop();
-      }
-    }
-
-    /****************图传链路***************/
-    else
-    {
-      // 底盘模式读取
-      read_keyboard();
-      key_control();
-
-      switch (ui_data.chassis_mode)
-      {
-      // 底盘跟随云台模式，r键触发
-      case CHASSIS_FOLLOW_GIMBAL_YAW:
-        chassis_mode_follow();
-        break;
-
-      // 正常运动模式，f键触发
-      case CHASSIS_NO_FOLLOW:
-        manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
-        chassis_mode_normal();
-        break;
-
-      // 停止模式
-      case CHASSIS_ZERO_FORCE:
-        chassis_mode_stop();
-        break;
-
-      default:
-        chassis_mode_stop();
-        break;
-      }
-    }
+    else // 图传链路
+      video_mode_choose();
 
     chassis_current_give();
     osDelay(1);
@@ -167,7 +97,6 @@ void Chassis_task(void const *pvParameters)
 
 static void Chassis_loop_Init()
 {
-  // rc_data = RemoteControlInit(&huart3);         // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
   referee_data = UITaskInit(&huart6, &ui_data); // 裁判系统初始化,会同时初始化UI
 
   for (uint8_t i = 0; i < 4; i++)
@@ -430,6 +359,78 @@ static void chassis_mode_stop()
   chassis_motor[1].target_speed = 0;
   chassis_motor[2].target_speed = 0;
   chassis_motor[3].target_speed = 0;
+}
+
+/*************************** 遥控器链路选择底盘模式 ****************************/
+void rc_mode_choose()
+{
+  // 右拨杆下，遥控操作
+  if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
+  {
+    chassis_mode_follow();
+  }
+
+  // 右拨杆中，键鼠操作
+  else if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
+  {
+    // 底盘模式读取
+    read_keyboard();
+    key_control();
+
+    // 底盘跟随云台模式，r键触发
+    if (chassis_mode == 1)
+    {
+      chassis_mode_follow();
+    }
+
+    // 正常运动模式，f键触发
+    else if (chassis_mode == 2)
+    {
+      manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
+      chassis_mode_normal();
+    }
+
+    else
+    {
+      chassis_mode_stop();
+    }
+  }
+
+  // 停止模式
+  else
+  {
+    chassis_mode_stop();
+  }
+}
+
+void video_mode_choose()
+{
+  // 底盘模式读取
+  read_keyboard();
+  key_control();
+
+  switch (ui_data.chassis_mode)
+  {
+  // 底盘跟随云台模式，r键触发
+  case CHASSIS_FOLLOW_GIMBAL_YAW:
+    chassis_mode_follow();
+    break;
+
+  // 正常运动模式，f键触发
+  case CHASSIS_NO_FOLLOW:
+    manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
+    chassis_mode_normal();
+    break;
+
+  // 停止模式
+  case CHASSIS_ZERO_FORCE:
+    chassis_mode_stop();
+    break;
+
+  default:
+    chassis_mode_stop();
+    break;
+  }
 }
 
 /*************************** 电机电流控制 ****************************/
@@ -828,11 +829,4 @@ static void level_judge()
   }
   else
     chassis_speed_max = CHASSIS_SPEED_MAX_1;
-}
-
-// 判断是否开启超级电容
-static void supercap_judge()
-{
-  if (supercap_flag)
-    chassis_speed_max = CHASSIS_SPEED_SUPERCAP;
 }
