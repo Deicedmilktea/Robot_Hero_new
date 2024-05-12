@@ -5,15 +5,15 @@
 
 ## 接线说明
 ### Top
-|      Name      | Motor |  ID   |  CAN  |
-| :------------: | :---: | :---: | :---: |
-| Friction_left  | 3508  |   1   | CAN2  |
-| Friction_right | 3508  |   2   | CAN2  |
-|  Friction_up   | 3508  |   3   | CAN2  |
-|    Lens_up     | 2006  |   4   | CAN2  |
-|   Lens_down    | 2006  |   5   | CAN2  |
-|     Pitch      | 6020  |   2   | CAN2  |
-|     Gimbal     | 6020  |   1   | CAN1  |
+|      Name      | Motor |  ID  | CAN  |
+| :------------: | :---: | :--: | :--: |
+| Friction_left  | 3508  |  1   | CAN2 |
+| Friction_right | 3508  |  2   | CAN2 |
+|  Friction_up   | 2006  |  3   | CAN2 |
+|    Lens_up     | 2006  |  4   | CAN2 |
+|   Lens_down    | 2006  |  5   | CAN2 |
+|     Pitch      | 6020  |  2   | CAN2 |
+|     Gimbal     | 6020  |  1   | CAN1 |
 
 ### Bottom
 1---------2\
