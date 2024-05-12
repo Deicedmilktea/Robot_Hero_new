@@ -17,7 +17,7 @@
 #include "remote_control.h"
 #include "video_control.h"
 
-#define X1 600
+#define X1 960
 #define Y1 400
 #define X2 650
 #define Y2 450

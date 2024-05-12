@@ -17,7 +17,7 @@
 #define TRIGGER_SINGLE_ANGLE 1140 // 19*360/6
 #define TRIGGER_ROTATE_SPEED 250
 
-trigger_t trigger; // 拨盘can1，id = 5
+static trigger_t trigger; // 拨盘can1，id = 5
 
 bool is_angle_control = false;
 float current_time = 0;
@@ -127,7 +127,6 @@ void Shoot_task(void const *argument)
 
       else
       {
-        is_angle_control = false;
         shoot_stop();
       }
     }
@@ -140,25 +139,30 @@ void Shoot_task(void const *argument)
 /***************初始化***************/
 static void shoot_loop_init()
 {
-  trigger.pid_speed_value[0] = 30;
-  trigger.pid_speed_value[1] = 0.1;
-  trigger.pid_speed_value[2] = 0;
+  trigger.pid_value[0] = 30;
+  trigger.pid_value[1] = 0.1;
+  trigger.pid_value[2] = 0;
 
   // trigger.pid_angle_value[0] = 20;
   // trigger.pid_angle_value[1] = 0.03;
-  // trigger.pid_angle_value[2] = 500;
+  // trigger.pid_angle_value[2] = 1000;
 
-  trigger.pid_angle_value[0] = 20;
-  trigger.pid_angle_value[1] = 0.03;
-  trigger.pid_angle_value[2] = 1000;
+  trigger.pid_angle_value[0] = 10;
+  trigger.pid_angle_value[1] = 0;
+  trigger.pid_angle_value[2] = 100;
+
+  trigger.pid_speed_value[0] = 10;
+  trigger.pid_speed_value[1] = 0;
+  trigger.pid_speed_value[2] = 0;
 
   // 初始化目标速度
   trigger.target_speed = 0;
   trigger.target_angle = motor_bottom[4].total_angle;
 
   // 初始化PID
-  pid_init(&trigger.pid_speed, trigger.pid_speed_value, 20000, 30000); // trigger_speed
-  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 1500, 5000);   // trigger_angle
+  pid_init(&trigger.pid, trigger.pid_value, 20000, 30000);           // trigger_speed
+  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 3000, 6000); // trigger_angle
+  pid_init(&trigger.pid_speed, trigger.pid_speed_value, 3000, 6000);
 }
 
 /***************射击模式*****************/
@@ -245,9 +249,12 @@ static void trigger_can2_cmd(int16_t v1)
 static void shoot_current_give()
 {
   if (is_angle_control)
-    motor_bottom[4].set_current = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_bottom[4].total_angle);
-  else
+  {
+    trigger.target_speed = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_bottom[4].total_angle);
     motor_bottom[4].set_current = pid_calc(&trigger.pid_speed, trigger.target_speed, motor_bottom[4].rotor_speed);
+  }
+  else
+    motor_bottom[4].set_current = pid_calc(&trigger.pid, trigger.target_speed, motor_bottom[4].rotor_speed);
 
   trigger_can2_cmd(motor_bottom[4].set_current);
 }
