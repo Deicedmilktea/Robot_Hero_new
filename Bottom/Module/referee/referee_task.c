@@ -17,11 +17,11 @@
 #include "remote_control.h"
 #include "video_control.h"
 
-#define X1 960
+#define X1 960 // 落风坡
 #define Y1 400
-#define X2 650
+#define X2 650 // 高地
 #define Y2 450
-#define X3 700
+#define X3 700 // 吊射点
 #define Y3 500
 #define LINE_LENGTH 25
 

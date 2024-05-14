@@ -95,32 +95,13 @@ void Gimbal_task(void const *pvParameters)
 
 static void Gimbal_loop_init()
 {
-	// // normal不压榨电机，效果一般，超调
-	// gimbal_gyro.pid_angle_value[0] = 200;
-	// gimbal_gyro.pid_angle_value[1] = 0.05;
-	// gimbal_gyro.pid_angle_value[2] = 2000;
+	gimbal_gyro.pid_angle_value[0] = 40;
+	gimbal_gyro.pid_angle_value[1] = 0;
+	gimbal_gyro.pid_angle_value[2] = 0;
 
-	// gimbal_gyro.pid_speed_value[0] = 10;
-	// gimbal_gyro.pid_speed_value[1] = 0;
-	// gimbal_gyro.pid_speed_value[2] = 0;
-
-	// normal日常使用版本，压榨一点点电机，效果不错
-	gimbal_gyro.pid_angle_value[0] = 150;
-	gimbal_gyro.pid_angle_value[1] = 0.01;
-	gimbal_gyro.pid_angle_value[2] = 800;
-
-	gimbal_gyro.pid_speed_value[0] = 20;
+	gimbal_gyro.pid_speed_value[0] = 100;
 	gimbal_gyro.pid_speed_value[1] = 0;
-	gimbal_gyro.pid_speed_value[2] = 100;
-
-	// // normal效果很好，但是6020发热很严重，能感觉电机微小抖动
-	// gimbal_gyro.pid_angle_value[0] = 150;
-	// gimbal_gyro.pid_angle_value[1] = 0.05;
-	// gimbal_gyro.pid_angle_value[2] = 0;
-
-	// gimbal_gyro.pid_speed_value[0] = 20;
-	// gimbal_gyro.pid_speed_value[1] = 0;
-	// gimbal_gyro.pid_speed_value[2] = 800;
+	gimbal_gyro.pid_speed_value[2] = 0;
 
 	// 视觉使用版本，防止yaw抖动过大
 	gimbal_gyro.pid_angle_vision_value[0] = 150;
@@ -223,11 +204,17 @@ static void gimbal_mode_vision()
 
 	detel_calc(&gimbal_gyro.target_angle);
 
+	// // 云台角度输出
+	// gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle_vision, gimbal_gyro.target_angle, INS.yaw_update);
+
+	// // 云台速度输出
+	// gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed_vision, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
+
 	// 云台角度输出
-	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle_vision, gimbal_gyro.target_angle, INS.yaw_update);
+	gimbal_gyro.pid_angle_out = pid_calc_a(&gimbal_gyro.pid_angle, gimbal_gyro.target_angle, INS.yaw_update);
 
 	// 云台速度输出
-	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed_vision, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
+	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
 
 	// 给电流
 	gimbal_can2_cmd(gimbal_gyro.pid_speed_out); // 给电流
