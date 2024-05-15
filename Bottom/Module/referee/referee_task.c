@@ -17,12 +17,12 @@
 #include "remote_control.h"
 #include "video_control.h"
 
-#define X1 960 // 落风坡
-#define Y1 400
-#define X2 650 // 高地
-#define Y2 450
-#define X3 700 // 吊射点
-#define Y3 500
+#define X1 960 // 落风坡 yellow
+#define Y1 370
+#define X2 960 // 高地 pink
+#define Y2 400
+#define X3 950 // 吊射点 oriange
+#define Y3 350
 #define LINE_LENGTH 25
 
 Referee_Interactive_info_t *Interactive_data; // UI绘制需要的机器人状态数据
@@ -103,13 +103,13 @@ void MyUIInit()
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[5], UI_shoot_line[6]);
 
     // 绘制发射点，高地
-    UILineDraw(&UI_shoot_line[7], "sl7", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X2 - LINE_LENGTH, Y2, X2 + LINE_LENGTH, Y2);
-    UILineDraw(&UI_shoot_line[8], "sl8", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X2, Y2 - LINE_LENGTH, X2, Y2 + LINE_LENGTH);
+    UILineDraw(&UI_shoot_line[7], "sl7", UI_Graph_ADD, 7, UI_Color_Pink, 2, X2 - LINE_LENGTH, Y2, X2 + LINE_LENGTH, Y2);
+    UILineDraw(&UI_shoot_line[8], "sl8", UI_Graph_ADD, 7, UI_Color_Pink, 2, X2, Y2 - LINE_LENGTH, X2, Y2 + LINE_LENGTH);
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[7], UI_shoot_line[8]);
 
     // 绘制发射点，吊射点
-    UILineDraw(&UI_shoot_line[9], "sl9", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X3 - LINE_LENGTH, Y3, X3 + LINE_LENGTH, Y3);
-    UILineDraw(&UI_shoot_line[10], "sll", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X3, Y3 - LINE_LENGTH, X3, Y3 + LINE_LENGTH);
+    UILineDraw(&UI_shoot_line[9], "sl9", UI_Graph_ADD, 7, UI_Color_Orange, 2, X3 - LINE_LENGTH, Y3, X3 + LINE_LENGTH, Y3);
+    UILineDraw(&UI_shoot_line[10], "sll", UI_Graph_ADD, 7, UI_Color_Orange, 2, X3, Y3 - LINE_LENGTH, X3, Y3 + LINE_LENGTH);
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[9], UI_shoot_line[10]);
 
     // 绘制车辆状态标志指示
