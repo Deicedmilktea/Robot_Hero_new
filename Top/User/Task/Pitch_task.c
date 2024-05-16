@@ -111,8 +111,8 @@ static void pitch_loop_init()
     pitch.target_angle = 0;
     pitch.target_speed = 0;
 
-    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 30000, 30000);
-    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 30000, 30000);
+    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 10000, 10000);
+    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 10000, 10000);
 }
 
 /**************** PID计算速度并发送电流 ***************/
