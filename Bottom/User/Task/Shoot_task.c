@@ -14,8 +14,8 @@
 #include "video_control.h"
 #include "Robot.h"
 
-#define TRIGGER_SINGLE_ANGLE 1140 // 19*360/6
-#define TRIGGER_ROTATE_SPEED 250
+#define TRIGGER_SINGLE_ANGLE 1235 // 19*360/6s
+#define TRIGGER_ROTATE_SPEED 100
 
 static trigger_t trigger; // 拨盘can1，id = 5
 
@@ -116,6 +116,8 @@ void Shoot_task(void const *argument)
       {
         is_angle_control = true;
         trigger_single_angle_move();
+        // is_angle_control = false;
+        // shoot_start();
       }
 
       // z键按下，反转
@@ -140,19 +142,19 @@ void Shoot_task(void const *argument)
 static void shoot_loop_init()
 {
   trigger.pid_value[0] = 30;
-  trigger.pid_value[1] = 0.1;
+  trigger.pid_value[1] = 0.3;
   trigger.pid_value[2] = 0;
 
   // trigger.pid_angle_value[0] = 20;
   // trigger.pid_angle_value[1] = 0.03;
   // trigger.pid_angle_value[2] = 1000;
 
-  trigger.pid_angle_value[0] = 10;
+  trigger.pid_angle_value[0] = 5;
   trigger.pid_angle_value[1] = 0;
   trigger.pid_angle_value[2] = 100;
 
-  trigger.pid_speed_value[0] = 10;
-  trigger.pid_speed_value[1] = 0;
+  trigger.pid_speed_value[0] = 2;
+  trigger.pid_speed_value[1] = 0.1;
   trigger.pid_speed_value[2] = 0;
 
   // 初始化目标速度
@@ -161,8 +163,8 @@ static void shoot_loop_init()
 
   // 初始化PID
   pid_init(&trigger.pid, trigger.pid_value, 20000, 30000);           // trigger_speed
-  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 3000, 6000); // trigger_angle
-  pid_init(&trigger.pid_speed, trigger.pid_speed_value, 3000, 6000);
+  pid_init(&trigger.pid_angle, trigger.pid_angle_value, 3000, 5500); // trigger_angle
+  pid_init(&trigger.pid_speed, trigger.pid_speed_value, 3000, 5500);
 }
 
 /***************射击模式*****************/

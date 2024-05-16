@@ -19,7 +19,7 @@
 
 #define X1 960 // 落风坡 yellow
 #define Y1 370
-#define X2 960 // 高地 pink
+#define X2 950 // 高地 pink
 #define Y2 400
 #define X3 950 // 吊射点 oriange
 #define Y3 350
