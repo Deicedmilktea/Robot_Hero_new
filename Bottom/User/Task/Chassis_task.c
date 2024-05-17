@@ -75,13 +75,13 @@ static void supercap_judge();                                                   
 
 void Chassis_task(void const *pvParameters)
 {
-
   Chassis_loop_Init();
 
   for (;;)
   {
     // 等级判断，获取最大速度
     level_judge();
+    // chassis_speed_max = CHASSIS_SPEED_MAX_10;
     // 校正yaw值
     yaw_correct();
     // // 判断是否开启超电
@@ -201,16 +201,17 @@ static void read_keyboard()
     else
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
 
-    // C键控制超级电容
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+    // ctrl+c超电开关
+    switch (SupercapRxData.state)
     {
-      supercap_flag = 1;
-      ui_data.supcap_mode = SUPCAP_ON;
-    }
-    else
-    {
+    case 0:
       supercap_flag = 0;
       ui_data.supcap_mode = SUPCAP_OFF;
+      break;
+    case 1:
+      supercap_flag = 1;
+      ui_data.supcap_mode = SUPCAP_ON;
+      break;
     }
 
     // R键控制底盘小陀螺速度
@@ -257,16 +258,17 @@ static void read_keyboard()
     else
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
 
-    // C键控制超级电容
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+    // ctrl+c超电开关
+    switch (SupercapRxData.state)
     {
-      supercap_flag = 1;
-      ui_data.supcap_mode = SUPCAP_ON;
-    }
-    else
-    {
+    case 0:
       supercap_flag = 0;
       ui_data.supcap_mode = SUPCAP_OFF;
+      break;
+    case 1:
+      supercap_flag = 1;
+      ui_data.supcap_mode = SUPCAP_ON;
+      break;
     }
 
     // R键控制底盘小陀螺速度
@@ -571,7 +573,8 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     // {
     //   Plimit = 1;
     // }
-    if (!supercap_flag)
+    
+    if (supercap_flag)
     {
       if (SupercapRxData.voltage) // 如果接入supercap
       {
@@ -597,10 +600,7 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     }
     else
     {
-      // if (SupercapRxData.voltage < 24 && SupercapRxData.voltage > 16)
       Plimit = 1;
-      // else if (SupercapRxData.voltage < 16 && SupercapRxData.voltage > 12)
-      //   Plimit = 0.5;
     }
 
     motor_bottom[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值

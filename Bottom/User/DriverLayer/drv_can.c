@@ -136,11 +136,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       motor_bottom[index].total_angle = motor_bottom[index].total_round * 360 + motor_bottom[index].angle_single_round;
     }
 
-    if (rx_header.StdId == 0x301) // superpower
+    if (rx_header.StdId == 0x301) // supercap
     {
       SupercapRxData.voltage = (uint16_t)((rx_data[0] << 8) | rx_data[1]);
       SupercapRxData.power = (uint16_t)((rx_data[2] << 8) | rx_data[3]);
-      SupercapRxData.state = rx_data[4];
+      SupercapRxData.state = rx_data[4]; // 0:off, 1:on
     }
   }
 }

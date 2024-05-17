@@ -3,21 +3,28 @@
 #include "usart.h"
 #include "string.h"
 #include "rm_referee.h"
+#include "remote_control.h"
+#include "video_control.h"
 
 SupercapTxData_t SupercapTxData;
+uint8_t supercap_mode = 0;
 
-extern UART_HandleTypeDef huart1;
 extern CAN_HandleTypeDef hcan2;
 extern referee_hero_t referee_hero;
+extern RC_ctrl_t rc_ctrl[2];
+extern Video_ctrl_t video_ctrl[2];
+extern uint8_t supercap_flag;
 
 static void supercap_can_transmit(SupercapTxData_t TxData);
 static void supercap_data_set(uint16_t buffer, uint16_t power, uint8_t state);
+static void read_keyboard();
 
 void Supercap_task(void const *argument)
 {
 	while (1)
 	{
-		supercap_data_set(referee_hero.buffer_energy, referee_hero.chassis_power, 0);
+		read_keyboard();
+		supercap_data_set(referee_hero.buffer_energy, referee_hero.chassis_power, supercap_mode);
 		supercap_can_transmit(SupercapTxData);
 		osDelay(5);
 	}
@@ -50,4 +57,49 @@ static void supercap_data_set(uint16_t buffer, uint16_t power, uint8_t state)
 	SupercapTxData.buffer = buffer;
 	SupercapTxData.power = power;
 	SupercapTxData.state = state;
+}
+
+static void read_keyboard()
+{
+	if (rc_ctrl[TEMP].rc.switch_left)
+	{
+		switch (rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_C] % 3)
+		{
+		case 0:
+			supercap_mode = SUPERCAP_STATE_AUTO;
+			break;
+		case 1:
+			supercap_flag = 0;
+			supercap_mode = SUPERCAP_STATE_OFF;
+			break;
+		case 2:
+			supercap_flag = 1;
+			supercap_mode = SUPERCAP_STATE_ON;
+			break;
+		default:
+			supercap_mode = SUPERCAP_STATE_AUTO;
+			break;
+		}
+	}
+
+	else
+	{
+		switch (video_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_C] % 3)
+		{
+		case 0:
+			supercap_mode = SUPERCAP_STATE_AUTO;
+			break;
+		case 1:
+			supercap_flag = 0;
+			supercap_mode = SUPERCAP_STATE_OFF;
+			break;
+		case 2:
+			supercap_flag = 1;
+			supercap_mode = SUPERCAP_STATE_ON;
+			break;
+		default:
+			supercap_mode = SUPERCAP_STATE_AUTO;
+			break;
+		}
+	}
 }

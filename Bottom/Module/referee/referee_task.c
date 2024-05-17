@@ -16,6 +16,7 @@
 #include "cmsis_os.h"
 #include "remote_control.h"
 #include "video_control.h"
+#include "supercap_task.h"
 
 #define X1 960 // 落风坡 yellow
 #define Y1 370
@@ -28,12 +29,14 @@
 Referee_Interactive_info_t *Interactive_data; // UI绘制需要的机器人状态数据
 static referee_info_t *referee_recv_info;     // 接收到的裁判系统数据
 uint8_t UI_Seq;                               // 包序号，供整个referee文件使用
+static uint8_t supercap_last_mode;            // 上一次的超级电容模式
 
 extern RC_ctrl_t rc_ctrl[2];       // 遥控器控制数据
 extern Video_ctrl_t video_ctrl[2]; // 视频控制数据
 extern INS_t INS_top;              // 上C板imu数据
 extern uint8_t vision_is_tracking; // 视觉是否识别到目标
 extern uint8_t friction_mode;      // 摩擦轮转速模式
+extern uint8_t supercap_mode;
 
 // @todo 不应该使用全局变量
 
@@ -188,7 +191,10 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // supercap
     if (_Interactive_data->Referee_Interactive_Flag.supcap_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off" : "on ");
+        if (supercap_mode == SUPERCAP_STATE_AUTO)
+            UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "auto_off" : "auto_on ");
+        else
+            UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off     " : "on      ");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 0;
     }
@@ -282,10 +288,11 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
     }
 
     // supercap开关
-    if (_Interactive_data->supcap_mode != _Interactive_data->supcap_last_mode)
+    if (_Interactive_data->supcap_mode != _Interactive_data->supcap_last_mode || supercap_mode != supercap_last_mode)
     {
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 1;
         _Interactive_data->supcap_last_mode = _Interactive_data->supcap_mode;
+        supercap_last_mode = supercap_mode;
     }
     // friction_mode转速
     _Interactive_data->friction_mode = friction_mode;
