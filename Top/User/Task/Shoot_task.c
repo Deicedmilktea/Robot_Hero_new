@@ -184,16 +184,16 @@ static void read_keyboard()
 /*************** 左右摩擦轮开启模式 *****************/
 static void shoot_start_lr()
 {
-  shoot_motor[0].target_speed = friction_speed;
-  shoot_motor[1].target_speed = -friction_speed;
+  shoot_motor[0].target_speed = -friction_speed;
+  shoot_motor[1].target_speed = friction_speed;
   shoot_motor[2].target_speed = 0;
 }
 
 /**************** 三摩擦轮开启模式 *****************/
 static void shoot_start_all()
 {
-  shoot_motor[0].target_speed = friction_speed;
-  shoot_motor[1].target_speed = -friction_speed;
+  shoot_motor[0].target_speed = -friction_speed;
+  shoot_motor[1].target_speed = friction_speed;
   shoot_motor[2].target_speed = -FRICTION_UP_SPEED;
 }
 
