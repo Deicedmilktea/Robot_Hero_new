@@ -24,9 +24,9 @@ void Supercap_task(void const *argument)
 	while (1)
 	{
 		read_keyboard();
-		supercap_data_set(referee_hero.buffer_energy, referee_hero.chassis_power, supercap_mode);
+		supercap_data_set(referee_hero.buffer_energy, referee_hero.chassis_power_limit, supercap_mode);
 		supercap_can_transmit(SupercapTxData);
-		osDelay(5);
+		osDelay(10);
 	}
 }
 
@@ -63,18 +63,13 @@ static void read_keyboard()
 {
 	if (rc_ctrl[TEMP].rc.switch_left)
 	{
-		switch (rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_C] % 3)
+		switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2)
 		{
 		case 0:
 			supercap_mode = SUPERCAP_STATE_AUTO;
 			break;
 		case 1:
-			supercap_flag = 0;
 			supercap_mode = SUPERCAP_STATE_OFF;
-			break;
-		case 2:
-			supercap_flag = 1;
-			supercap_mode = SUPERCAP_STATE_ON;
 			break;
 		default:
 			supercap_mode = SUPERCAP_STATE_AUTO;
@@ -84,18 +79,13 @@ static void read_keyboard()
 
 	else
 	{
-		switch (video_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_C] % 3)
+		switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2)
 		{
 		case 0:
 			supercap_mode = SUPERCAP_STATE_AUTO;
 			break;
 		case 1:
-			supercap_flag = 0;
 			supercap_mode = SUPERCAP_STATE_OFF;
-			break;
-		case 2:
-			supercap_flag = 1;
-			supercap_mode = SUPERCAP_STATE_ON;
 			break;
 		default:
 			supercap_mode = SUPERCAP_STATE_AUTO;

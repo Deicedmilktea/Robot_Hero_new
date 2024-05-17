@@ -37,6 +37,7 @@ extern INS_t INS_top;              // 上C板imu数据
 extern uint8_t vision_is_tracking; // 视觉是否识别到目标
 extern uint8_t friction_mode;      // 摩擦轮转速模式
 extern uint8_t supercap_mode;
+extern SupercapRxData_t SupercapRxData;
 
 // @todo 不应该使用全局变量
 
@@ -131,7 +132,7 @@ void MyUIInit()
     // 由于初始化时xxx_last_mode默认为0，所以此处对应UI也应该设为0时对应的UI，防止模式不变的情况下无法置位flag，导致UI无法刷新
     UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 390, 750, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[0]);
-    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "off");
+    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "auto_on");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
     UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 650, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
@@ -248,8 +249,8 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // supercap_power
     if (_Interactive_data->Referee_Interactive_Flag.Power_flag == 1)
     {
-        UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 750, 230, _Interactive_data->Chassis_Power_Data.chassis_power_mx * 1000);
-        UILineDraw(&UI_Energy[2], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 30, 722, 160, (uint32_t)750 + _Interactive_data->Chassis_Power_Data.chassis_power_mx * 30, 160);
+        UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 3, 970, 210, _Interactive_data->Chassis_Power_Data.chassis_power_mx);
+        UILineDraw(&UI_Energy[2], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 30, 722, 160, (uint32_t)722 + (_Interactive_data->Chassis_Power_Data.chassis_power_mx / 1000 - 9) * 17, 160);
         UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_Energy[1], UI_Energy[2]);
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 0;
     }
@@ -317,6 +318,7 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
     }
 
     // supercap数据
+    _Interactive_data->Chassis_Power_Data.chassis_power_mx = SupercapRxData.voltage;
     if (_Interactive_data->Chassis_Power_Data.chassis_power_mx != _Interactive_data->Chassis_last_Power_Data.chassis_power_mx)
     {
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 1;

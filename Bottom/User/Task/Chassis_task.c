@@ -118,7 +118,7 @@ void Chassis_task(void const *pvParameters)
 
         else
         {
-          chassis_mode_stop();
+          chassis_mode_normal();
         }
       }
 
@@ -208,7 +208,7 @@ static void read_keyboard()
       supercap_flag = 0;
       ui_data.supcap_mode = SUPCAP_OFF;
       break;
-    case 1:
+    case 3:
       supercap_flag = 1;
       ui_data.supcap_mode = SUPCAP_ON;
       break;
@@ -258,14 +258,14 @@ static void read_keyboard()
     else
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
 
-    // ctrl+c超电开关
+    // 超电开关
     switch (SupercapRxData.state)
     {
     case 0:
       supercap_flag = 0;
       ui_data.supcap_mode = SUPCAP_OFF;
       break;
-    case 1:
+    case 3:
       supercap_flag = 1;
       ui_data.supcap_mode = SUPCAP_ON;
       break;
@@ -433,8 +433,8 @@ static void chassis_current_give()
     motor_bottom[i].set_current = pid_calc(&chassis_motor[i].pid, chassis_motor[i].target_speed, motor_bottom[i].rotor_speed);
   }
   // 在功率限制算法中，静止状态底盘锁不住，这时取消功率限制，保证发弹稳定性
-  if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
-    Chassis_Power_Limit(4 * chassis_speed_max);
+  // if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
+  Chassis_Power_Limit(4 * chassis_speed_max);
 
   chassis_can2_cmd(motor_bottom[0].set_current, motor_bottom[1].set_current, motor_bottom[2].set_current, motor_bottom[3].set_current);
 }
@@ -573,35 +573,27 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     // {
     //   Plimit = 1;
     // }
-    
-    if (supercap_flag)
+
+    if (!supercap_flag)
     {
-      if (SupercapRxData.voltage) // 如果接入supercap
-      {
-        if (SupercapRxData.voltage < 24 && SupercapRxData.voltage > 23)
-          Plimit = 0.9;
-        else if (SupercapRxData.voltage < 23 && SupercapRxData.voltage > 22)
-          Plimit = 0.8;
-        else if (SupercapRxData.voltage < 22 && SupercapRxData.voltage > 21)
-          Plimit = 0.7;
-        else if (SupercapRxData.voltage < 21 && SupercapRxData.voltage > 20)
-          Plimit = 0.6;
-        else if (SupercapRxData.voltage < 20 && SupercapRxData.voltage > 18)
-          Plimit = 0.5;
-        else if (SupercapRxData.voltage < 18 && SupercapRxData.voltage > 15)
-          Plimit = 0.3;
-        else if (SupercapRxData.voltage < 15)
-          Plimit = 0.1;
-      }
-      else // 防止不接入supercap时，Plimit为0.1
-      {
+      if (Watch_Buffer <= 60 && Watch_Buffer >= 40)
+        Plimit = 0.95; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
+      else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
+        Plimit = 0.75;
+      else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
+        Plimit = 0.5;
+      else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
+        Plimit = 0.25;
+      else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
+        Plimit = 0.125;
+      else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
+        Plimit = 0.05;
+      else
         Plimit = 1;
-      }
     }
+
     else
-    {
       Plimit = 1;
-    }
 
     motor_bottom[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
     motor_bottom[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
@@ -754,68 +746,68 @@ static void level_judge()
     {
     case 1:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_1;
+        chassis_speed_max = CHASSIS_SPEED_MAX_13;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_1 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_13 + 3000;
       break;
     case 2:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_2;
+        chassis_speed_max = CHASSIS_SPEED_MAX_13;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_2 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_13 + 3000;
       break;
     case 3:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_3;
+        chassis_speed_max = CHASSIS_SPEED_MAX_13;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_3 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_13 + 3000;
       break;
     case 4:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_4;
+        chassis_speed_max = CHASSIS_SPEED_MAX_46;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_4 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_46 + 3000;
       break;
     case 5:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_5;
+        chassis_speed_max = CHASSIS_SPEED_MAX_46;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_5 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_46 + 3000;
       break;
     case 6:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_6;
+        chassis_speed_max = CHASSIS_SPEED_MAX_46;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_6 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_46 + 3000;
       break;
     case 7:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_7;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_7 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710 + 3000;
       break;
     case 8:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_8;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_8 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710 + 3000;
       break;
     case 9:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_9;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_9 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710 + 3000;
       break;
     case 10:
       if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_10;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710;
       else
-        chassis_speed_max = CHASSIS_SPEED_MAX_10 + 3000;
+        chassis_speed_max = CHASSIS_SPEED_MAX_710 + 3000;
       break;
     }
   }
   else
-    chassis_speed_max = CHASSIS_SPEED_MAX_1;
+    chassis_speed_max = CHASSIS_SPEED_MAX_13;
 }
 
 // 判断是否开启超级电容

@@ -21,7 +21,6 @@ typedef enum
 {
     SUPERCAP_STATE_AUTO = 1,
     SUPERCAP_STATE_OFF,
-    SUPERCAP_STATE_ON,
 } supercap_state_e;
 
 #endif
