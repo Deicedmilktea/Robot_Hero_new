@@ -134,7 +134,7 @@ void MyUIInit()
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[0]);
     UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "auto_on");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
-    UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 650, "normal");
+    UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 650, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
     UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 600, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
@@ -295,6 +295,7 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
         _Interactive_data->supcap_last_mode = _Interactive_data->supcap_mode;
         supercap_last_mode = supercap_mode;
     }
+
     // friction_mode转速
     _Interactive_data->friction_mode = friction_mode;
     if (_Interactive_data->friction_mode != _Interactive_data->friction_last_mode)
