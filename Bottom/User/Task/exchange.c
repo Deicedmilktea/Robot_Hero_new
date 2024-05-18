@@ -8,15 +8,15 @@
 extern INS_t INS;
 
 static uint8_t send_buffer[8];
-static int16_t pitch = 0;
+static int16_t ins_pitch = 0;
 
 void exchange_task()
 {
 	while (1)
 	{
-		pitch = 50 * INS.Roll;
-		send_buffer[0] = (pitch >> 8) & 0xff;
-		send_buffer[1] = pitch & 0xff;
+		ins_pitch = 50 * INS.Roll;
+		send_buffer[0] = (ins_pitch >> 8) & 0xff;
+		send_buffer[1] = ins_pitch & 0xff;
 		send_buffer[2] = 0;
 		send_buffer[3] = 0;
 		send_buffer[4] = 0;
@@ -25,6 +25,6 @@ void exchange_task()
 		send_buffer[7] = 0;
 		can_remote(send_buffer, 0x55);
 
-		osDelay(1);
+		osDelay(2);
 	}
 }

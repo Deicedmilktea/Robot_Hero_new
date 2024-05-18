@@ -1,7 +1,7 @@
 /*
 *****Gimbal_task云台任务*****
-* 云台电机为6020，ID = 2
-* 云台电机为motor_top[5] CAN1控制
+* 云台电机为6020，ID = 1
+* 云台电机为motor_top[6] CAN1控制
 * 遥控器控制：左拨杆左右
 * 键鼠控制：鼠标左右滑动
 */
@@ -264,22 +264,14 @@ static void gimbal_can2_cmd(int16_t voltage)
 
 	tx_header.DLC = 8; // 发送数据长度（字节）
 
-	// tx_data[0] = NULL;
-	// tx_data[1] = NULL;
-	// tx_data[2] = (voltage >> 8) & 0xff;
-	// tx_data[3] = (voltage) & 0xff;
-	// tx_data[4] = NULL;
-	// tx_data[5] = NULL;
-	// tx_data[6] = NULL;
-	// tx_data[7] = NULL;
-	tx_data[0] = NULL;
-	tx_data[1] = NULL;
+	tx_data[0] = (voltage >> 8) & 0xff;
+	tx_data[1] = (voltage) & 0xff;
 	tx_data[2] = NULL;
 	tx_data[3] = NULL;
 	tx_data[4] = NULL;
 	tx_data[5] = NULL;
-	tx_data[6] = (voltage >> 8) & 0xff;
-	tx_data[7] = (voltage) & 0xff;
+	tx_data[6] = NULL;
+	tx_data[7] = NULL;
 
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, &send_mail_box);
 }

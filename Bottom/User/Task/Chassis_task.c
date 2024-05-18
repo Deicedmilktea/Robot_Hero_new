@@ -19,10 +19,10 @@
 #include "Supercap_task.h"
 
 motor_info_t motor_bottom[5]; // can2电机信息结构体, 0123：底盘，4：拨盘
-chassis_t chassis_motor[4];
-uint8_t chassis_mode = 0;  // 判断底盘状态，用于UI编写
-uint8_t supercap_flag = 0; // 是否开启超级电容
+uint8_t chassis_mode = 0;     // 判断底盘状态，用于UI编写
+uint8_t supercap_flag = 0;    // 是否开启超级电容
 
+static chassis_t chassis_motor[4]; // 电机信息结构体
 static int16_t Vx = 0, Vy = 0, Wz = 0;
 static float rx = 0.2, ry = 0.2;
 static float relative_yaw = 0;
@@ -130,14 +130,18 @@ static void read_keyboard()
     else
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
 
-    // C键控制超级电容
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+    // 超电开关
+    switch (SupercapRxData.state)
     {
+    case 0:
+      supercap_flag = 0;
+      ui_data.supcap_mode = SUPCAP_OFF;
+      break;
+    case 3:
       supercap_flag = 1;
       ui_data.supcap_mode = SUPCAP_ON;
-    }
-    else
-    {
+      break;
+    default:
       supercap_flag = 0;
       ui_data.supcap_mode = SUPCAP_OFF;
     }
@@ -192,16 +196,17 @@ static void read_keyboard()
     else
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
 
-    // C键控制超级电容
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2 == 1)
+    // 超电开关
+    switch (SupercapRxData.state)
     {
-      supercap_flag = 1;
-      ui_data.supcap_mode = SUPCAP_ON;
-    }
-    else
-    {
+    case 0:
       supercap_flag = 0;
       ui_data.supcap_mode = SUPCAP_OFF;
+      break;
+    case 3:
+      supercap_flag = 1;
+      ui_data.supcap_mode = SUPCAP_ON;
+      break;
     }
 
     // R键控制底盘小陀螺速度
@@ -289,11 +294,6 @@ static void chassis_mode_top()
   chassis_motor[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
   chassis_motor[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
 
-  // chassis_motor[0].target_speed = 0;
-  // chassis_motor[1].target_speed = 0;
-  // chassis_motor[2].target_speed = 0;
-  // chassis_motor[3].target_speed = 0;
-
   cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 }
 
@@ -316,9 +316,9 @@ static void chassis_mode_follow()
   relative_yaw = INS.yaw_update - INS_top.Yaw;
 
   // 便于小陀螺操作
-  if (key_Wz_acw || key_Wz_cw)
+  if (key_Wz_acw)
   {
-    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max + key_Wz_acw + key_Wz_cw; // rotate
+    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max + key_Wz_acw; // rotate
   }
 
   else
@@ -436,16 +436,14 @@ void video_mode_choose()
 /*************************** 电机电流控制 ****************************/
 static void chassis_current_give()
 {
-  uint8_t i = 0;
-
-  for (i = 0; i < 4; i++)
+  for (uint8_t i = 0; i < 4; i++)
   {
     chassis_motor[i].target_speed = Motor_Speed_limiting(chassis_motor[i].target_speed, chassis_speed_max);
     motor_bottom[i].set_current = pid_calc(&chassis_motor[i].pid, chassis_motor[i].target_speed, motor_bottom[i].rotor_speed);
   }
   // 在功率限制算法中，静止状态底盘锁不住，这时取消功率限制，保证发弹稳定性
-  if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
-    Chassis_Power_Limit(4 * chassis_speed_max);
+  // if (chassis_motor[0].target_speed != 0 || chassis_motor[1].target_speed != 0 || chassis_motor[2].target_speed != 0 || chassis_motor[3].target_speed != 0)
+  Chassis_Power_Limit(4 * chassis_speed_max);
 
   chassis_can2_cmd(motor_bottom[0].set_current, motor_bottom[1].set_current, motor_bottom[2].set_current, motor_bottom[3].set_current);
 }
@@ -483,25 +481,21 @@ static void yaw_correct()
   }
   // Wz为负，顺时针旋转，陀螺仪飘 60°/min（以3000为例转出的，根据速度不同调整）
   // 解决yaw偏移，完成校正
-  if (rc_ctrl[TEMP].key[KEY_PRESS].shift || rc_ctrl[TEMP].key[KEY_PRESS].ctrl || video_ctrl[TEMP].key[KEY_PRESS].shift || video_ctrl[TEMP].key[KEY_PRESS].ctrl)
+  if (rc_ctrl[TEMP].key[KEY_PRESS].shift || video_ctrl[TEMP].key[KEY_PRESS].shift)
   {
     if (chassis_wz_max == CHASSIS_WZ_MAX_1)
     {
       if (Wz > 500)
         imu_err_yaw -= 0.001f;
-      // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
       if (Wz < -500)
         imu_err_yaw += 0.001f;
-      // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
     }
     else
     {
       if (Wz > 500)
         imu_err_yaw -= 0.0015f;
-      // imu_err_yaw -= 0.001f * chassis_speed_max / 3000.0f;
       if (Wz < -500)
         imu_err_yaw += 0.0015f;
-      // imu_err_yaw += 0.001f * chassis_speed_max / 3000.0f;
     }
   }
 
@@ -524,9 +518,8 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
   Watch_Power_Max = Klimit;
   Watch_Power = referee_hero.chassis_power;
   Watch_Buffer = referee_hero.buffer_energy; // 限制值，功率值，缓冲能量值，初始值是1，0，0
-  // get_chassis_power_and_buffer(&Power, &Power_Buffer, &Power_Max);//通过裁判系统和编码器值获取（限制值，实时功率，实时缓冲能量）
 
-  Chassis_pidout_max = 32768; // 32768，40，960			15384 * 4，取了4个3508电机最大电流的一个保守值
+  Chassis_pidout_max = 52428; // 16384 * 4 *0.8，取了4个3508电机最大电流的一个保守值
 
   if (Watch_Power > 600)
   {
@@ -542,8 +535,6 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
                       fabs(chassis_motor[2].target_speed - motor_bottom[2].rotor_speed) +
                       fabs(chassis_motor[3].target_speed - motor_bottom[3].rotor_speed)); // fabs是求绝对值，这里获取了4个轮子的差值求和
 
-    //	Chassis_pidout_target = fabs(motor_speed_target[0]) + fabs(motor_speed_target[1]) + fabs(motor_speed_target[2]) + fabs(motor_speed_target[3]);
-
     /*期望滞后占比环，增益个体加速度*/
     if (Chassis_pidout)
     {
@@ -558,8 +549,6 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     }
 
     /*功率满输出占比环，车总增益加速度*/
-    //		if(Chassis_pidout_target) Klimit=Chassis_pidout/Chassis_pidout_target;	//375*4 = 1500
-    //		else{Klimit = 0;}
     Klimit = Chassis_pidout / Chassis_pidout_target_limit;
 
     if (Klimit > 1)
@@ -567,54 +556,27 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
     else if (Klimit < -1)
       Klimit = -1; // 限制绝对值不能超过1，也就是Chassis_pidout一定要小于某个速度值，不能超调
 
-    // /*缓冲能量占比环，总体约束*/
-    // if (Watch_Buffer < 50 && Watch_Buffer >= 40)
-    //   Plimit = 0.9; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
-    // else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
-    //   Plimit = 0.75;
-    // else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
-    //   Plimit = 0.5;
-    // else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
-    //   Plimit = 0.25;
-    // else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
-    //   Plimit = 0.125;
-    // else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
-    //   Plimit = 0.05;
-    // else
-    // {
-    //   Plimit = 1;
-    // }
+    /*缓冲能量占比环，总体约束*/
     if (!supercap_flag)
     {
-      if (SupercapRxData.voltage) // 如果接入supercap
-      {
-        if (SupercapRxData.voltage < 24 && SupercapRxData.voltage > 23)
-          Plimit = 0.9;
-        else if (SupercapRxData.voltage < 23 && SupercapRxData.voltage > 22)
-          Plimit = 0.8;
-        else if (SupercapRxData.voltage < 22 && SupercapRxData.voltage > 21)
-          Plimit = 0.7;
-        else if (SupercapRxData.voltage < 21 && SupercapRxData.voltage > 20)
-          Plimit = 0.6;
-        else if (SupercapRxData.voltage < 20 && SupercapRxData.voltage > 18)
-          Plimit = 0.5;
-        else if (SupercapRxData.voltage < 18 && SupercapRxData.voltage > 15)
-          Plimit = 0.3;
-        else if (SupercapRxData.voltage < 15)
-          Plimit = 0.1;
-      }
-      else // 防止不接入supercap时，Plimit为0.1
-      {
+      if (Watch_Buffer <= 60 && Watch_Buffer >= 40)
+        Plimit = 0.95; // 近似于以一个线性来约束比例（为了保守可以调低Plimit，但会影响响应速度）
+      else if (Watch_Buffer < 40 && Watch_Buffer >= 35)
+        Plimit = 0.75;
+      else if (Watch_Buffer < 35 && Watch_Buffer >= 30)
+        Plimit = 0.5;
+      else if (Watch_Buffer < 30 && Watch_Buffer >= 20)
+        Plimit = 0.25;
+      else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
+        Plimit = 0.125;
+      else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
+        Plimit = 0.05;
+      else
         Plimit = 1;
-      }
     }
+
     else
-    {
-      // if (SupercapRxData.voltage < 24 && SupercapRxData.voltage > 16)
       Plimit = 1;
-      // else if (SupercapRxData.voltage < 16 && SupercapRxData.voltage > 12)
-      //   Plimit = 0.5;
-    }
 
     motor_bottom[0].set_current = Scaling1 * (Chassis_pidout_max * Klimit) * Plimit; // 输出值
     motor_bottom[1].set_current = Scaling2 * (Chassis_pidout_max * Klimit) * Plimit;
@@ -673,12 +635,6 @@ static void key_control(void)
       key_Wz_acw += KEY_START_OFFSET;
     else
       key_Wz_acw -= KEY_STOP_OFFSET;
-
-    // 反转
-    if (rc_ctrl[TEMP].key[KEY_PRESS].ctrl)
-      key_Wz_cw -= KEY_START_OFFSET;
-    else
-      key_Wz_cw += KEY_STOP_OFFSET;
   }
 
   // 图传链路
@@ -709,12 +665,6 @@ static void key_control(void)
       key_Wz_acw += KEY_START_OFFSET;
     else
       key_Wz_acw -= KEY_STOP_OFFSET;
-
-    // 反转
-    if (video_ctrl[TEMP].key[KEY_PRESS].ctrl)
-      key_Wz_cw -= KEY_START_OFFSET;
-    else
-      key_Wz_cw += KEY_STOP_OFFSET;
   }
 
   if (key_x_fast > chassis_speed_max)
@@ -737,10 +687,6 @@ static void key_control(void)
     key_Wz_acw = chassis_wz_max;
   if (key_Wz_acw < 0)
     key_Wz_acw = 0;
-  if (key_Wz_cw < -chassis_wz_max)
-    key_Wz_cw = -chassis_wz_max;
-  if (key_Wz_cw > 0)
-    key_Wz_cw = 0;
 }
 
 static void detel_calc(float *angle)
@@ -766,67 +712,40 @@ static void level_judge()
     switch (referee_hero.robot_level)
     {
     case 1:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_1;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_1 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_13;
       break;
     case 2:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_2;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_2 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_13;
       break;
     case 3:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_3;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_3 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_13;
       break;
     case 4:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_4;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_4 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_46;
       break;
     case 5:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_5;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_5 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_46;
       break;
     case 6:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_6;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_6 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_46;
       break;
     case 7:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_7;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_7 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     case 8:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_8;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_8 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     case 9:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_9;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_9 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     case 10:
-      if (!supercap_flag)
-        chassis_speed_max = CHASSIS_SPEED_MAX_10;
-      else
-        chassis_speed_max = CHASSIS_SPEED_MAX_10 + 3000;
+      chassis_speed_max = CHASSIS_SPEED_MAX_710;
       break;
     }
   }
   else
-    chassis_speed_max = CHASSIS_SPEED_MAX_1;
+    chassis_speed_max = CHASSIS_SPEED_MAX_13;
+
+  if (supercap_flag)
+    chassis_speed_max += 3000;
 }

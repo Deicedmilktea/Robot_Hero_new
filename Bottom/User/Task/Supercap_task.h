@@ -17,4 +17,10 @@ typedef struct
     uint8_t state;   // 超电状态
 } SupercapTxData_t;
 
+typedef enum
+{
+    SUPERCAP_STATE_AUTO = 1,
+    SUPERCAP_STATE_OFF,
+} supercap_state_e;
+
 #endif

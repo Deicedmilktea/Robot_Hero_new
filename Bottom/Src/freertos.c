@@ -148,7 +148,7 @@ void MX_FREERTOS_Init(void)
   SupercapTaskHandle = osThreadCreate(osThread(SupercapTask), NULL);
 
   osThreadDef(UITask, UI_task, osPriorityNormal, 0, 512);
-  SupercapTaskHandle = osThreadCreate(osThread(UITask), NULL);
+  UITaskHandle = osThreadCreate(osThread(UITask), NULL);
 
   osThreadDef(exchangeTask, exchange_task, osPriorityNormal, 0, 128);
   exchangeHandle = osThreadCreate(osThread(exchangeTask), NULL);

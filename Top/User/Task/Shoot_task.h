@@ -10,12 +10,15 @@
 #define FRICTION_SPEED_LOW 6000
 #define FRICTION_SPEED_HIGH 6500
 #define FRICTION_SPEED_STOP 0
+#define FRICTION_UP_SPEED_STOP 0
 
 #define LENS_ANGLE_ON -45
 #define LENS_ANGLE_OFF -2000
+#define LENS_UP_ANGLE 2200 // 初始化-200，开镜2000
 
 #define LENS_ANGLE_HIGH -520
 #define LENS_ANGLE_LOW 310
+#define LENS_DOWN_ANGLE 500 // 初始化200，低头700
 
 typedef struct
 {
@@ -26,9 +29,10 @@ typedef struct
 
 typedef struct
 {
-    pid_struct_t pid;   // 摩擦轮speed的pid结构体
-    float pid_value[3]; // 摩擦轮speed的pid参数
-    float target_angle; // 摩擦轮的目标速度
+    pid_struct_t pid;   // speed的pid结构体
+    float pid_value[3]; // speed的pid参数
+    float target_angle; // 目标速度
+    int16_t init_angle; // 初始角度
 } lens_t;
 
 typedef enum

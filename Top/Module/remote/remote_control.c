@@ -68,14 +68,14 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
         // 遥控器数据
         for (int i = 0; i <= 7; i++)
         {
-            temp_remote[i] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+            temp_remote[i] = sbus_buf[i];
         }
         can_remote(temp_remote, 0x33);
 
         // 键鼠数据
         for (int i = 8; i <= 15; i++)
         {
-            temp_remote[i - 8] = sbus_buf[i]; // volatile const uint8_t和uint8_t不一样不能直接带入can_remote这个函数
+            temp_remote[i - 8] = sbus_buf[i];
         }
         can_remote(temp_remote, 0x34);
 

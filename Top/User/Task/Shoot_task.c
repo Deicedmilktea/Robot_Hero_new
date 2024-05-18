@@ -19,6 +19,7 @@ uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
 static int16_t friction_speed = 0;
+static int16_t friction_up_speed = 0;
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
@@ -113,8 +114,8 @@ static void shoot_loop_init()
   shoot_motor[1].target_speed = 0;
   shoot_motor[2].target_speed = 0;
 
-  lens_motor[0].target_angle = motor_top[3].total_angle;
-  lens_motor[1].target_angle = motor_top[4].total_angle;
+  lens_motor[0].init_angle = motor_top[3].total_angle;
+  lens_motor[1].init_angle = motor_top[4].total_angle;
 
   // 初始化PID
   pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
@@ -135,21 +136,25 @@ static void read_keyboard()
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
     {
       friction_speed = FRICTION_SPEED_NORMAL;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_NORMAL;
     }
     else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
     {
       friction_speed = FRICTION_SPEED_LOW;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_LOW;
     }
     else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
     {
       friction_speed = FRICTION_SPEED_HIGH;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_HIGH;
     }
     else
     {
       friction_speed = FRICTION_SPEED_STOP;
+      friction_up_speed = FRICTION_UP_SPEED_STOP;
       friction_flag = FRICTION_STOP;
     }
   }
@@ -161,21 +166,25 @@ static void read_keyboard()
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
     {
       friction_speed = FRICTION_SPEED_NORMAL;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_NORMAL;
     }
     else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
     {
       friction_speed = FRICTION_SPEED_LOW;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_LOW;
     }
     else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
     {
       friction_speed = FRICTION_SPEED_HIGH;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_HIGH;
     }
     else
     {
       friction_speed = FRICTION_SPEED_STOP;
+      friction_up_speed = FRICTION_UP_SPEED_STOP;
       friction_flag = FRICTION_STOP;
     }
   }
@@ -194,7 +203,7 @@ static void shoot_start_all()
 {
   shoot_motor[0].target_speed = -friction_speed;
   shoot_motor[1].target_speed = friction_speed;
-  shoot_motor[2].target_speed = -FRICTION_UP_SPEED;
+  shoot_motor[2].target_speed = -friction_up_speed;
 }
 
 /*************** 摩擦轮关闭模式 **************/
@@ -212,28 +221,28 @@ static void lens_judge()
   if (rc_ctrl[TEMP].rc.switch_left)
   {
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
-      lens_motor[0].target_angle = LENS_ANGLE_ON;
+      lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_ANGLE;
     else
-      lens_motor[0].target_angle = LENS_ANGLE_OFF;
+      lens_motor[0].target_angle = lens_motor[0].init_angle;
 
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
-      lens_motor[1].target_angle = LENS_ANGLE_HIGH;
+      lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
     else
-      lens_motor[1].target_angle = LENS_ANGLE_LOW;
+      lens_motor[1].target_angle = lens_motor[1].init_angle;
   }
 
   // 图传链路
   else
   {
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
-      lens_motor[0].target_angle = LENS_ANGLE_ON;
+      lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_ANGLE;
     else
-      lens_motor[0].target_angle = LENS_ANGLE_OFF;
+      lens_motor[0].target_angle = lens_motor[0].init_angle;
 
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
-      lens_motor[1].target_angle = LENS_ANGLE_HIGH;
+      lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
     else
-      lens_motor[1].target_angle = LENS_ANGLE_LOW;
+      lens_motor[1].target_angle = lens_motor[1].init_angle;
   }
 }
 

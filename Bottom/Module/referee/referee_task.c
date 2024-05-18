@@ -16,24 +16,28 @@
 #include "cmsis_os.h"
 #include "remote_control.h"
 #include "video_control.h"
+#include "supercap_task.h"
 
-#define X1 960 // 落风坡
-#define Y1 400
-#define X2 650 // 高地
-#define Y2 450
-#define X3 700 // 吊射点
-#define Y3 500
+#define X1 960 // 落风坡 yellow
+#define Y1 370
+#define X2 950 // 高地 pink
+#define Y2 400
+#define X3 950 // 吊射点 oriange
+#define Y3 350
 #define LINE_LENGTH 25
 
 Referee_Interactive_info_t *Interactive_data; // UI绘制需要的机器人状态数据
 static referee_info_t *referee_recv_info;     // 接收到的裁判系统数据
 uint8_t UI_Seq;                               // 包序号，供整个referee文件使用
+static uint8_t supercap_last_mode;            // 上一次的超级电容模式
 
 extern RC_ctrl_t rc_ctrl[2];       // 遥控器控制数据
 extern Video_ctrl_t video_ctrl[2]; // 视频控制数据
 extern INS_t INS_top;              // 上C板imu数据
 extern uint8_t vision_is_tracking; // 视觉是否识别到目标
 extern uint8_t friction_mode;      // 摩擦轮转速模式
+extern uint8_t supercap_mode;
+extern SupercapRxData_t SupercapRxData;
 
 // @todo 不应该使用全局变量
 
@@ -103,13 +107,13 @@ void MyUIInit()
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[5], UI_shoot_line[6]);
 
     // 绘制发射点，高地
-    UILineDraw(&UI_shoot_line[7], "sl7", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X2 - LINE_LENGTH, Y2, X2 + LINE_LENGTH, Y2);
-    UILineDraw(&UI_shoot_line[8], "sl8", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X2, Y2 - LINE_LENGTH, X2, Y2 + LINE_LENGTH);
+    UILineDraw(&UI_shoot_line[7], "sl7", UI_Graph_ADD, 7, UI_Color_Pink, 2, X2 - LINE_LENGTH, Y2, X2 + LINE_LENGTH, Y2);
+    UILineDraw(&UI_shoot_line[8], "sl8", UI_Graph_ADD, 7, UI_Color_Pink, 2, X2, Y2 - LINE_LENGTH, X2, Y2 + LINE_LENGTH);
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[7], UI_shoot_line[8]);
 
     // 绘制发射点，吊射点
-    UILineDraw(&UI_shoot_line[9], "sl9", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X3 - LINE_LENGTH, Y3, X3 + LINE_LENGTH, Y3);
-    UILineDraw(&UI_shoot_line[10], "sll", UI_Graph_ADD, 7, UI_Color_Yellow, 2, X3, Y3 - LINE_LENGTH, X3, Y3 + LINE_LENGTH);
+    UILineDraw(&UI_shoot_line[9], "sl9", UI_Graph_ADD, 7, UI_Color_Orange, 2, X3 - LINE_LENGTH, Y3, X3 + LINE_LENGTH, Y3);
+    UILineDraw(&UI_shoot_line[10], "sll", UI_Graph_ADD, 7, UI_Color_Orange, 2, X3, Y3 - LINE_LENGTH, X3, Y3 + LINE_LENGTH);
     UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_shoot_line[9], UI_shoot_line[10]);
 
     // 绘制车辆状态标志指示
@@ -128,9 +132,9 @@ void MyUIInit()
     // 由于初始化时xxx_last_mode默认为0，所以此处对应UI也应该设为0时对应的UI，防止模式不变的情况下无法置位flag，导致UI无法刷新
     UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 390, 750, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[0]);
-    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "off");
+    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "auto_on");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
-    UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 650, "normal");
+    UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 650, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
     UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 600, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
@@ -188,7 +192,10 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // supercap
     if (_Interactive_data->Referee_Interactive_Flag.supcap_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off" : "on ");
+        if (supercap_mode == SUPERCAP_STATE_AUTO)
+            UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "auto_off" : "auto_on ");
+        else
+            UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off     " : "on      ");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 0;
     }
@@ -242,8 +249,8 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // supercap_power
     if (_Interactive_data->Referee_Interactive_Flag.Power_flag == 1)
     {
-        UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 2, 750, 230, _Interactive_data->Chassis_Power_Data.chassis_power_mx * 1000);
-        UILineDraw(&UI_Energy[2], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 30, 722, 160, (uint32_t)750 + _Interactive_data->Chassis_Power_Data.chassis_power_mx * 30, 160);
+        UIFloatDraw(&UI_Energy[1], "sd5", UI_Graph_Change, 8, UI_Color_Green, 18, 2, 3, 970, 210, _Interactive_data->Chassis_Power_Data.chassis_power_mx);
+        UILineDraw(&UI_Energy[2], "sd6", UI_Graph_Change, 8, UI_Color_Pink, 30, 722, 160, (uint32_t)722 + (_Interactive_data->Chassis_Power_Data.chassis_power_mx / 1000 - 9) * 17, 160);
         UIGraphRefresh(&referee_recv_info->referee_id, 2, UI_Energy[1], UI_Energy[2]);
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 0;
     }
@@ -282,11 +289,13 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
     }
 
     // supercap开关
-    if (_Interactive_data->supcap_mode != _Interactive_data->supcap_last_mode)
+    if (_Interactive_data->supcap_mode != _Interactive_data->supcap_last_mode || supercap_mode != supercap_last_mode)
     {
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 1;
         _Interactive_data->supcap_last_mode = _Interactive_data->supcap_mode;
+        supercap_last_mode = supercap_mode;
     }
+
     // friction_mode转速
     _Interactive_data->friction_mode = friction_mode;
     if (_Interactive_data->friction_mode != _Interactive_data->friction_last_mode)
@@ -310,6 +319,7 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
     }
 
     // supercap数据
+    _Interactive_data->Chassis_Power_Data.chassis_power_mx = SupercapRxData.voltage;
     if (_Interactive_data->Chassis_Power_Data.chassis_power_mx != _Interactive_data->Chassis_last_Power_Data.chassis_power_mx)
     {
         _Interactive_data->Referee_Interactive_Flag.Power_flag = 1;

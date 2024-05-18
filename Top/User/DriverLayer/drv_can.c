@@ -69,7 +69,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data); // receive can1 data
 
     // yaw
-    if ((rx_header.StdId == 0x209))
+    if ((rx_header.StdId == 0x205))
     {
       motor_read(YAW_INDEX, rx_data);
     }
