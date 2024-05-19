@@ -82,11 +82,11 @@ void Gimbal_task(void const *pvParameters)
 
 static void Gimbal_loop_init()
 {
-	gimbal_gyro.pid_angle_value[0] = 40;
+	gimbal_gyro.pid_angle_value[0] = 30;
 	gimbal_gyro.pid_angle_value[1] = 0;
 	gimbal_gyro.pid_angle_value[2] = 0;
 
-	gimbal_gyro.pid_speed_value[0] = 100;
+	gimbal_gyro.pid_speed_value[0] = 200;
 	gimbal_gyro.pid_speed_value[1] = 0;
 	gimbal_gyro.pid_speed_value[2] = 0;
 
@@ -198,7 +198,7 @@ static void gimbal_mode_vision()
 	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed_vision, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
 
 	// 给电流
-	gimbal_can2_cmd(gimbal_gyro.pid_speed_out); // 给电流
+	gimbal_can2_cmd(-gimbal_gyro.pid_speed_out); // 给电流
 }
 
 /**************************** 锁yaw **********************************/
@@ -232,7 +232,7 @@ static void gimbal_mode_normal()
 	gimbal_gyro.pid_speed_out = pid_calc(&gimbal_gyro.pid_speed, gimbal_gyro.pid_angle_out, INS.Gyro[2] * 57.3f);
 
 	// 给电流
-	gimbal_can2_cmd(gimbal_gyro.pid_speed_out);
+	gimbal_can2_cmd(-gimbal_gyro.pid_speed_out);
 }
 
 /*****************************角度范围限制**********************************/

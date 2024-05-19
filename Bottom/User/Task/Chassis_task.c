@@ -569,7 +569,7 @@ static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
         Plimit = 0.25;
       else if (Watch_Buffer < 20 && Watch_Buffer >= 10)
         Plimit = 0.125;
-      else if (Watch_Buffer < 10 && Watch_Buffer >= 0)
+      else if (Watch_Buffer < 10 && Watch_Buffer > 0)
         Plimit = 0.05;
       else
         Plimit = 1;
