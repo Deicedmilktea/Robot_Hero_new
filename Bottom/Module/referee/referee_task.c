@@ -18,12 +18,12 @@
 #include "video_control.h"
 #include "supercap_task.h"
 
-#define X1 960 // 落风坡 yellow
-#define Y1 370
+#define X1 930 // 落风坡 yellow
+#define Y1 420
 #define X2 950 // 高地 pink
 #define Y2 400
-#define X3 950 // 吊射点 oriange
-#define Y3 350
+#define X3 935 // 吊射点 oriange
+#define Y3 310
 #define LINE_LENGTH 25
 
 Referee_Interactive_info_t *Interactive_data; // UI绘制需要的机器人状态数据

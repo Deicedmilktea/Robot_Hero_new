@@ -40,7 +40,10 @@
             "stdint.h": "c",
             "rm_referee.h": "c",
             "task.h": "c",
-            "daemon.h": "c"
+            "daemon.h": "c",
+            "robot_def.h": "c",
+            "string.h": "c",
+            "referee_ui.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },

@@ -14,11 +14,10 @@
 #include "video_control.h"
 #include "Robot.h"
 
-#define TRIGGER_SINGLE_ANGLE 1235 // 19*360/6s
+#define TRIGGER_SINGLE_ANGLE 1305 // 19*360/6+165
 #define TRIGGER_ROTATE_SPEED 100
 
 static trigger_t trigger; // 拨盘can1，id = 5
-
 bool is_angle_control = false;
 float current_time = 0;
 float last_time = 0;

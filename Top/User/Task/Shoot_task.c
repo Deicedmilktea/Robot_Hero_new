@@ -42,7 +42,7 @@ static void shoot_start();
 static void shoot_stop();
 
 // can2发送电流
-static void shoot_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);
+static void shoot_can2_cmd(int16_t v1, int16_t v2);
 
 // PID计算速度并发送电流
 static void shoot_current_give();
@@ -187,7 +187,7 @@ static void shoot_stop()
 }
 
 /********************************摩擦轮can2发送电流***************************/
-static void shoot_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
+static void shoot_can2_cmd(int16_t v1, int16_t v2)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -203,10 +203,10 @@ static void shoot_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
   tx_data[1] = (v1) & 0xff;
   tx_data[2] = (v2 >> 8) & 0xff;
   tx_data[3] = (v2) & 0xff;
-  tx_data[4] = (v3 >> 8) & 0xff;
-  tx_data[5] = (v3) & 0xff;
-  tx_data[6] = (v4 >> 8) & 0xff;
-  tx_data[7] = (v4) & 0xff;
+  tx_data[4] = NULL;
+  tx_data[5] = NULL;
+  tx_data[6] = NULL;
+  tx_data[7] = NULL;
 
   HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
 }
@@ -218,5 +218,5 @@ static void shoot_current_give()
   motor_top[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_top[0].rotor_speed);
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
 
-  shoot_can2_cmd(motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
+  shoot_can2_cmd(motor_top[0].set_current, motor_top[1].set_current);
 }
