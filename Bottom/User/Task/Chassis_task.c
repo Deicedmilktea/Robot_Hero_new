@@ -44,6 +44,7 @@ extern SupercapRxData_t SupercapRxData; // 超电接收数据
 extern CAN_HandleTypeDef hcan2;
 extern uint8_t trigger_flag;
 extern uint8_t friction_mode;
+extern uint8_t is_remote_online;
 
 // 功率限制算法的变量定义
 float Watch_Power_Max;                                                // 限制值
@@ -83,7 +84,7 @@ void Chassis_task(void const *pvParameters)
     level_judge(); // 等级判断，获取最大速度
     yaw_correct(); // 校正yaw值
 
-    if (rc_ctrl[TEMP].rc.switch_left) // 遥控器链路
+    if (is_remote_online) // 遥控器链路
       rc_mode_choose();
 
     else // 图传链路
@@ -119,58 +120,43 @@ static void Chassis_loop_Init()
 static void read_keyboard()
 {
   // 遥控器链路
-  if (rc_ctrl[TEMP].rc.switch_left)
+  if (is_remote_online)
   {
     // F键控制底盘模式
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 1)
-      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
-    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 2)
-      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
-    else
-      ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
-
-    // 超电开关
-    switch (SupercapRxData.state)
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3)
     {
-    case 0:
-      supercap_flag = 0;
-      ui_data.supcap_mode = SUPCAP_OFF;
+    case 1:
+      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
       break;
-    case 3:
-      supercap_flag = 1;
-      ui_data.supcap_mode = SUPCAP_ON;
+    case 2:
+      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+      break;
+    default:
+      ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
       break;
     }
 
     // R键控制底盘小陀螺速度
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
     {
+    case 1:
       chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
       ui_data.top_mode = TOP_HIGH;
-    }
-    else
-    {
+      break;
+    default:
       chassis_wz_max = CHASSIS_WZ_MAX_1;
       ui_data.top_mode = TOP_LOW;
+      break;
     }
 
     // Q键切换发射模式，单发和爆破
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
-      ui_data.shoot_mode = SHOOT_BUFF;
-    else
-      ui_data.shoot_mode = SHOOT_NORMAL;
-
-    // E键切换摩擦轮速度，012分别为low，normal，high
-    switch (friction_mode)
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2)
     {
-    case 0:
-      ui_data.friction_mode = FRICTION_LOW;
-      break;
     case 1:
-      ui_data.friction_mode = FRICTION_NORMAL;
+      ui_data.shoot_mode = SHOOT_BUFF;
       break;
-    case 2:
-      ui_data.friction_mode = FRICTION_HIGH;
+    default:
+      ui_data.shoot_mode = SHOOT_NORMAL;
       break;
     }
   }
@@ -179,57 +165,69 @@ static void read_keyboard()
   else
   {
     // F键控制底盘模式
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 1)
-      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
-    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3 == 2)
-      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
-    else
-      ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
-
-    // 超电开关
-    switch (SupercapRxData.state)
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3)
     {
-    case 0:
-      supercap_flag = 0;
-      ui_data.supcap_mode = SUPCAP_OFF;
+    case 1:
+      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
       break;
-    case 3:
-      supercap_flag = 1;
-      ui_data.supcap_mode = SUPCAP_ON;
+    case 2:
+      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+      break;
+    default:
+      ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
       break;
     }
 
     // R键控制底盘小陀螺速度
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2 == 1)
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
     {
+    case 1:
       chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
       ui_data.top_mode = TOP_HIGH;
-    }
-    else
-    {
+      break;
+    default:
       chassis_wz_max = CHASSIS_WZ_MAX_1;
       ui_data.top_mode = TOP_LOW;
+      break;
     }
 
     // Q键切换发射模式，单发和爆破
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
-      ui_data.shoot_mode = SHOOT_BUFF;
-    else
-      ui_data.shoot_mode = SHOOT_NORMAL;
-
-    // E键切换摩擦轮速度，012分别为low，normal，high
-    switch (friction_mode)
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2)
     {
-    case 0:
-      ui_data.friction_mode = FRICTION_LOW;
-      break;
     case 1:
-      ui_data.friction_mode = FRICTION_NORMAL;
+      ui_data.shoot_mode = SHOOT_BUFF;
       break;
-    case 2:
-      ui_data.friction_mode = FRICTION_HIGH;
+    default:
+      ui_data.shoot_mode = SHOOT_NORMAL;
       break;
     }
+  }
+
+  // 超电开关
+  switch (SupercapRxData.state)
+  {
+  case 3:
+    supercap_flag = 1;
+    ui_data.supcap_mode = SUPCAP_ON;
+    break;
+  default:
+    supercap_flag = 0;
+    ui_data.supcap_mode = SUPCAP_OFF;
+    break;
+  }
+
+  // E键切换摩擦轮速度，012分别为low，normal，high
+  switch (friction_mode)
+  {
+  case 1:
+    ui_data.friction_mode = FRICTION_NORMAL;
+    break;
+  case 2:
+    ui_data.friction_mode = FRICTION_HIGH;
+    break;
+  default:
+    ui_data.friction_mode = FRICTION_LOW;
+    break;
   }
 }
 

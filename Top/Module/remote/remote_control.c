@@ -20,6 +20,7 @@ static int16_t pitch = 0;
 
 // 遥控器数据
 RC_ctrl_t rc_ctrl[2];            //[0]:当前数据TEMP,[1]:上一次的数据LAST.用于按键持续按下和切换的判断
+uint8_t is_remote_online;        // 遥控器是否在线
 static uint8_t rc_init_flag = 0; // 遥控器初始化标志位
 static uint8_t temp_remote[8];   // 临时存储发送数据
 
@@ -94,6 +95,9 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
         temp_remote[7] = friction_flag;
 
         can_remote(temp_remote, 0x35);
+
+        temp_remote[0] = is_remote_online;
+        can_remote(temp_remote, 0x36);
     }
 
     // 位域的按键值解算,直接memcpy即可,注意小端低字节在前,即lsb在第一位,msb在最后
@@ -138,6 +142,7 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
  */
 static void RemoteControlRxCallback()
 {
+    is_remote_online = 1;                     // 遥控器在线
     DaemonReload(rc_daemon_instance);         // 先喂狗
     sbus_to_rc(rc_usart_instance->recv_buff); // 进行协议解析
 }
@@ -148,6 +153,7 @@ static void RemoteControlRxCallback()
  */
 static void RCLostCallback(void *id)
 {
+    is_remote_online = 0;                // 遥控器离线
     memset(rc_ctrl, 0, sizeof(rc_ctrl)); // 清空遥控器数据
     USARTServiceInit(rc_usart_instance); // 尝试重新启动接收
 }

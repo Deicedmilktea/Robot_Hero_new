@@ -26,6 +26,7 @@ extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS_bottom;
 extern float vision_pitch;
 extern bool vision_is_tracking;
+extern uint8_t is_remote_online;
 
 // 初始化
 static void pitch_loop_init();
@@ -49,7 +50,7 @@ void Pitch_task(void const *argument)
         pitch.relative_pitch = INS.Roll - INS_bottom.Pitch;
 
         // 遥控器链路
-        if (rc_ctrl[TEMP].rc.switch_left)
+        if (is_remote_online)
         {
             // 视觉识别，右拨杆上/鼠标右键
             if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r)

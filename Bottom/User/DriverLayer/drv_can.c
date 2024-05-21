@@ -17,6 +17,7 @@ INS_t INS_top;
 SupercapRxData_t SupercapRxData;
 uint8_t vision_is_tracking;
 uint8_t friction_mode;
+uint8_t is_remote_online;
 
 static uint8_t sbus_buf[18u]; // 遥控器接收的buffer
 static uint8_t video_buf[12]; // 图传接收的buffer
@@ -91,12 +92,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       friction_mode = rx_data[7];
     }
 
-    if (rx_header.StdId == 0x36) // 接收上C传来的图传数据
+    if (rx_header.StdId == 0x36)
+      is_remote_online = rx_data[0];
+
+    if (rx_header.StdId == 0x37) // 接收上C传来的图传数据
     {
       memcpy(video_buf, rx_data, 8);
     }
 
-    if (rx_header.StdId == 0x37) // 接收上C传来的图传数据
+    if (rx_header.StdId == 0x38) // 接收上C传来的图传数据
     {
       memcpy(video_buf + 8, rx_data, 4);
       VideoRead(video_buf);
@@ -104,10 +108,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       INS_top.Yaw = (int16_t)((rx_data[6] << 8) | rx_data[7]) / 50.0f;
     }
 
-    if (rx_header.StdId == 0x38) // 接收上C传来的图传数据
+    if (rx_header.StdId == 0x39) // 接收上C传来的图传数据
     {
       vision_is_tracking = rx_data[0];
       friction_mode = rx_data[1];
+      is_remote_online = rx_data[2];
     }
   }
 

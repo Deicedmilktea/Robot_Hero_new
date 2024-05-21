@@ -28,6 +28,7 @@ uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
+extern uint8_t is_remote_online;
 
 // 初始化
 static void shoot_loop_init();
@@ -57,7 +58,7 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     // 遥控器链路
-    if (rc_ctrl[TEMP].rc.switch_left)
+    if (is_remote_online)
     {
       // 右拨杆中，键鼠控制
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
@@ -120,7 +121,7 @@ static void shoot_loop_init()
 static void read_keyboard()
 {
   // 遥控器链路
-  if (rc_ctrl[TEMP].rc.switch_left)
+  if (is_remote_online)
   {
     // E键切换摩擦轮速度
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
