@@ -28,6 +28,7 @@ extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS;
 extern bool vision_is_tracking;
 extern float vision_yaw;
+extern uint8_t is_remote_online; // 遥控器是否在线
 
 static void Gimbal_loop_init();				  // 初始化
 static void angle_over_zero(float err);		  // 角度过零处理
@@ -45,7 +46,7 @@ void Gimbal_task(void const *pvParameters)
 	for (;;)
 	{
 		// 遥控链路
-		if (rc_ctrl[TEMP].rc.switch_left)
+		if (is_remote_online)
 		{
 			// 视觉控制
 			if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r) // 左拨杆上 || 按住右键
@@ -152,7 +153,7 @@ static void gimbal_mode_vision()
 	Yaw_read_imu();
 
 	// 遥控器链路
-	if (rc_ctrl[TEMP].rc.switch_left)
+	if (is_remote_online)
 	{
 		// 如果追踪到目标
 		if (vision_is_tracking)
@@ -208,7 +209,7 @@ static void gimbal_mode_normal()
 	Yaw_read_imu();
 
 	// 遥控器链路
-	if (rc_ctrl[TEMP].rc.switch_left)
+	if (is_remote_online)
 	{
 		// 使用非线性映射函数调整灵敏度
 		float normalized_input = rc_ctrl[TEMP].rc.rocker_l_ / 660.0f + rc_ctrl[TEMP].mouse.x / 16384.0f * 100;

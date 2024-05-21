@@ -24,6 +24,7 @@ static int16_t friction_up_speed = 0;
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
+extern uint8_t is_remote_online;
 
 static void shoot_loop_init();                                                            // 初始化
 static void read_keyboard();                                                              // 读取摩擦轮速度
@@ -42,7 +43,7 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     // 遥控器链路
-    if (rc_ctrl[TEMP].rc.switch_left)
+    if (is_remote_online)
     {
       // 右拨杆中，键鼠控制
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
@@ -131,7 +132,7 @@ static void shoot_loop_init()
 static void read_keyboard()
 {
   // 遥控器链路
-  if (rc_ctrl[TEMP].rc.switch_left)
+  if (is_remote_online)
   {
     // E键切换摩擦轮速度
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
@@ -219,7 +220,7 @@ static void shoot_stop()
 static void lens_judge()
 {
   // 遥控器链路
-  if (rc_ctrl[TEMP].rc.switch_left)
+  if (is_remote_online)
   {
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
       lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_ANGLE;
@@ -280,8 +281,8 @@ static void shoot_current_give()
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
   motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);
 
-  // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
-  // motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
+  motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+  motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
 
   shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
   shoot_can2_cmd(1, motor_top[4].set_current, motor_top[5].set_current, 0, 0);

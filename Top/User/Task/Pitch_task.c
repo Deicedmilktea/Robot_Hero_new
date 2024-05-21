@@ -26,6 +26,7 @@ extern Video_ctrl_t video_ctrl[2];
 extern INS_t INS_bottom;
 extern float vision_pitch;
 extern bool vision_is_tracking;
+extern uint8_t is_remote_online;
 
 static void pitch_loop_init();               // 初始化
 static void pitch_can2_cmd(int16_t voltage); // can1发送电流
@@ -42,7 +43,7 @@ void Pitch_task(void const *argument)
         pitch.relative_pitch = INS.Roll - INS_bottom.Pitch;
 
         // 遥控器链路
-        if (rc_ctrl[TEMP].rc.switch_left)
+        if (is_remote_online)
         {
             // 视觉识别，右拨杆上/鼠标右键
             if (switch_is_up(rc_ctrl[TEMP].rc.switch_right) || rc_ctrl[TEMP].mouse.press_r == 1)
@@ -89,6 +90,13 @@ void Pitch_task(void const *argument)
                     pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input);
                 }
             }
+
+            else
+            {
+                // 使用非线性映射函数调整灵敏度
+                float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 10.0f;
+                pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input);
+            }
         }
 
         pitch_position_limit();
@@ -102,7 +110,7 @@ static void pitch_loop_init()
 {
     pitch.angle_pid_value[0] = 20;
     pitch.angle_pid_value[1] = 0;
-    pitch.angle_pid_value[2] = 0;
+    pitch.angle_pid_value[2] = 50;
 
     pitch.speed_pid_value[0] = 300;
     pitch.speed_pid_value[1] = 0.05;
@@ -112,7 +120,7 @@ static void pitch_loop_init()
     pitch.target_speed = 0;
 
     pid_init(&pitch.pid_angle, pitch.angle_pid_value, 10000, 10000);
-    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 10000, 10000);
+    pid_init(&pitch.pid_speed, pitch.speed_pid_value, 16384, 16384);
 }
 
 /**************** PID计算速度并发送电流 ***************/

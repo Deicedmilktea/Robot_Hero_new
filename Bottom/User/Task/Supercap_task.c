@@ -14,6 +14,7 @@ extern referee_hero_t referee_hero;
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
 extern uint8_t supercap_flag;
+extern uint8_t is_remote_online;
 
 static void supercap_can_transmit(SupercapTxData_t TxData);
 static void supercap_data_set(uint16_t buffer, uint16_t power, uint8_t state);
@@ -61,13 +62,10 @@ static void supercap_data_set(uint16_t buffer, uint16_t power, uint8_t state)
 
 static void read_keyboard()
 {
-	if (rc_ctrl[TEMP].rc.switch_left)
+	if (is_remote_online)
 	{
 		switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2)
 		{
-		case 0:
-			supercap_mode = SUPERCAP_STATE_AUTO;
-			break;
 		case 1:
 			supercap_mode = SUPERCAP_STATE_OFF;
 			break;
@@ -81,9 +79,6 @@ static void read_keyboard()
 	{
 		switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2)
 		{
-		case 0:
-			supercap_mode = SUPERCAP_STATE_AUTO;
-			break;
 		case 1:
 			supercap_mode = SUPERCAP_STATE_OFF;
 			break;

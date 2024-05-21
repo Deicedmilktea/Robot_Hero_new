@@ -24,6 +24,7 @@ extern bool vision_is_tracking;
 extern uint8_t friction_flag;
 extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
+extern uint8_t is_remote_online;
 
 static void VideoDataContorl()
 {
@@ -92,11 +93,11 @@ static void VideoRead(uint8_t *buff)
                 case ID_remote_control_data: // 图传链路键鼠数据
                     memcpy(&video_ctrl[TEMP].key_data, (buff + DATA_Offset), LEN_remote_control_data);
 
-                    if (!rc_ctrl[TEMP].rc.switch_left)
+                    if (!is_remote_online)
                     {
                         // 发送给下C板
                         memcpy(send_buff, buff + DATA_Offset, 8);
-                        can_remote(send_buff, 0x36);
+                        can_remote(send_buff, 0x37);
 
                         memcpy(send_buff, buff + DATA_Offset + 8, 4);
                         ins_pitch = INS.Roll * 50;
@@ -105,11 +106,11 @@ static void VideoRead(uint8_t *buff)
                         send_buff[5] = ins_pitch & 0xff;
                         send_buff[6] = (ins_yaw >> 8) & 0xff;
                         send_buff[7] = ins_yaw & 0xff;
-                        can_remote(send_buff, 0x37);
+                        can_remote(send_buff, 0x38);
 
                         send_buff[0] = (uint8_t)vision_is_tracking;
                         send_buff[1] = friction_flag;
-                        can_remote(send_buff, 0x38);
+                        can_remote(send_buff, 0x39);
                     }
 
                     *(uint16_t *)&video_ctrl[TEMP].key[KEY_PRESS] = video_ctrl[TEMP].key_data.keyboard_value;

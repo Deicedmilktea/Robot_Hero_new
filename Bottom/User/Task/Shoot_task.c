@@ -28,6 +28,7 @@ extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
 extern motor_info_t motor_bottom[5];
 extern CAN_HandleTypeDef hcan2;
+extern uint8_t is_remote_online;
 
 static void shoot_loop_init();            // 初始化
 static void shoot_start();                // 射击模式
@@ -45,7 +46,7 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     // 遥控器链路
-    if (rc_ctrl[TEMP].rc.switch_left)
+    if (is_remote_online)
     {
       // 右拨杆下，遥控器控制
       if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
@@ -156,7 +157,7 @@ static void shoot_start()
 static void read_keyboard()
 {
   // 遥控器链路
-  if (rc_ctrl[TEMP].rc.switch_left)
+  if (is_remote_online)
   {
     // Q键切换发射模式，单发和爆破
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
