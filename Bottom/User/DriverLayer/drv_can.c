@@ -112,6 +112,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     {
       vision_is_tracking = rx_data[0];
       friction_mode = rx_data[1];
+      is_remote_online = rx_data[2];
     }
   }
 

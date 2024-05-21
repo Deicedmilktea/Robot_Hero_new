@@ -110,6 +110,7 @@ static void VideoRead(uint8_t *buff)
 
                         send_buff[0] = (uint8_t)vision_is_tracking;
                         send_buff[1] = friction_flag;
+                        send_buff[2] = 0; // is_remote_online
                         can_remote(send_buff, 0x39);
                     }
 
