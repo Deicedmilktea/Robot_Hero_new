@@ -50,7 +50,13 @@ typedef enum
 {
     GIMBAL_OFF = 0,
     GIMBAL_ON,
-} is_gimbal_on_t;
+} is_gimbal_on_e;
+
+typedef enum
+{
+    VIDEO_NORMAL = 0,
+    VIDEO_ADAPTIVE,
+} video_mode_e;
 
 void Shoot_task(void const *argument);
 

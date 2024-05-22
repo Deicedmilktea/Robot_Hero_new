@@ -18,7 +18,7 @@
 motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 uint8_t is_gimbal_on = 0;  // 云台是否开启
-int16_t adptive_angle;
+uint8_t video_mode;        // 图传模式
 
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
@@ -266,10 +266,10 @@ static void lens_judge()
     else
       lens_motor[0].target_angle = lens_motor[0].init_angle;
 
-    // if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
-    //   lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
-    // else
-    //   lens_motor[1].target_angle = lens_motor[1].init_angle;
+    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
+      video_mode = VIDEO_ADAPTIVE;
+    else
+      video_mode = VIDEO_NORMAL;
   }
 
   // 图传链路
@@ -280,10 +280,10 @@ static void lens_judge()
     else
       lens_motor[0].target_angle = lens_motor[0].init_angle;
 
-    // if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
-    //   lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
-    // else
-    //   lens_motor[1].target_angle = lens_motor[1].init_angle;
+    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
+      video_mode = VIDEO_ADAPTIVE;
+    else
+      video_mode = VIDEO_NORMAL;
   }
 }
 
@@ -307,15 +307,22 @@ void video_adaptive()
 {
   if (is_lens_ready)
   {
-    // 调节角度
-    adptive_angle = 36 * INS.Roll;
-    lens_motor[1].target_angle = lens_motor[1].init_angle + adptive_angle;
+    if (video_mode == VIDEO_ADAPTIVE)
+    {
+      // 调节角度
+      int16_t adptive_angle = 36 * INS.Roll;
+      lens_motor[1].target_angle = lens_motor[1].init_angle + adptive_angle;
+    }
+
+    else
+    {
+      lens_motor[1].target_angle = lens_motor[1].init_angle;
+    }
   }
 }
 
 /********************************摩擦轮can2发送电流***************************/
-static void
-shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int16_t v4)
+static void shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int16_t v4)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -355,7 +362,7 @@ static void shoot_current_give()
 
   else
   {
-    // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+    motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
     motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
   }
 
