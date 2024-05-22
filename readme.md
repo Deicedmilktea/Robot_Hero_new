@@ -71,5 +71,5 @@ Branch: pitch_6020
 |   X    |       刷新UI(仅在开局使用)       |
 |   C    |           超电(off/on)           |
 |   V    |  陀螺仪校正(仅在底盘normal使用)  |
-|   B    |        图传位置(low/high)        |
+|   B    |    图传模式(normal/adaptive)     |
 | ctrl+X |       pitch, yaw启动/卸力        |
