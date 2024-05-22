@@ -349,7 +349,7 @@ void rc_mode_choose()
   // 右拨杆下，遥控操作
   if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
   {
-    chassis_mode_follow();
+    chassis_mode_normal();
   }
 
   // 右拨杆中，键鼠操作
@@ -378,9 +378,10 @@ void rc_mode_choose()
     }
   }
 
-  // 停止模式
+  // 右拨杆上，校正yaw
   else
   {
+    manual_yaw_correct(); // 手动校正yaw值，头对正
     chassis_mode_stop();
   }
 }

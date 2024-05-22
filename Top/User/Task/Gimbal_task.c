@@ -29,27 +29,14 @@ extern INS_t INS;
 extern bool vision_is_tracking;
 extern float vision_yaw;
 extern uint8_t is_remote_online;
+extern uint8_t is_gimbal_on;
 
-// 初始化
-static void Gimbal_loop_init();
-
-// 角度过零处理
-static void angle_over_zero(float err);
-
-// 控制云台旋转
-static void gimbal_control();
-
-// 角度范围限制
-static void detel_calc(float *angle);
-
-// can1发送电流
-static void gimbal_can2_cmd(int16_t voltage);
-
-// 视觉控制
-static void gimbal_mode_vision();
-
-// 锁yaw
-static void gimbal_mode_normal();
+static void Gimbal_loop_init();				  // 初始化
+static void angle_over_zero(float err);		  // 角度过零处理
+static void detel_calc(float *angle);		  // 角度范围限制
+static void gimbal_can2_cmd(int16_t voltage); // can1发送电流
+static void gimbal_mode_vision();			  // 视觉控制
+static void gimbal_mode_normal();			  // 锁yaw
 
 // 云台运动task
 void Gimbal_task(void const *pvParameters)
@@ -77,16 +64,19 @@ void Gimbal_task(void const *pvParameters)
 		// 图传链路
 		else
 		{
-			// 视觉控制
-			if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
+			if (is_gimbal_on)
 			{
-				gimbal_mode_vision();
-			}
+				// 视觉控制
+				if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
+				{
+					gimbal_mode_vision();
+				}
 
-			// 锁yaw模式
-			else // 左拨杆中或下
-			{
-				gimbal_mode_normal();
+				// 锁yaw模式
+				else // 左拨杆中或下
+				{
+					gimbal_mode_normal();
+				}
 			}
 		}
 

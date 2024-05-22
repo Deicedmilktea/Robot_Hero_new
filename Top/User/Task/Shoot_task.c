@@ -24,32 +24,20 @@ static shoot_t shoot_motor[2]; // 摩擦轮can2，id = 56
 static int16_t friction_speed = 0;
 
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
+uint8_t is_gimbal_on = 0;  // 是否开启云台
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
 extern uint8_t is_remote_online;
 
-// 初始化
-static void shoot_loop_init();
-
-// 读取摩擦轮速度
-static void read_keyboard();
-
-// 摩擦轮开启模式
-static void shoot_start();
-
-// 摩擦轮关闭模式
-static void shoot_stop();
-
-// can2发送电流
-static void shoot_can2_cmd(int16_t v1, int16_t v2);
-
-// PID计算速度并发送电流
-static void shoot_current_give();
-
-// 读取键鼠是否开启摩擦轮
-static void read_keyboard();
+static void shoot_loop_init();                      // 初始化
+static void read_keyboard();                        // 读取摩擦轮速度
+static void shoot_start();                          // 摩擦轮开启模式
+static void shoot_stop();                           // 摩擦轮关闭模式
+static void shoot_can2_cmd(int16_t v1, int16_t v2); // can2发送电流
+static void shoot_current_give();                   // PID计算速度并发送电流
+static void read_keyboard();                        // 读取键鼠是否开启摩擦轮
 
 void Shoot_task(void const *argument)
 {
@@ -124,25 +112,34 @@ static void read_keyboard()
   if (is_remote_online)
   {
     // E键切换摩擦轮速度
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4)
     {
+    case 1:
       friction_speed = FRICTION_SPEED_NORMAL;
       friction_flag = FRICTION_NORMAL;
-    }
-    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
-    {
+      break;
+    case 2:
       friction_speed = FRICTION_SPEED_LOW;
       friction_flag = FRICTION_LOW;
-    }
-    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
-    {
+      break;
+    case 3:
       friction_speed = FRICTION_SPEED_HIGH;
       friction_flag = FRICTION_HIGH;
-    }
-    else
-    {
+      break;
+    default:
       friction_speed = FRICTION_SPEED_STOP;
       friction_flag = FRICTION_STOP;
+      break;
+    }
+
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2)
+    {
+    case 1:
+      is_gimbal_on = GIMBAL_ON;
+      break;
+    default:
+      is_gimbal_on = GIMBAL_OFF;
+      break;
     }
   }
 
@@ -150,25 +147,24 @@ static void read_keyboard()
   else
   {
     // E键切换摩擦轮速度
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4)
     {
+    case 1:
       friction_speed = FRICTION_SPEED_NORMAL;
       friction_flag = FRICTION_NORMAL;
-    }
-    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
-    {
+      break;
+    case 2:
       friction_speed = FRICTION_SPEED_LOW;
       friction_flag = FRICTION_LOW;
-    }
-    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
-    {
+      break;
+    case 3:
       friction_speed = FRICTION_SPEED_HIGH;
       friction_flag = FRICTION_HIGH;
-    }
-    else
-    {
+      break;
+    default:
       friction_speed = FRICTION_SPEED_STOP;
       friction_flag = FRICTION_STOP;
+      break;
     }
   }
 }

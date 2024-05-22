@@ -19,6 +19,12 @@ typedef enum
     FRICTION_STOP,
 } friction_mode_e;
 
+typedef enum
+{
+    GIMBAL_OFF = 0,
+    GIMBAL_ON,
+} is_gimbal_on_e;
+
 void Shoot_task(void const *argument);
 
 #endif
