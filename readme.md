@@ -1,19 +1,20 @@
 # Hero接线及操作说明
 ```
+Branch: pitch_6020
 本文档是针对新英雄（pitch为6020）的接线及操作说明
 ```
 
 ## 接线说明
 ### Top
-|      Name      | Motor |  ID  | CAN  |
-| :------------: | :---: | :--: | :--: |
-| Friction_left  | 3508  |  1   | CAN2 |
-| Friction_right | 3508  |  2   | CAN2 |
-|  Friction_up   | 2006  |  3   | CAN2 |
-|    Lens_up     | 2006  |  4   | CAN2 |
-|   Lens_down    | 2006  |  5   | CAN2 |
-|     Pitch      | 6020  |  2   | CAN2 |
-|     Gimbal     | 6020  |  1   | CAN1 |
+|      Name      | Motor |  ID   |  CAN  |
+| :------------: | :---: | :---: | :---: |
+| Friction_left  | 3508  |   1   | CAN2  |
+| Friction_right | 3508  |   2   | CAN2  |
+|  Friction_up   | 2006  |   3   | CAN2  |
+|    Lens_up     | 2006  |   4   | CAN2  |
+|   Lens_down    | 2006  |   5   | CAN2  |
+|     Pitch      | 6020  |   2   | CAN2  |
+|     Gimbal     | 6020  |   1   | CAN1  |
 
 ### Bottom
 1---------2\
@@ -49,23 +50,26 @@
  *   |                                                   |    *
  *   -----------------------------------------------------    *
  *                                                            *
+ 注：上场模式将右拨杆上更改为yaw轴陀螺仪校正
+     遥控模式默认为normal，便于过检录
 ```
 
 ### 图传链路
 ```
 在此操作方式下只存在键鼠操作
 ```
-|    Key     |            Operation             |
-| :--------: | :------------------------------: |
-|    WASD    |             底盘运动             |
-| shift/crtl |          小陀螺(cw/ccw)          |
-|     Q      |       发射模式(单发/爆破)        |
-|     E      | 摩擦轮速度(stop/normal/low/high) |
-|     R      |       小陀螺速度(low/high)       |
-|     F      |   底盘模式(stop/normal/follow)   |
-|     G      |           开镜(on/off)           |
-|     Z      |             拨盘反转             |
-|     X      |       刷新UI(仅在开局使用)       |
-|     C      |           超电(off/on)           |
-|     V      |  陀螺仪校正(仅在底盘normal使用)  |
-|     B      |        图传位置(low/high)        |
+|  Key   |            Operation             |
+| :----: | :------------------------------: |
+|  WASD  |             底盘运动             |
+| shift  |              小陀螺              |
+|   Q    |       发射模式(单发/爆破)        |
+|   E    | 摩擦轮速度(stop/normal/low/high) |
+|   R    |       小陀螺速度(low/high)       |
+|   F    |   底盘模式(stop/normal/follow)   |
+|   G    |           开镜(on/off)           |
+|   Z    |             拨盘反转             |
+|   X    |       刷新UI(仅在开局使用)       |
+|   C    |           超电(off/on)           |
+|   V    |  陀螺仪校正(仅在底盘normal使用)  |
+|   B    |        图传位置(low/high)        |
+| ctrl+X |       pitch, yaw启动/卸力        |

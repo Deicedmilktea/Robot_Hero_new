@@ -22,6 +22,12 @@ typedef struct
     float err_yaw;                   // 上下yaw值差
 } gimbal_t;
 
+typedef enum
+{
+    GIMBAL_OFF = 0,
+    GIMBAL_ON,
+} is_gimbal_on_t;
+
 void Gimbal_task(void const *pvParameters);
 
 #endif

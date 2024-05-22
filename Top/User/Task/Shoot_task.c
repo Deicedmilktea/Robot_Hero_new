@@ -15,6 +15,7 @@
 
 motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
+uint8_t is_gimbal_on = 0;  // 云台是否开启
 
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
@@ -135,29 +136,39 @@ static void read_keyboard()
   if (is_remote_online)
   {
     // E键切换摩擦轮速度
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4)
     {
+    case 1:
       friction_speed = FRICTION_SPEED_NORMAL;
       friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_NORMAL;
-    }
-    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
-    {
+      break;
+    case 2:
       friction_speed = FRICTION_SPEED_LOW;
       friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_LOW;
-    }
-    else if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
-    {
+      break;
+    case 3:
       friction_speed = FRICTION_SPEED_HIGH;
       friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_HIGH;
-    }
-    else
-    {
+      break;
+    default:
       friction_speed = FRICTION_SPEED_STOP;
       friction_up_speed = FRICTION_UP_SPEED_STOP;
       friction_flag = FRICTION_STOP;
+      break;
+    }
+
+    // ctrl + x 控制gimbal, pitch
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2)
+    {
+    case 1:
+      is_gimbal_on = GIMBAL_ON;
+      break;
+    default:
+      is_gimbal_on = GIMBAL_OFF;
+      break;
     }
   }
 
@@ -165,29 +176,28 @@ static void read_keyboard()
   else
   {
     // E键切换摩擦轮速度
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 1)
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4)
     {
+    case 1:
       friction_speed = FRICTION_SPEED_NORMAL;
       friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_NORMAL;
-    }
-    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 2)
-    {
+      break;
+    case 2:
       friction_speed = FRICTION_SPEED_LOW;
       friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_LOW;
-    }
-    else if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_E] % 4 == 3)
-    {
+      break;
+    case 3:
       friction_speed = FRICTION_SPEED_HIGH;
       friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_HIGH;
-    }
-    else
-    {
+      break;
+    default:
       friction_speed = FRICTION_SPEED_STOP;
       friction_up_speed = FRICTION_UP_SPEED_STOP;
       friction_flag = FRICTION_STOP;
+      break;
     }
   }
 }
@@ -281,8 +291,8 @@ static void shoot_current_give()
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
   motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);
 
-  motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
-  motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
+  // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+  // motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
 
   shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
   shoot_can2_cmd(1, motor_top[4].set_current, motor_top[5].set_current, 0, 0);

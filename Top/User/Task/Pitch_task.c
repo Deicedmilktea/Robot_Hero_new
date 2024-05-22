@@ -27,6 +27,7 @@ extern INS_t INS_bottom;
 extern float vision_pitch;
 extern bool vision_is_tracking;
 extern uint8_t is_remote_online;
+extern uint8_t is_gimbal_on;
 
 static void pitch_loop_init();               // 初始化
 static void pitch_can2_cmd(int16_t voltage); // can1发送电流
@@ -73,14 +74,24 @@ void Pitch_task(void const *argument)
         // 图传链路
         else
         {
-            // 视觉识别，鼠标右键
-            if (video_ctrl[TEMP].key_data.right_button_down == 1)
+            if (is_gimbal_on)
             {
-                if (vision_is_tracking)
+                // 视觉识别，鼠标右键
+                if (video_ctrl[TEMP].key_data.right_button_down == 1)
                 {
-                    // 视觉模式下的手动微调
-                    float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 100.0f;
-                    pitch.target_angle = vision_pitch + normalized_input;
+                    if (vision_is_tracking)
+                    {
+                        // 视觉模式下的手动微调
+                        float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 100.0f;
+                        pitch.target_angle = vision_pitch + normalized_input;
+                    }
+
+                    else
+                    {
+                        // 使用非线性映射函数调整灵敏度
+                        float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 10.0f;
+                        pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input);
+                    }
                 }
 
                 else
@@ -89,13 +100,6 @@ void Pitch_task(void const *argument)
                     float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 10.0f;
                     pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input);
                 }
-            }
-
-            else
-            {
-                // 使用非线性映射函数调整灵敏度
-                float normalized_input = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 10.0f;
-                pitch.target_angle -= pow(fabs(normalized_input), 0.98) * sign(normalized_input);
             }
         }
 

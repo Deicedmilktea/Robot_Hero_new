@@ -347,7 +347,7 @@ void rc_mode_choose()
   // 右拨杆下，遥控操作
   if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
   {
-    chassis_mode_follow();
+    chassis_mode_normal(); // 正常模式，便于检录小陀螺展示
   }
 
   // 右拨杆中，键鼠操作
@@ -374,10 +374,11 @@ void rc_mode_choose()
     }
   }
 
-  // 正常模式，便于检录小陀螺展示
+  // 右拨杆上，校正yaw
   else
   {
-    chassis_mode_normal();
+    manual_yaw_correct(); // 手动校正yaw值，头对正，右拨杆往上推
+    chassis_mode_stop();
   }
 }
 
