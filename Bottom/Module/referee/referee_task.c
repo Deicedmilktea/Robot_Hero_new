@@ -19,7 +19,7 @@
 #include "supercap_task.h"
 
 #define X1 960 // 落风坡 yellow
-#define Y1 370
+#define Y1 300
 #define X2 950 // 高地 pink
 #define Y2 400
 #define X3 950 // 吊射点 oriange

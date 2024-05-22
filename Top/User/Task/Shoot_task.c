@@ -19,6 +19,7 @@ motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 uint8_t is_gimbal_on = 0;  // 云台是否开启
 uint8_t video_mode;        // 图传模式
+int16_t adptive_angle;
 
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
@@ -116,8 +117,8 @@ static void shoot_loop_init()
   lens_motor[0].pid_value[2] = 600;
 
   // lens_down
-  lens_motor[1].pid_value[0] = 10;
-  lens_motor[1].pid_value[1] = 0;
+  lens_motor[1].pid_value[0] = 30;
+  lens_motor[1].pid_value[1] = 0.05;
   lens_motor[1].pid_value[2] = 600;
 
   // lens_up_speed
@@ -140,11 +141,11 @@ static void shoot_loop_init()
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
   pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, FRICTION_MAX_SPEED); // friction_up
 
-  pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 1000, 4000); // lens_up
-  pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 1000, 4000); // lens_down
+  pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 4000, 8000); // lens_up
+  pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 4000, 8000); // lens_down
 
-  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_value, 1000, 2000); // lens_up
-  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_value, 1000, 2000); // lens_down
+  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_value, 1000, 4000); // lens_up
+  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_value, 1000, 4000); // lens_down
 }
 
 // 读取摩擦轮速度
@@ -310,7 +311,7 @@ void video_adaptive()
     if (video_mode == VIDEO_ADAPTIVE)
     {
       // 调节角度
-      int16_t adptive_angle = 36 * INS.Roll;
+      adptive_angle = 36 * (INS.Roll + 6);
       lens_motor[1].target_angle = lens_motor[1].init_angle + adptive_angle;
     }
 

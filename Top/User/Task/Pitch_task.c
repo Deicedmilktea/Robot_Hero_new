@@ -109,18 +109,18 @@ void Pitch_task(void const *argument)
 /*************************** 初始化 *************************/
 static void pitch_loop_init()
 {
-    pitch.angle_pid_value[0] = 20;
+    pitch.angle_pid_value[0] = 50;
     pitch.angle_pid_value[1] = 0;
-    pitch.angle_pid_value[2] = 50;
+    pitch.angle_pid_value[2] = 100;
 
-    pitch.speed_pid_value[0] = 300;
+    pitch.speed_pid_value[0] = 500;
     pitch.speed_pid_value[1] = 0.05;
     pitch.speed_pid_value[2] = 0;
 
     pitch.target_angle = 0;
     pitch.target_speed = 0;
 
-    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 10000, 10000);
+    pid_init(&pitch.pid_angle, pitch.angle_pid_value, 16384, 16384);
     pid_init(&pitch.pid_speed, pitch.speed_pid_value, 16384, 16384);
 }
 
