@@ -72,4 +72,4 @@ Branch: pitch_6020
 |   C    |           超电(off/on)           |
 |   V    |  陀螺仪校正(仅在底盘normal使用)  |
 |   B    |    图传模式(normal/adaptive)     |
-| ctrl+X |       pitch, yaw启动/卸力        |
+| ctrl+X |         gimbal 启动/卸力         |
