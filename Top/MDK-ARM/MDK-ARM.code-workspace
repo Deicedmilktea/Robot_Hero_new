@@ -45,7 +45,11 @@
             "usart.h": "c",
             "compare": "c",
             "limits": "c",
-            "*.tcc": "c"
+            "*.tcc": "c",
+            "pid.h": "c",
+            "cmath": "c",
+            "cinttypes": "c",
+            "cstdlib": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },

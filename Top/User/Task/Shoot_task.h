@@ -14,11 +14,11 @@
 
 #define LENS_ANGLE_ON -45
 #define LENS_ANGLE_OFF -2000
-#define LENS_UP_ANGLE 2200 // 初始化-200，开镜2000
+#define LENS_UP_ANGLE 1950
 
-#define LENS_ANGLE_HIGH -520
+#define LENS_ANGLE_HIGH -400
 #define LENS_ANGLE_LOW 310
-#define LENS_DOWN_ANGLE 500 // 初始化200，低头700
+#define LENS_DOWN_ANGLE 1400
 
 typedef struct
 {
@@ -29,10 +29,13 @@ typedef struct
 
 typedef struct
 {
-    pid_struct_t pid;   // speed的pid结构体
-    float pid_value[3]; // speed的pid参数
-    float target_angle; // 目标速度
-    int16_t init_angle; // 初始角度
+    pid_struct_t pid;         // angle的pid结构体
+    pid_struct_t pid_speed;   // speed的pid结构体
+    float pid_value[3];       // angle的pid参数
+    float pid_speed_value[3]; // speed的pid参数
+    int16_t target_angle;     // 目标角度
+    float target_speed;       // 目标速度
+    int16_t init_angle;       // 初始角度
 } lens_t;
 
 typedef enum

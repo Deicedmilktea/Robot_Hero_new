@@ -12,20 +12,25 @@
 #include "main.h"
 #include "remote_control.h"
 #include "video_control.h"
+#include "stdlib.h"
+#include "ins_task.h"
 
 motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 uint8_t is_gimbal_on = 0;  // 云台是否开启
+int16_t adptive_angle;
 
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
 static int16_t friction_speed = 0;
 static int16_t friction_up_speed = 0;
+static uint8_t is_lens_ready = 0; // 开镜是否到达机械限位
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
 extern uint8_t is_remote_online;
+extern INS_t INS;
 
 static void shoot_loop_init();                                                            // 初始化
 static void read_keyboard();                                                              // 读取摩擦轮速度
@@ -36,6 +41,8 @@ static void lens_judge();                                                       
 static void shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int16_t v4); // can2发送电流
 static void shoot_current_give();                                                         // PID计算速度并发送电流
 static void read_keyboard();                                                              // 读取键鼠是否开启摩擦轮
+static void lens_prepare();                                                               // 开镜准备
+static void video_adaptive();                                                             // 图传自适应调节
 
 void Shoot_task(void const *argument)
 {
@@ -43,13 +50,13 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+    read_keyboard();
     // 遥控器链路
     if (is_remote_online)
     {
       // 右拨杆中，键鼠控制
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
-        read_keyboard();
         shoot_start_all();
         lens_judge();
       }
@@ -74,7 +81,8 @@ void Shoot_task(void const *argument)
     // 图传链路
     else
     {
-      read_keyboard();
+      lens_prepare();
+      video_adaptive();
       shoot_start_all();
       lens_judge();
     }
@@ -104,29 +112,39 @@ static void shoot_loop_init()
 
   // lens_up
   lens_motor[0].pid_value[0] = 10;
-  lens_motor[0].pid_value[1] = 0.01;
-  lens_motor[0].pid_value[2] = 500;
+  lens_motor[0].pid_value[1] = 0;
+  lens_motor[0].pid_value[2] = 600;
 
   // lens_down
   lens_motor[1].pid_value[0] = 10;
-  lens_motor[1].pid_value[1] = 0.01;
-  lens_motor[1].pid_value[2] = 500;
+  lens_motor[1].pid_value[1] = 0;
+  lens_motor[1].pid_value[2] = 600;
+
+  // lens_up_speed
+  lens_motor[0].pid_speed_value[0] = 10;
+  lens_motor[0].pid_speed_value[1] = 0.01;
+  lens_motor[0].pid_speed_value[2] = 0;
+
+  // lens_down_speed
+  lens_motor[1].pid_speed_value[0] = 10;
+  lens_motor[1].pid_speed_value[1] = 0.01;
+  lens_motor[1].pid_speed_value[2] = 0;
 
   // 初始化目标速度
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
   shoot_motor[2].target_speed = 0;
 
-  lens_motor[0].init_angle = motor_top[3].total_angle;
-  lens_motor[1].init_angle = motor_top[4].total_angle;
-
   // 初始化PID
   pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
   pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, FRICTION_MAX_SPEED); // friction_up
 
-  pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 1000, 5000); // lens_up
-  pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 1000, 5000); // lens_down
+  pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 1000, 4000); // lens_up
+  pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 1000, 4000); // lens_down
+
+  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_value, 1000, 2000); // lens_up
+  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_value, 1000, 2000); // lens_down
 }
 
 // 读取摩擦轮速度
@@ -199,6 +217,17 @@ static void read_keyboard()
       friction_flag = FRICTION_STOP;
       break;
     }
+
+    // ctrl + x 控制gimbal, pitch
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2)
+    {
+    case 1:
+      is_gimbal_on = GIMBAL_ON;
+      break;
+    default:
+      is_gimbal_on = GIMBAL_OFF;
+      break;
+    }
   }
 }
 
@@ -237,10 +266,10 @@ static void lens_judge()
     else
       lens_motor[0].target_angle = lens_motor[0].init_angle;
 
-    if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
-      lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
-    else
-      lens_motor[1].target_angle = lens_motor[1].init_angle;
+    // if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
+    //   lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
+    // else
+    //   lens_motor[1].target_angle = lens_motor[1].init_angle;
   }
 
   // 图传链路
@@ -251,15 +280,42 @@ static void lens_judge()
     else
       lens_motor[0].target_angle = lens_motor[0].init_angle;
 
-    if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
-      lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
-    else
-      lens_motor[1].target_angle = lens_motor[1].init_angle;
+    // if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_B] % 2 == 1)
+    //   lens_motor[1].target_angle = lens_motor[1].init_angle + LENS_DOWN_ANGLE;
+    // else
+    //   lens_motor[1].target_angle = lens_motor[1].init_angle;
+  }
+}
+
+void lens_prepare()
+{
+  if (!is_lens_ready)
+  {
+    lens_motor[0].target_speed = -1000;
+    lens_motor[1].target_speed = -1000;
+
+    if ((motor_top[3].torque_current < -1500) && (motor_top[4].torque_current < -1500))
+    {
+      is_lens_ready = 1;
+      lens_motor[0].init_angle = motor_top[3].total_angle;
+      lens_motor[1].init_angle = motor_top[4].total_angle;
+    }
+  }
+}
+
+void video_adaptive()
+{
+  if (is_lens_ready)
+  {
+    // 调节角度
+    adptive_angle = 36 * INS.Roll;
+    lens_motor[1].target_angle = lens_motor[1].init_angle + adptive_angle;
   }
 }
 
 /********************************摩擦轮can2发送电流***************************/
-static void shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int16_t v4)
+static void
+shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int16_t v4)
 {
   uint32_t send_mail_box;
   CAN_TxHeaderTypeDef tx_header;
@@ -291,8 +347,17 @@ static void shoot_current_give()
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
   motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);
 
-  // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
-  // motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
+  if (!is_lens_ready)
+  {
+    motor_top[3].set_current = pid_calc(&lens_motor[0].pid_speed, lens_motor[0].target_speed, motor_top[3].rotor_speed);
+    motor_top[4].set_current = pid_calc(&lens_motor[1].pid_speed, lens_motor[1].target_speed, motor_top[4].rotor_speed);
+  }
+
+  else
+  {
+    // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+    motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
+  }
 
   shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);
   shoot_can2_cmd(1, motor_top[4].set_current, motor_top[5].set_current, 0, 0);

@@ -347,7 +347,7 @@ void rc_mode_choose()
   // 右拨杆下，遥控操作
   if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
   {
-    chassis_mode_normal(); // 正常模式，便于检录小陀螺展示
+    chassis_mode_follow(); // 正常模式，便于检录小陀螺展示
   }
 
   // 右拨杆中，键鼠操作
