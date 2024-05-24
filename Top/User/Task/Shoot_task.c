@@ -88,7 +88,7 @@ void Shoot_task(void const *argument)
       lens_judge();
     }
 
-    shoot_current_give();
+    // shoot_current_give();
     osDelay(1);
   }
 }
@@ -363,8 +363,8 @@ static void shoot_current_give()
 
   else
   {
-    motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
-    motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
+    // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+    // motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
   }
 
   shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);

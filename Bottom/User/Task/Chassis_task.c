@@ -370,7 +370,7 @@ void rc_mode_choose()
 
     else
     {
-      chassis_mode_stop();
+      chassis_mode_normal();
     }
   }
 
