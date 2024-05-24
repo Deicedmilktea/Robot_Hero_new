@@ -63,7 +63,7 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
     rc_ctrl[TEMP].mouse.press_l = sbus_buf[12];                 //!< Mouse Left Is Press ?
     rc_ctrl[TEMP].mouse.press_r = sbus_buf[13];                 //!< Mouse Right Is Press ?
 
-    if (rc_ctrl[TEMP].rc.switch_left)
+    if (is_remote_online)
     {
         // CAN发送遥控器数据给下C板
         // 遥控器数据

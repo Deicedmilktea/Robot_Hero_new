@@ -93,7 +93,7 @@ static void VideoRead(uint8_t *buff)
                 case ID_remote_control_data: // 图传链路键鼠数据
                     memcpy(&video_ctrl[TEMP].key_data, (buff + DATA_Offset), LEN_remote_control_data);
 
-                    if (!rc_ctrl[TEMP].rc.switch_left)
+                    if (!is_remote_online)
                     {
                         // 发送给下C板
                         memcpy(send_buff, buff + DATA_Offset, 8);
