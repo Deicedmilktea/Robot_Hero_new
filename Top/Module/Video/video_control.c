@@ -7,6 +7,7 @@
 #include "drv_can.h"
 #include "stdbool.h"
 #include "ins_task.h"
+#include "Robot.h"
 
 #define RE_RX_BUFFER_SIZE 255u // 裁判系统接收缓冲区大小
 
@@ -25,6 +26,7 @@ extern uint8_t friction_flag;
 extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
 extern uint8_t is_remote_online;
+extern motor_info_t motor_top[7];
 
 static void VideoDataContorl()
 {
@@ -101,7 +103,7 @@ static void VideoRead(uint8_t *buff)
 
                         memcpy(send_buff, buff + DATA_Offset + 8, 4);
                         ins_pitch = INS.Roll * 50;
-                        ins_yaw = INS.yaw_update * 50;
+                        ins_yaw = motor_top[6].ecd;
                         send_buff[4] = (ins_pitch >> 8) & 0xff;
                         send_buff[5] = ins_pitch & 0xff;
                         send_buff[6] = (ins_yaw >> 8) & 0xff;

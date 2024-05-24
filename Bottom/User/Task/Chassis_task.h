@@ -19,9 +19,11 @@
 #define CHASSIS_SPEED_SUPERCAP 10000
 #define CHASSIS_WZ_MAX_1 4000 // 低速
 #define CHASSIS_WZ_MAX_2 6000 // 高速
+
+#define INIT_YAW 3800
 #define KEY_START_OFFSET 20
 #define KEY_STOP_OFFSET 30
-#define FOLLOW_WEIGHT 160
+#define FOLLOW_WEIGHT 100
 
 typedef struct
 {

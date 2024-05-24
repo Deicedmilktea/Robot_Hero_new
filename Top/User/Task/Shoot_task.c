@@ -88,7 +88,7 @@ void Shoot_task(void const *argument)
       lens_judge();
     }
 
-    // shoot_current_give();
+    shoot_current_give();
     osDelay(1);
   }
 }
@@ -144,8 +144,8 @@ static void shoot_loop_init()
   pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 4000, 8000); // lens_up
   pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 4000, 8000); // lens_down
 
-  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_value, 1000, 4000); // lens_up
-  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_value, 1000, 4000); // lens_down
+  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_speed_value, 2000, 4000); // lens_up
+  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_speed_value, 2000, 4000); // lens_down
 }
 
 // 读取摩擦轮速度
@@ -363,8 +363,8 @@ static void shoot_current_give()
 
   else
   {
-    // motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
-    // motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
+    motor_top[3].set_current = pid_calc(&lens_motor[0].pid, lens_motor[0].target_angle, motor_top[3].total_angle);
+    motor_top[4].set_current = pid_calc(&lens_motor[1].pid, lens_motor[1].target_angle, motor_top[4].total_angle);
   }
 
   shoot_can2_cmd(0, motor_top[0].set_current, motor_top[1].set_current, motor_top[2].set_current, motor_top[3].set_current);

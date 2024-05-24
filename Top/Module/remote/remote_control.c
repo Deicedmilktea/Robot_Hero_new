@@ -14,6 +14,7 @@
 extern INS_t INS;
 extern bool vision_is_tracking;
 extern uint8_t friction_flag;
+extern motor_info_t motor_top[7];
 
 static int16_t ins_yaw = 0; // 用于接收yaw的值
 static int16_t ins_pitch = 0;
@@ -84,7 +85,7 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
         temp_remote[0] = sbus_buf[16];
         temp_remote[1] = sbus_buf[17];
 
-        ins_yaw = 50 * INS.yaw_update; // 使之接收带上小数点
+        ins_yaw = motor_top[6].ecd;
         ins_pitch = 50 * INS.Roll;
 
         temp_remote[2] = (ins_yaw >> 8) & 0xff;

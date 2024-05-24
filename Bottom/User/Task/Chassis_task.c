@@ -24,20 +24,16 @@ uint8_t supercap_flag = 0;    // 是否开启超级电容
 static chassis_t chassis_motor[4]; // 电机信息结构体
 static int16_t Vx = 0, Vy = 0, Wz = 0;
 static float rx = 0.2, ry = 0.2;
-static float relative_yaw = 0;
-static int yaw_correction_flag = 1;                                                   // yaw值校正标志
+static float relative_yaw = 0;                                                        // yaw值校正标志
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz_acw, key_Wz_cw; // 键盘控制变量
-static float imu_err_yaw = 0;                                                         // 记录yaw飘移的数值便于进行校正
 static int16_t chassis_speed_max = 0;                                                 // 底盘速度，不同等级对应不同速度
 static int16_t chassis_wz_max = 4000;                                                 // 小陀螺速度(两档切换)
-static uint8_t cycle = 0;                                                             // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
 static referee_info_t *referee_data;                                                  // 用于获取裁判系统的数据
 static Referee_Interactive_info_t ui_data;                                            // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
 
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
-extern INS_t INS;
-extern INS_t INS_top;
+extern int16_t top_yaw;
 extern referee_hero_t referee_hero;
 extern SupercapRxData_t SupercapRxData; // 超电接收数据
 extern CAN_HandleTypeDef hcan2;
@@ -56,15 +52,11 @@ static float Klimit = 1;                                              // 限制�
 static float Plimit = 0;                                              // 约束比例
 static float Chassis_pidout_max;                                      // 输出值限制
 
-static void read_keyboard();                                                            // 读取键鼠数据控制底盘模式
 static void Chassis_loop_Init();                                                        // 参数重置
-static void chassis_mode_normal();                                                      // 正常运动模式
-static void chassis_mode_top();                                                         // 小陀螺模式
 static void chassis_mode_follow();                                                      // 底盘跟随云台模式
 static void chassis_mode_stop();                                                        // 急停模式
-static void yaw_correct();                                                              // yaw值校正
-static void manual_yaw_correct();                                                       // 手动yaw值校正（仅在正常运动模式生效）
-static void chassis_current_give(void);                                                 // 电机电流控制
+static void read_keyboard();                                                            // 读取键鼠数据控制底盘模式
+static void chassis_current_give();                                                     // 电机电流控制
 static void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4);           // chassis CAN2发送信号
 static int16_t Motor_Speed_limiting(volatile int16_t motor_speed, int16_t limit_speed); // 速度限制
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit);                    // 功率限制
@@ -82,7 +74,6 @@ void Chassis_task(void const *pvParameters)
   for (;;)
   {
     level_judge(); // 等级判断，获取最大速度
-    yaw_correct(); // 校正yaw值
 
     if (is_remote_online) // 遥控器链路
       rc_mode_choose();
@@ -108,7 +99,7 @@ static void Chassis_loop_Init()
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    pid_init(&chassis_motor[i].pid, chassis_motor[i].pid_value, 16384, 16384);
+    pid_init(&chassis_motor[i].pid, chassis_motor[i].pid_value, 12000, 12000);
   }
 
   Vx = 0;
@@ -123,13 +114,10 @@ static void read_keyboard()
   if (is_remote_online)
   {
     // F键控制底盘模式
-    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3)
+    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 2)
     {
     case 1:
-      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
-      break;
-    case 2:
-      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // normal
       break;
     default:
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
@@ -162,13 +150,10 @@ static void read_keyboard()
   // 图传链路
   else
   {
-    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 3)
+    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_F] % 2)
     {
     case 1:
-      ui_data.chassis_mode = CHASSIS_NO_FOLLOW; // normal
-      break;
-    case 2:
-      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // follow
+      ui_data.chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW; // normal
       break;
     default:
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
@@ -229,71 +214,14 @@ static void read_keyboard()
   }
 }
 
-/*************************************** 正常运动模式 ************************************/
-static void chassis_mode_normal()
-{
-  Vx = rc_ctrl[TEMP].rc.rocker_r_ / 660.0f * chassis_speed_max + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl[TEMP].rc.rocker_r1 / 660.0f * chassis_speed_max + key_y_fast - key_y_slow; // front and back
-  Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max + key_Wz_acw + key_Wz_cw;          // rotate
-
-  int16_t Temp_Vx = Vx;
-  int16_t Temp_Vy = Vy;
-
-  relative_yaw = INS.yaw_update - INS_top.Yaw;
-  relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
-
-  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
-  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
-
-  chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis_motor[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
-  chassis_motor[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
-
-  cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
-}
-
-/****************************** 小陀螺模式 *********************************/
-static void chassis_mode_top()
-{
-  Vx = rc_ctrl[TEMP].rc.rocker_r_ / 660.0f * chassis_speed_max + key_x_fast - key_x_slow; // left and right
-  Vy = rc_ctrl[TEMP].rc.rocker_r1 / 660.0f * chassis_speed_max + key_y_fast - key_y_slow; // front and back
-  Wz = chassis_wz_max;
-
-  int16_t Temp_Vx = Vx;
-  int16_t Temp_Vy = Vy;
-
-  relative_yaw = INS.yaw_update - INS_top.Yaw;
-  relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
-
-  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
-  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
-
-  chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
-  chassis_motor[2].target_speed = -Vy - Vx + 3 * (-Wz) * (rx + ry);
-  chassis_motor[3].target_speed = Vy - Vx + 3 * (-Wz) * (rx + ry);
-
-  cycle = 1; // 记录的模式状态的变量，以便切换到 follow 模式的时候，可以知道分辨已经切换模式，计算一次 yaw 的差值
-}
-
 /***************************** 底盘跟随云台模式 *******************************/
 static void chassis_mode_follow()
 {
   Vx = rc_ctrl[TEMP].rc.rocker_r_ / 660.0f * chassis_speed_max + key_x_fast - key_x_slow; // left and right
   Vy = rc_ctrl[TEMP].rc.rocker_r1 / 660.0f * chassis_speed_max + key_y_fast - key_y_slow; // front and back
 
-  // // 切换模式的时候循环一次，计算 yaw 的差值，防止出现在切换模式的时候底盘突然一转
-  // if (cycle)
-  // {
-  //   cycle = 0;
-  //   init_relative_yaw = INS.yaw_update - INS_top.Yaw;
-  // }
-
-  // relative_yaw = INS.yaw_update - INS_top.Yaw - init_relative_yaw;
-
   // 保证切换回这个模式的时候，头在初始方向上，速度移动最快，方便逃跑(●'◡'●)
-  relative_yaw = INS.yaw_update - INS_top.Yaw;
+  relative_yaw = (top_yaw - INIT_YAW) / 8191.0f * 360;
 
   // 便于小陀螺操作
   if (key_Wz_acw)
@@ -308,23 +236,23 @@ static void chassis_mode_follow()
     {
       Wz = 0;
     }
+
     else
     {
       detel_calc(&relative_yaw);
       Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-      if (Wz > 2 * chassis_wz_max)
-        Wz = 2 * chassis_wz_max;
-      if (Wz < -2 * chassis_wz_max)
-        Wz = -2 * chassis_wz_max;
+      if (Wz > chassis_wz_max)
+        Wz = chassis_wz_max;
+      if (Wz < -chassis_wz_max)
+        Wz = -chassis_wz_max;
     }
   }
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
-  relative_yaw = -relative_yaw / 57.3f; // 此处加负是因为旋转角度后，旋转方向相反
-  Vx = cos(relative_yaw) * Temp_Vx - sin(relative_yaw) * Temp_Vy;
-  Vy = sin(relative_yaw) * Temp_Vx + cos(relative_yaw) * Temp_Vy;
+  Vx = cos(-relative_yaw / 57.3f) * Temp_Vx - sin(-relative_yaw / 57.3f) * Temp_Vy;
+  Vy = sin(-relative_yaw / 57.3f) * Temp_Vx + cos(-relative_yaw / 57.3f) * Temp_Vy;
 
   chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
@@ -361,23 +289,15 @@ void rc_mode_choose()
     {
       chassis_mode_follow();
     }
-
-    else if (ui_data.chassis_mode == CHASSIS_NO_FOLLOW)
-    {
-      manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
-      chassis_mode_normal();
-    }
-
     else
     {
-      chassis_mode_normal();
+      chassis_mode_stop();
     }
   }
 
   // 右拨杆上，校正yaw
   else
   {
-    manual_yaw_correct(); // 手动校正yaw值，头对正，右拨杆往上推
     chassis_mode_stop();
   }
 }
@@ -393,12 +313,6 @@ void video_mode_choose()
   // 底盘跟随云台模式，r键触发
   case CHASSIS_FOLLOW_GIMBAL_YAW:
     chassis_mode_follow();
-    break;
-
-  // 正常运动模式，f键触发
-  case CHASSIS_NO_FOLLOW:
-    manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
-    chassis_mode_normal();
     break;
 
   // 停止模式，CHASSIS_ZERO_FORCE
@@ -443,48 +357,6 @@ static void chassis_can2_cmd(int16_t v1, int16_t v2, int16_t v3, int16_t v4)
   tx_data[6] = (v4 >> 8) & 0xff;
   tx_data[7] = (v4) & 0xff;
   HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &send_mail_box);
-}
-
-/************************* yaw值校正 *******************************/
-static void yaw_correct()
-{
-  // 只执行一次
-  if (yaw_correction_flag)
-  {
-    yaw_correction_flag = 0;
-    INS.yaw_init = INS.Yaw;
-  }
-  // Wz为负，顺时针旋转，陀螺仪飘 60°/min（以3000为例转出的，根据速度不同调整）
-  // 解决yaw偏移，完成校正
-  if (rc_ctrl[TEMP].key[KEY_PRESS].shift || video_ctrl[TEMP].key[KEY_PRESS].shift)
-  {
-    if (chassis_wz_max == CHASSIS_WZ_MAX_1)
-    {
-      if (Wz > 500)
-        imu_err_yaw -= 0.001f;
-      if (Wz < -500)
-        imu_err_yaw += 0.001f;
-    }
-    else
-    {
-      if (Wz > 500)
-        imu_err_yaw -= 0.0015f;
-      if (Wz < -500)
-        imu_err_yaw += 0.0015f;
-    }
-  }
-
-  INS.yaw_update = INS.Yaw - INS.yaw_init + imu_err_yaw;
-}
-
-/***************** 手动yaw值校正（仅在正常运动模式生效） ******************/
-static void manual_yaw_correct()
-{
-  if (rc_ctrl[TEMP].key[KEY_PRESS].v || video_ctrl[TEMP].key[KEY_PRESS].v)
-  {
-    float manual_err_yaw = INS.yaw_update - INS_top.Yaw;
-    imu_err_yaw -= manual_err_yaw;
-  }
 }
 
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
@@ -667,15 +539,15 @@ static void key_control(void)
 static void detel_calc(float *angle)
 {
   // 如果角度大于180度，则减去360度
-  if (*angle > 180)
+  if (*angle > 4096)
   {
-    *angle -= 360;
+    *angle -= 8191;
   }
 
   // 如果角度小于-180度，则加上360度
-  else if (*angle < -180)
+  else if (*angle < -4096)
   {
-    *angle += 360;
+    *angle += 8191;
   }
 }
 
