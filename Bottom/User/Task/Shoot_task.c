@@ -29,6 +29,7 @@ extern Video_ctrl_t video_ctrl[2];
 extern motor_info_t motor_bottom[5];
 extern CAN_HandleTypeDef hcan2;
 extern uint8_t is_remote_online;
+extern uint8_t is_friction_on;
 
 static void shoot_loop_init();            // 初始化
 static void shoot_start();                // 射击模式
@@ -70,8 +71,11 @@ void Shoot_task(void const *argument)
         // 鼠标左键按下，控制拨盘旋转固定角度
         if (rc_ctrl[TEMP].mouse.press_l)
         {
-          is_angle_control = true;
-          trigger_single_angle_move();
+          if (is_friction_on)
+          {
+            is_angle_control = true;
+            trigger_single_angle_move();
+          }
         }
 
         // z键按下，反转
@@ -90,6 +94,7 @@ void Shoot_task(void const *argument)
 
       else
       {
+        is_angle_control = false;
         shoot_stop();
       }
     }
@@ -100,8 +105,11 @@ void Shoot_task(void const *argument)
       // 鼠标左键按下，控制拨盘旋转固定角度
       if (video_ctrl[TEMP].key_data.left_button_down)
       {
-        is_angle_control = true;
-        trigger_single_angle_move();
+        if (is_friction_on)
+        {
+          is_angle_control = true;
+          trigger_single_angle_move();
+        }
       }
 
       // z键按下，反转

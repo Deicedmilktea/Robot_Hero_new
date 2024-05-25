@@ -15,6 +15,8 @@ extern INS_t INS;
 extern bool vision_is_tracking;
 extern uint8_t friction_flag;
 extern motor_info_t motor_top[7];
+extern uint8_t video_mode;
+extern uint8_t is_friction_on;
 
 static int16_t ins_yaw = 0; // 用于接收yaw的值
 static int16_t ins_pitch = 0;
@@ -98,6 +100,8 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
         can_remote(temp_remote, 0x35);
 
         temp_remote[0] = is_remote_online;
+        temp_remote[1] = video_mode;
+        temp_remote[2] = is_friction_on;
         can_remote(temp_remote, 0x36);
     }
 

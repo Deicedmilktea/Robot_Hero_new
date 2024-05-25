@@ -18,6 +18,7 @@
 motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
 uint8_t video_mode;        // 图传模式
+uint8_t is_friction_on;    // 摩擦轮是否开启
 
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
@@ -42,6 +43,7 @@ static void shoot_current_give();                                               
 static void read_keyboard();                                                              // 读取键鼠是否开启摩擦轮
 static void lens_prepare();                                                               // 开镜准备
 static void video_adaptive();                                                             // 图传自适应调节
+static void read_friction_on();                                                           // 摩擦轮是否开启
 
 void Shoot_task(void const *argument)
 {
@@ -50,6 +52,8 @@ void Shoot_task(void const *argument)
   for (;;)
   {
     read_keyboard();
+    read_friction_on();
+
     // 遥控器链路
     if (is_remote_online)
     {
@@ -296,6 +300,14 @@ void video_adaptive()
       lens_motor[1].target_angle = lens_motor[1].init_angle;
     }
   }
+}
+
+void read_friction_on()
+{
+  if (friction_speed)
+    is_friction_on = 1;
+  else
+    is_friction_on = 0;
 }
 
 /********************************摩擦轮can2发送电流***************************/

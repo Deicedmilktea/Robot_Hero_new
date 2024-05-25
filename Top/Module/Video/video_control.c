@@ -27,6 +27,8 @@ extern RC_ctrl_t rc_ctrl[2];
 extern INS_t INS;
 extern uint8_t is_remote_online;
 extern motor_info_t motor_top[7];
+extern uint8_t video_mode;
+extern uint8_t is_friction_on;
 
 static void VideoDataContorl()
 {
@@ -113,6 +115,8 @@ static void VideoRead(uint8_t *buff)
                         send_buff[0] = (uint8_t)vision_is_tracking;
                         send_buff[1] = friction_flag;
                         send_buff[2] = 0; // is_remote_online
+                        send_buff[3] = video_mode;
+                        send_buff[4] = is_friction_on;
                         can_remote(send_buff, 0x39);
                     }
 

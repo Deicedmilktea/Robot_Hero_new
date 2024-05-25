@@ -13,7 +13,6 @@
 #define ROBOT_DEF_H
 
 #include "ins_task.h"
-// #include "master_process.h"
 #include "stdint.h"
 
 /* 开发板类型定义,烧录时注意不要弄错对应功能;修改定义后需要重新编译,只能存在一个定义! */
@@ -140,9 +139,9 @@ typedef enum
 
 typedef enum
 {
-    TOP_LOW = 0,
-    TOP_HIGH,
-} top_mode_e;
+    VIDEO_NORMAL = 0,
+    VIDEO_ADAPTIVE,
+} video_mode_e;
 
 /* ----------------CMD应用发布的控制数据,应当由gimbal/chassis/shoot订阅---------------- */
 /**

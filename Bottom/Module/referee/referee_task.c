@@ -58,7 +58,6 @@ static void DeterminRobotID()
 
 static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_info_t *_Interactive_data);
 static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data); // 模式切换检测
-static void RobotModeTest(Referee_Interactive_info_t *_Interactive_data); // 测试用函数，实现模式自动变化
 
 referee_info_t *UITaskInit(UART_HandleTypeDef *referee_usart_handle, Referee_Interactive_info_t *UI_data)
 {
@@ -125,7 +124,7 @@ void MyUIInit()
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[2]);
     UICharDraw(&UI_State_sta[3], "ss3", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 150, 600, "shoot-q:"); // 拨盘模式
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[3]);
-    UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 150, 550, "top-r:"); // 小陀螺转速
+    UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 150, 550, "video-b:"); // 图传模式
     UICharRefresh(&referee_recv_info->referee_id, UI_State_sta[4]);
 
     // 绘制车辆状态标志，动态
@@ -138,7 +137,7 @@ void MyUIInit()
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
     UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 600, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
-    UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 290, 550, "low");
+    UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 290, 550, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[4]);
 
     // 底盘功率显示，静态
@@ -238,12 +237,12 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
         _Interactive_data->Referee_Interactive_Flag.shoot_flag = 0;
     }
 
-    // top
-    if (_Interactive_data->Referee_Interactive_Flag.top_flag == 1)
+    // video
+    if (_Interactive_data->Referee_Interactive_Flag.video_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 290, 550, _Interactive_data->top_mode == TOP_LOW ? "low " : "high");
+        UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 290, 550, _Interactive_data->video_mode == VIDEO_NORMAL ? "normal  " : "adaptive");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[4]);
-        _Interactive_data->Referee_Interactive_Flag.top_flag = 0;
+        _Interactive_data->Referee_Interactive_Flag.video_flag = 0;
     }
 
     // supercap_power
@@ -297,7 +296,6 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
     }
 
     // friction_mode转速
-    _Interactive_data->friction_mode = friction_mode;
     if (_Interactive_data->friction_mode != _Interactive_data->friction_last_mode)
     {
         _Interactive_data->Referee_Interactive_Flag.friction_flag = 1;
@@ -311,11 +309,11 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
         _Interactive_data->shoot_last_mode = _Interactive_data->shoot_mode;
     }
 
-    // 小陀螺转速
-    if (_Interactive_data->top_mode != _Interactive_data->top_last_mode)
+    // 图传模式
+    if (_Interactive_data->video_mode != _Interactive_data->video_last_mode)
     {
-        _Interactive_data->Referee_Interactive_Flag.top_flag = 1;
-        _Interactive_data->top_last_mode = _Interactive_data->top_mode;
+        _Interactive_data->Referee_Interactive_Flag.video_flag = 1;
+        _Interactive_data->video_last_mode = _Interactive_data->video_mode;
     }
 
     // supercap数据

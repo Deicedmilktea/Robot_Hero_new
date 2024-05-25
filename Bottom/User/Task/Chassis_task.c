@@ -39,6 +39,7 @@ extern CAN_HandleTypeDef hcan2;
 extern uint8_t trigger_flag;
 extern uint8_t friction_mode;
 extern uint8_t is_remote_online;
+extern uint8_t video_mode;
 
 // 功率限制算法的变量定义
 static float Watch_Power_Max;                                         // 限制值
@@ -185,6 +186,17 @@ static void read_keyboard()
     break;
   default:
     ui_data.friction_mode = FRICTION_STOP;
+    break;
+  }
+
+  // B键切换图传模式，normal，adaptive
+  switch (video_mode)
+  {
+  case 1:
+    ui_data.video_mode = VIDEO_ADAPTIVE;
+    break;
+  default:
+    ui_data.video_mode = VIDEO_NORMAL;
     break;
   }
 }

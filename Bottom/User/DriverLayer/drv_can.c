@@ -21,6 +21,8 @@ SupercapRxData_t SupercapRxData;
 uint8_t vision_is_tracking;
 uint8_t friction_mode;
 uint8_t is_remote_online; // 遥控器是否在线
+uint8_t video_mode;       // 图传模式
+uint8_t is_friction_on;   // 摩擦轮是否开启
 
 static uint8_t sbus_buf[18u]; // 遥控器接收的buffer
 static uint8_t video_buf[12]; // 图传接收的buffer
@@ -96,7 +98,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
     }
 
     if (rx_header.StdId == 0x36)
+    {
       is_remote_online = rx_data[0];
+      video_mode = rx_data[1];
+      is_friction_on = rx_data[2];
+    }
 
     if (rx_header.StdId == 0x37) // 接收上C传来的图传数据
     {
@@ -116,6 +122,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       vision_is_tracking = rx_data[0];
       friction_mode = rx_data[1];
       is_remote_online = rx_data[2];
+      video_mode = rx_data[3];
+      is_friction_on = rx_data[4];
     }
   }
 
