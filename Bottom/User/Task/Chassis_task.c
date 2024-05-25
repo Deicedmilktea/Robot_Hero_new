@@ -175,16 +175,16 @@ static void read_keyboard()
   // E键切换摩擦轮速度，012分别为low，normal，high
   switch (friction_mode)
   {
-  case 1:
+  case FRICTION_NORMAL:
     ui_data.friction_mode = FRICTION_NORMAL;
     break;
-  case 2:
+  case FRICTION_LOW:
     ui_data.friction_mode = FRICTION_LOW;
     break;
-  case 3:
+  case FRICTION_HIGH:
     ui_data.friction_mode = FRICTION_HIGH;
     break;
-  default:
+  case FRICTION_STOP:
     ui_data.friction_mode = FRICTION_STOP;
     break;
   }

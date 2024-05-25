@@ -137,7 +137,7 @@ void MyUIInit()
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
     UICharDraw(&UI_State_dyn[3], "sd3", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 600, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[3]);
-    UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 290, 550, "normal");
+    UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 550, "normal");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[4]);
 
     // 底盘功率显示，静态
@@ -240,7 +240,7 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // video
     if (_Interactive_data->Referee_Interactive_Flag.video_flag == 1)
     {
-        UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 290, 550, _Interactive_data->video_mode == VIDEO_NORMAL ? "normal  " : "adaptive");
+        UICharDraw(&UI_State_dyn[4], "sd4", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 340, 550, _Interactive_data->video_mode == VIDEO_NORMAL ? "normal  " : "adaptive");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[4]);
         _Interactive_data->Referee_Interactive_Flag.video_flag = 0;
     }
