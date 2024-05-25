@@ -81,7 +81,7 @@ void Chassis_task(void const *pvParameters)
     else // 图传链路
       video_mode_choose();
 
-    chassis_current_give();
+    // chassis_current_give();
     osDelay(1);
   }
 }

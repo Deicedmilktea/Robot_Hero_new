@@ -142,7 +142,7 @@ static void shoot_loop_init()
   trigger.target_angle = motor_bottom[4].total_angle;
 
   // 初始化PID
-  pid_init(&trigger.pid, trigger.pid_value, 20000, 30000);           // trigger_speed
+  pid_init(&trigger.pid, trigger.pid_value, 30000, 30000);           // trigger_speed
   pid_init(&trigger.pid_angle, trigger.pid_angle_value, 3000, 5500); // trigger_angle
   pid_init(&trigger.pid_speed, trigger.pid_speed_value, 3000, 5500);
 }
