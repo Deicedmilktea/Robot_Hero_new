@@ -29,7 +29,6 @@ extern INS_t INS;
 extern bool vision_is_tracking;
 extern float vision_yaw;
 extern uint8_t is_remote_online; // 遥控器是否在线
-extern uint8_t is_gimbal_on;	 // 云台是否开启
 
 static void Gimbal_loop_init();				  // 初始化
 static void angle_over_zero(float err);		  // 角度过零处理
@@ -65,19 +64,17 @@ void Gimbal_task(void const *pvParameters)
 		// 图传链路
 		else
 		{
-			if (is_gimbal_on)
-			{
-				// 视觉控制
-				if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
-				{
-					gimbal_mode_vision();
-				}
 
-				// 锁yaw模式
-				else // 左拨杆中或下
-				{
-					gimbal_mode_normal();
-				}
+			// 视觉控制
+			if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
+			{
+				gimbal_mode_vision();
+			}
+
+			// 锁yaw模式
+			else // 左拨杆中或下
+			{
+				gimbal_mode_normal();
 			}
 		}
 

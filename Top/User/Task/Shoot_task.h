@@ -12,12 +12,7 @@
 #define FRICTION_SPEED_STOP 0
 #define FRICTION_UP_SPEED_STOP 0
 
-#define LENS_ANGLE_ON -45
-#define LENS_ANGLE_OFF -2000
 #define LENS_UP_ANGLE 1950
-
-#define LENS_ANGLE_HIGH -400
-#define LENS_ANGLE_LOW 310
 #define LENS_DOWN_ANGLE 1400
 
 typedef struct

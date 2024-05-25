@@ -58,18 +58,38 @@ Branch: pitch_6020
 ```
 在此操作方式下只存在键鼠操作
 ```
-|  Key   |            Operation             |
-| :----: | :------------------------------: |
-|  WASD  |             底盘运动             |
-| shift  |              小陀螺              |
-|   Q    |       发射模式(单发/爆破)        |
-|   E    | 摩擦轮速度(stop/normal/low/high) |
-|   R    |       小陀螺速度(low/high)       |
-|   F    |   底盘模式(stop/normal/follow)   |
-|   G    |           开镜(on/off)           |
-|   Z    |             拨盘反转             |
-|   X    |       刷新UI(仅在开局使用)       |
-|   C    |           超电(off/on)           |
-|   V    |  陀螺仪校正(仅在底盘normal使用)  |
-|   B    |    图传模式(normal/adaptive)     |
-| ctrl+X |         gimbal 启动/卸力         |
+|  Key  |            Operation             |
+| :---: | :------------------------------: |
+| WASD  |             底盘运动             |
+| shift |              小陀螺              |
+|   Q   |       发射模式(单发/爆破)        |
+|   E   | 摩擦轮速度(stop/normal/low/high) |
+|   R   |                                  |
+|   F   |      底盘模式(stop/follow)       |
+|   G   |           开镜(off/on)           |
+|   Z   |             拨盘反转             |
+|   X   |       刷新UI(仅在开局使用)       |
+|   C   |           超电(on/off)           |
+|   V   |                                  |
+|   B   |    图传模式(normal/adaptive)     |
+
+### 操作手指南
+* **刷新`UI`**\
+  按下`V`，仅在开局上电时使用
+* **底盘模式**\
+  默认`stop`模式，按下`F`切换模式`stop/follow`
+* **小陀螺**\
+  按下`shift`
+* **摩擦轮转速**\
+  默认`stop`模式，按下`E`切换模式`stop/normal/low/high`
+* **开关镜**\
+  默认`off`模式，按下`F`切换模式`off/on`
+* **图传模式**\
+  默认`normal`模式，按下`B`切换模式`normal/adptive`，其中`adaptive`模式仅在吊射情况下开启，`normal`模式下图传与枪管平行
+* **拨盘反转**\
+  按下`Z`，发现单发不了则短按，避免单发堵弹损坏电机，也便于下次发弹
+  **Warning: 一定注意是短按，否则可能影响下次单发**
+* **发射模式**\
+  默认`normal`单发模式，按下`Q`切换模式`normal/buff`，`buff`为爆破模式，解除对单发的`1s`间隔限制
+* **超电模式**\
+  默认`on`模式，按下`C`切换模式`on/off`，一般不用管，他会自己做功率限制，相信`Supercap`

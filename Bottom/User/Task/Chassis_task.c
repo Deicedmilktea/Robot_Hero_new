@@ -27,7 +27,6 @@ static float rx = 0.2, ry = 0.2;
 static float relative_yaw = 0;                                                        // yaw值校正标志
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz_acw, key_Wz_cw; // 键盘控制变量
 static int16_t chassis_speed_max = 0;                                                 // 底盘速度，不同等级对应不同速度
-static int16_t chassis_wz_max = 4000;                                                 // 小陀螺速度(两档切换)
 static referee_info_t *referee_data;                                                  // 用于获取裁判系统的数据
 static Referee_Interactive_info_t ui_data;                                            // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
 
@@ -124,18 +123,6 @@ static void read_keyboard()
       break;
     }
 
-    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
-    {
-    case 1:
-      chassis_wz_max = CHASSIS_WZ_MAX_2;
-      ui_data.top_mode = TOP_HIGH;
-      break;
-    default:
-      chassis_wz_max = CHASSIS_WZ_MAX_1;
-      ui_data.top_mode = TOP_LOW;
-      break;
-    }
-
     switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2)
     {
     case 1:
@@ -157,18 +144,6 @@ static void read_keyboard()
       break;
     default:
       ui_data.chassis_mode = CHASSIS_ZERO_FORCE; // stop
-      break;
-    }
-
-    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
-    {
-    case 1:
-      chassis_wz_max = CHASSIS_WZ_MAX_2;
-      ui_data.top_mode = TOP_HIGH;
-      break;
-    default:
-      chassis_wz_max = CHASSIS_WZ_MAX_1;
-      ui_data.top_mode = TOP_LOW;
       break;
     }
 
@@ -226,7 +201,7 @@ static void chassis_mode_follow()
   // 便于小陀螺操作
   if (key_Wz_acw)
   {
-    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max + key_Wz_acw; // rotate
+    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * CHASSIS_WZ_MAX + key_Wz_acw; // rotate
   }
 
   else
@@ -242,17 +217,17 @@ static void chassis_mode_follow()
       detel_calc(&relative_yaw);
       Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-      if (Wz > chassis_wz_max)
-        Wz = chassis_wz_max;
-      if (Wz < -chassis_wz_max)
-        Wz = -chassis_wz_max;
+      if (Wz > CHASSIS_WZ_MAX)
+        Wz = CHASSIS_WZ_MAX;
+      if (Wz < -CHASSIS_WZ_MAX)
+        Wz = -CHASSIS_WZ_MAX;
     }
   }
 
   int16_t Temp_Vx = Vx;
   int16_t Temp_Vy = Vy;
-  Vx = cos(-relative_yaw / 57.3f) * Temp_Vx - sin(-relative_yaw / 57.3f) * Temp_Vy;
-  Vy = sin(-relative_yaw / 57.3f) * Temp_Vx + cos(-relative_yaw / 57.3f) * Temp_Vy;
+  Vx = cosf(-relative_yaw / 57.3f) * Temp_Vx - sinf(-relative_yaw / 57.3f) * Temp_Vy;
+  Vy = sinf(-relative_yaw / 57.3f) * Temp_Vx + cosf(-relative_yaw / 57.3f) * Temp_Vy;
 
   chassis_motor[0].target_speed = Vy + Vx + 3 * (-Wz) * (rx + ry);
   chassis_motor[1].target_speed = -Vy + Vx + 3 * (-Wz) * (rx + ry);
@@ -530,8 +505,8 @@ static void key_control(void)
     key_y_slow = chassis_speed_max;
   if (key_y_slow < 0)
     key_y_slow = 0;
-  if (key_Wz_acw > chassis_wz_max)
-    key_Wz_acw = chassis_wz_max;
+  if (key_Wz_acw > CHASSIS_WZ_MAX)
+    key_Wz_acw = CHASSIS_WZ_MAX;
   if (key_Wz_acw < 0)
     key_Wz_acw = 0;
 }
@@ -539,15 +514,15 @@ static void key_control(void)
 static void detel_calc(float *angle)
 {
   // 如果角度大于180度，则减去360度
-  if (*angle > 4096)
+  if (*angle > 180)
   {
-    *angle -= 8191;
+    *angle -= 360;
   }
 
   // 如果角度小于-180度，则加上360度
-  else if (*angle < -4096)
+  else if (*angle < -180)
   {
-    *angle += 8191;
+    *angle += 360;
   }
 }
 

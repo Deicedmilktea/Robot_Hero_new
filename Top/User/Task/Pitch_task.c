@@ -27,7 +27,6 @@ extern INS_t INS_bottom;
 extern float vision_pitch;
 extern bool vision_is_tracking;
 extern uint8_t is_remote_online;
-extern uint8_t is_gimbal_on;
 
 static void pitch_loop_init();               // 初始化
 static void pitch_can2_cmd(int16_t voltage); // can1发送电流

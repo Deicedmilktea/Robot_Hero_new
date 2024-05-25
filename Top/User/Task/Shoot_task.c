@@ -17,9 +17,7 @@
 
 motor_info_t motor_top[7]; //[0]-[2]:left, right, up, [3]:lens_up, [4]:lens_down, [5]:pitch, [6]:yaw
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
-uint8_t is_gimbal_on = 0;  // 云台是否开启
 uint8_t video_mode;        // 图传模式
-int16_t adptive_angle;
 
 static shoot_t shoot_motor[3]; // 摩擦轮can2，id = 12
 static lens_t lens_motor[2];   // 开镜can2，up,down,id = 45
@@ -178,17 +176,6 @@ static void read_keyboard()
       friction_flag = FRICTION_STOP;
       break;
     }
-
-    // ctrl + x 控制gimbal, pitch
-    switch (rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2)
-    {
-    case 1:
-      is_gimbal_on = GIMBAL_ON;
-      break;
-    default:
-      is_gimbal_on = GIMBAL_OFF;
-      break;
-    }
   }
 
   // 图传链路
@@ -216,17 +203,6 @@ static void read_keyboard()
       friction_speed = FRICTION_SPEED_STOP;
       friction_up_speed = FRICTION_UP_SPEED_STOP;
       friction_flag = FRICTION_STOP;
-      break;
-    }
-
-    // ctrl + x 控制gimbal, pitch
-    switch (video_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2)
-    {
-    case 1:
-      is_gimbal_on = GIMBAL_ON;
-      break;
-    default:
-      is_gimbal_on = GIMBAL_OFF;
       break;
     }
   }
@@ -311,7 +287,7 @@ void video_adaptive()
     if (video_mode == VIDEO_ADAPTIVE)
     {
       // 调节角度
-      adptive_angle = 36 * (INS.Roll + 6);
+      int16_t adptive_angle = 36 * (INS.Roll + 6);
       lens_motor[1].target_angle = lens_motor[1].init_angle + adptive_angle;
     }
 
