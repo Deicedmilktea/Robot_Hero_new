@@ -18,9 +18,11 @@
 #define TRIGGER_ROTATE_SPEED 100
 
 static trigger_t trigger; // 拨盘can1，id = 5
-bool is_angle_control = false;
-float current_time = 0;
-float last_time = 0;
+static bool is_angle_control = false;
+static float current_time = 0;
+static float last_time = 0;
+static float shoot_delay;
+
 uint8_t trigger_flag = 0;
 
 extern RC_ctrl_t rc_ctrl[2];
@@ -28,6 +30,7 @@ extern Video_ctrl_t video_ctrl[2];
 extern motor_info_t motor_bottom[5];
 extern CAN_HandleTypeDef hcan2;
 extern uint8_t is_remote_online;
+extern uint8_t is_friction_on;
 
 // 初始化
 static void shoot_loop_init();
@@ -59,6 +62,8 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+    read_keyboard();
+
     // 遥控器链路
     if (is_remote_online)
     {
@@ -68,8 +73,11 @@ void Shoot_task(void const *argument)
         // 遥控器左边拨到上，电机启动
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_left))
         {
-          is_angle_control = false;
-          shoot_start();
+          if (is_friction_on)
+          {
+            is_angle_control = false;
+            shoot_start();
+          }
         }
         else
         {
@@ -84,8 +92,11 @@ void Shoot_task(void const *argument)
         // 鼠标左键按下，控制拨盘旋转固定角度
         if (rc_ctrl[TEMP].mouse.press_l)
         {
-          is_angle_control = true;
-          trigger_single_angle_move();
+          if (is_friction_on)
+          {
+            is_angle_control = true;
+            trigger_single_angle_move();
+          }
         }
 
         // z键按下，反转
@@ -97,7 +108,6 @@ void Shoot_task(void const *argument)
 
         else
         {
-          is_angle_control = false;
           shoot_stop();
         }
       }
@@ -114,10 +124,13 @@ void Shoot_task(void const *argument)
       // 鼠标左键按下，控制拨盘旋转固定角度
       if (video_ctrl[TEMP].key_data.left_button_down)
       {
-        is_angle_control = true;
-        trigger_single_angle_move();
-        // is_angle_control = false;
-        // shoot_start();
+        if (is_friction_on)
+        {
+          is_angle_control = true;
+          trigger_single_angle_move();
+          // is_angle_control = false;
+          // shoot_start();
+        }
       }
 
       // z键按下，反转
@@ -145,12 +158,12 @@ static void shoot_loop_init()
   trigger.pid_value[1] = 0.3;
   trigger.pid_value[2] = 0;
 
-  trigger.pid_angle_value[0] = 5;
+  trigger.pid_angle_value[0] = 20;
   trigger.pid_angle_value[1] = 0;
-  trigger.pid_angle_value[2] = 100;
+  trigger.pid_angle_value[2] = 500;
 
-  trigger.pid_speed_value[0] = 2;
-  trigger.pid_speed_value[1] = 0.1;
+  trigger.pid_speed_value[0] = 10;
+  trigger.pid_speed_value[1] = 0;
   trigger.pid_speed_value[2] = 0;
 
   // 初始化目标速度
@@ -177,9 +190,15 @@ static void read_keyboard()
   {
     // Q键切换发射模式，单发和爆破
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+    {
       trigger_flag = 1;
+      shoot_delay = SHOOT_DELAY_BUFF;
+    }
     else
+    {
       trigger_flag = 0;
+      shoot_delay = SHOOT_DELAY_NORMAL;
+    }
   }
 
   // 图传链路
@@ -187,9 +206,15 @@ static void read_keyboard()
   {
     // Q键切换发射模式，单发和爆破
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+    {
       trigger_flag = 1;
+      shoot_delay = SHOOT_DELAY_BUFF;
+    }
     else
+    {
       trigger_flag = 0;
+      shoot_delay = SHOOT_DELAY_NORMAL;
+    }
   }
 }
 
@@ -198,7 +223,7 @@ static void trigger_single_angle_move()
 {
   current_time = DWT_GetTimeline_ms();
   // 判断两次发射时间间隔，避免双发
-  if (current_time - last_time > 1000)
+  if (current_time - last_time > shoot_delay)
   {
     last_time = DWT_GetTimeline_ms();
     trigger.target_angle = motor_bottom[4].total_angle - TRIGGER_SINGLE_ANGLE;
@@ -248,7 +273,7 @@ static void shoot_current_give()
 {
   if (is_angle_control)
   {
-    trigger.target_speed = pid_calc_trigger(&trigger.pid_angle, trigger.target_angle, motor_bottom[4].total_angle);
+    trigger.target_speed = pid_calc(&trigger.pid_angle, trigger.target_angle, motor_bottom[4].total_angle);
     motor_bottom[4].set_current = pid_calc(&trigger.pid_speed, trigger.target_speed, motor_bottom[4].rotor_speed);
   }
   else

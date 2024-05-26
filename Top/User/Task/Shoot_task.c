@@ -24,7 +24,7 @@ static shoot_t shoot_motor[2]; // 摩擦轮can2，id = 56
 static int16_t friction_speed = 0;
 
 uint8_t friction_flag = 0; // 摩擦轮转速标志位，012分别为low, normal, high, 默认为normal
-uint8_t is_gimbal_on = 0;  // 是否开启云台
+uint8_t is_friction_on;    // 摩擦轮是否开启
 
 extern CAN_HandleTypeDef hcan2;
 extern RC_ctrl_t rc_ctrl[2];
@@ -38,6 +38,7 @@ static void shoot_stop();                           // 摩擦轮关闭模式
 static void shoot_can2_cmd(int16_t v1, int16_t v2); // can2发送电流
 static void shoot_current_give();                   // PID计算速度并发送电流
 static void read_keyboard();                        // 读取键鼠是否开启摩擦轮
+static void read_friction_on();                     // 摩擦轮是否开启
 
 void Shoot_task(void const *argument)
 {
@@ -45,6 +46,8 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+    read_friction_on();
+
     // 遥控器链路
     if (is_remote_online)
     {
@@ -131,16 +134,6 @@ static void read_keyboard()
       friction_flag = FRICTION_STOP;
       break;
     }
-
-    switch (rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][Key_X] % 2)
-    {
-    case 1:
-      is_gimbal_on = GIMBAL_ON;
-      break;
-    default:
-      is_gimbal_on = GIMBAL_OFF;
-      break;
-    }
   }
 
   // 图传链路
@@ -181,6 +174,14 @@ static void shoot_stop()
 {
   shoot_motor[0].target_speed = 0;
   shoot_motor[1].target_speed = 0;
+}
+
+void read_friction_on()
+{
+  if (friction_speed)
+    is_friction_on = 1;
+  else
+    is_friction_on = 0;
 }
 
 /********************************摩擦轮can2发送电流***************************/

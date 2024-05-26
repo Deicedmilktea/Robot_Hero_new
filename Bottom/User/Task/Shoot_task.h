@@ -3,6 +3,10 @@
 
 #include "pid.h"
 
+// 定义发射触发时间间隔
+#define SHOOT_DELAY_NORMAL 1000
+#define SHOOT_DELAY_BUFF 200
+
 typedef struct
 {
     pid_struct_t pid;         // 拨盘speed的pid结构体

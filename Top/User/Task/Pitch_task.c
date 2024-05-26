@@ -27,7 +27,6 @@ extern INS_t INS_bottom;
 extern float vision_pitch;
 extern bool vision_is_tracking;
 extern uint8_t is_remote_online;
-extern uint8_t is_gimbal_on;
 
 static void pitch_loop_init();               // 初始化
 static void pitch_can2_cmd(int16_t voltage); // can1发送电流
@@ -75,32 +74,29 @@ void Pitch_task(void const *argument)
         // 图传链路
         else
         {
-            if (is_gimbal_on)
+            // 视觉识别，鼠标右键
+            if (video_ctrl[TEMP].key_data.right_button_down)
             {
-                // 视觉识别，鼠标右键
-                if (video_ctrl[TEMP].key_data.right_button_down)
+                if (vision_is_tracking)
                 {
-                    if (vision_is_tracking)
-                    {
-                        // 视觉模式下的遥控器微调
-                        pitch.vision_remote_pitch = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 20.0f;
-                        pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
-                        // pitch.vision_target_pitch = vision_pitch;
+                    // 视觉模式下的遥控器微调
+                    pitch.vision_remote_pitch = video_ctrl[TEMP].key_data.mouse_y / 16384.0f * 20.0f;
+                    pitch.vision_target_pitch = pitch.vision_remote_pitch + vision_pitch;
+                    // pitch.vision_target_pitch = vision_pitch;
 
-                        pitch.target_speed = pid_calc(&pitch.vision_pid_angle, pitch.vision_target_pitch, INS.Roll);
+                    pitch.target_speed = pid_calc(&pitch.vision_pid_angle, pitch.vision_target_pitch, INS.Roll);
 
-                        // target_speed 这个跟遥控器链路不一样，鼠标返回值和那个是反的，终于正回来了
-                    }
-                    else
-                    {
-                        pitch.target_speed = 40 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
-                    }
+                    // target_speed 这个跟遥控器链路不一样，鼠标返回值和那个是反的，终于正回来了
                 }
-
                 else
                 {
                     pitch.target_speed = 40 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
                 }
+            }
+
+            else
+            {
+                pitch.target_speed = 40 * video_ctrl[TEMP].key_data.mouse_y / 16384.0f * pitch.speed_max;
             }
         }
 

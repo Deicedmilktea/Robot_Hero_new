@@ -64,19 +64,16 @@ void Gimbal_task(void const *pvParameters)
 		// 图传链路
 		else
 		{
-			if (is_gimbal_on)
+			// 视觉控制
+			if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
 			{
-				// 视觉控制
-				if (video_ctrl[TEMP].key_data.right_button_down) // 按住右键
-				{
-					gimbal_mode_vision();
-				}
+				gimbal_mode_vision();
+			}
 
-				// 锁yaw模式
-				else // 左拨杆中或下
-				{
-					gimbal_mode_normal();
-				}
+			// 锁yaw模式
+			else // 左拨杆中或下
+			{
+				gimbal_mode_normal();
 			}
 		}
 

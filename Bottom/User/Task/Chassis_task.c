@@ -359,27 +359,32 @@ void rc_mode_choose()
     read_keyboard();
     key_control();
 
-    // 底盘跟随云台模式，r键触发
-    if (chassis_mode == 1)
+    switch (ui_data.chassis_mode)
     {
+    // 底盘跟随云台模式、
+    case CHASSIS_FOLLOW_GIMBAL_YAW:
       chassis_mode_follow();
-    }
+      break;
 
-    // 正常运动模式，f键触发
-    else if (chassis_mode == 2)
-    {
+    // 正常运动模式
+    case CHASSIS_NO_FOLLOW:
       manual_yaw_correct(); // 手动校正yaw值，头对正，按下V键
       chassis_mode_normal();
-    }
+      break;
 
-    else
-    {
-      chassis_mode_normal();
+    // 停止模式
+    case CHASSIS_ZERO_FORCE:
+      chassis_mode_stop();
+      break;
+
+    default:
+      chassis_mode_stop();
+      break;
     }
   }
 
   // 右拨杆上，校正yaw
-  else
+  else if (switch_is_up(rc_ctrl[TEMP].rc.switch_right))
   {
     manual_yaw_correct(); // 手动校正yaw值，头对正
     chassis_mode_stop();
