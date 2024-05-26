@@ -53,6 +53,8 @@ void Shoot_task(void const *argument)
   {
     read_keyboard();
     read_friction_on();
+    lens_prepare();
+    video_adaptive();
 
     // 遥控器链路
     if (is_remote_online)
@@ -84,8 +86,6 @@ void Shoot_task(void const *argument)
     // 图传链路
     else
     {
-      lens_prepare();
-      video_adaptive();
       shoot_start_all();
       lens_judge();
     }

@@ -213,7 +213,12 @@ static void chassis_mode_follow()
   // 便于小陀螺操作
   if (key_Wz_acw)
   {
-    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * CHASSIS_WZ_MAX + key_Wz_acw; // rotate
+    Wz = key_Wz_acw; // rotate
+  }
+
+  else if (rc_ctrl[TEMP].rc.dial)
+  {
+    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * CHASSIS_WZ_MAX; // rotate
   }
 
   else
@@ -295,17 +300,13 @@ void video_mode_choose()
   read_keyboard();
   key_control();
 
-  switch (ui_data.chassis_mode)
+  if (ui_data.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW)
   {
-  // 底盘跟随云台模式，r键触发
-  case CHASSIS_FOLLOW_GIMBAL_YAW:
     chassis_mode_follow();
-    break;
-
-  // 停止模式，CHASSIS_ZERO_FORCE
-  default:
+  }
+  else
+  {
     chassis_mode_stop();
-    break;
   }
 }
 

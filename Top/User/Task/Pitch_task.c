@@ -57,16 +57,16 @@ void Pitch_task(void const *argument)
                 else
                 {
                     // 使用非线性映射函数调整灵敏度
-                    float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 100.0f;
-                    pitch.target_angle += pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.1f;
+                    float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 10.0f;
+                    pitch.target_angle += pow(fabs(normalized_input), 0.98) * sign(normalized_input);
                 }
             }
 
             else
             {
                 // 使用非线性映射函数调整灵敏度
-                float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 100.0f;
-                pitch.target_angle += pow(fabs(normalized_input), 0.98) * sign(normalized_input) * 0.1f;
+                float normalized_input = rc_ctrl[TEMP].rc.rocker_l1 / 660.0f - rc_ctrl[TEMP].mouse.y / 16384.0f * 10.0f;
+                pitch.target_angle += pow(fabs(normalized_input), 0.98) * sign(normalized_input);
             }
         }
 
@@ -112,7 +112,7 @@ static void pitch_loop_init()
     pitch.angle_pid_value[1] = 0;
     pitch.angle_pid_value[2] = 100;
 
-    pitch.speed_pid_value[0] = 1000;
+    pitch.speed_pid_value[0] = 800;
     pitch.speed_pid_value[1] = 0.05;
     pitch.speed_pid_value[2] = 0;
 
