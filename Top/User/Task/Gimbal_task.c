@@ -89,7 +89,7 @@ static void Gimbal_loop_init()
 	gimbal_gyro.pid_angle_value[2] = 0;
 
 	gimbal_gyro.pid_speed_value[0] = 1000;
-	gimbal_gyro.pid_speed_value[1] = 0.05;
+	gimbal_gyro.pid_speed_value[1] = 1;
 	gimbal_gyro.pid_speed_value[2] = 0;
 
 	// 视觉使用版本，防止yaw抖动过大

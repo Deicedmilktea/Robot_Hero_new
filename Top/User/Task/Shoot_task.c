@@ -146,8 +146,8 @@ static void shoot_loop_init()
   pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 4000, 8000); // lens_up
   pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 4000, 8000); // lens_down
 
-  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_speed_value, 2000, 4000); // lens_up
-  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_speed_value, 2000, 4000); // lens_down
+  pid_init(&lens_motor[0].pid_speed, lens_motor[0].pid_speed_value, 2000, 2000); // lens_up
+  pid_init(&lens_motor[1].pid_speed, lens_motor[1].pid_speed_value, 2000, 2000); // lens_down
 }
 
 // 读取摩擦轮速度
@@ -176,7 +176,7 @@ static void read_keyboard()
       break;
     default:
       friction_speed = FRICTION_SPEED_STOP;
-      friction_up_speed = FRICTION_UP_SPEED_STOP;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_STOP;
       break;
     }
@@ -205,7 +205,7 @@ static void read_keyboard()
       break;
     default:
       friction_speed = FRICTION_SPEED_STOP;
-      friction_up_speed = FRICTION_UP_SPEED_STOP;
+      friction_up_speed = FRICTION_UP_SPEED;
       friction_flag = FRICTION_STOP;
       break;
     }
@@ -225,7 +225,10 @@ static void shoot_start_all()
 {
   shoot_motor[0].target_speed = -friction_speed;
   shoot_motor[1].target_speed = friction_speed;
-  shoot_motor[2].target_speed = -friction_up_speed;
+  if (!friction_speed)
+    shoot_motor[2].target_speed = friction_up_speed;
+  else
+    shoot_motor[2].target_speed = -friction_up_speed;
 }
 
 /*************** 摩擦轮关闭模式 **************/

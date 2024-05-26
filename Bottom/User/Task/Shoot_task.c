@@ -14,13 +14,14 @@
 #include "video_control.h"
 #include "Robot.h"
 
-#define TRIGGER_SINGLE_ANGLE 1285 // 19*360/6+95
+#define TRIGGER_SINGLE_ANGLE 1335 // 19*360/6+95
 #define TRIGGER_ROTATE_SPEED 250
 
 static trigger_t trigger; // 拨盘can1，id = 5
 static bool is_angle_control = false;
 static float current_time = 0;
 static float last_time = 0;
+static int16_t shoot_delay;
 
 uint8_t trigger_flag = 0;
 
@@ -46,6 +47,8 @@ void Shoot_task(void const *argument)
 
   for (;;)
   {
+    read_keyboard();
+
     // 遥控器链路
     if (is_remote_online)
     {
@@ -87,14 +90,12 @@ void Shoot_task(void const *argument)
 
         else
         {
-          is_angle_control = false;
           shoot_stop();
         }
       }
 
       else
       {
-        is_angle_control = false;
         shoot_stop();
       }
     }
@@ -137,12 +138,12 @@ static void shoot_loop_init()
   trigger.pid_value[1] = 0.3;
   trigger.pid_value[2] = 0;
 
-  trigger.pid_angle_value[0] = 5;
+  trigger.pid_angle_value[0] = 20;
   trigger.pid_angle_value[1] = 0;
-  trigger.pid_angle_value[2] = 100;
+  trigger.pid_angle_value[2] = 500;
 
-  trigger.pid_speed_value[0] = 2;
-  trigger.pid_speed_value[1] = 0.1;
+  trigger.pid_speed_value[0] = 10;
+  trigger.pid_speed_value[1] = 0;
   trigger.pid_speed_value[2] = 0;
 
   // 初始化目标速度
@@ -169,9 +170,15 @@ static void read_keyboard()
   {
     // Q键切换发射模式，单发和爆破
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+    {
       trigger_flag = 1;
+      shoot_delay = SHOOT_DELAY_BUFF;
+    }
     else
+    {
       trigger_flag = 0;
+      shoot_delay = SHOOT_DELAY_NORMAL;
+    }
   }
 
   // 图传链路
@@ -179,9 +186,15 @@ static void read_keyboard()
   {
     // Q键切换发射模式，单发和爆破
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2 == 1)
+    {
       trigger_flag = 1;
+      shoot_delay = SHOOT_DELAY_BUFF;
+    }
     else
+    {
       trigger_flag = 0;
+      shoot_delay = SHOOT_DELAY_NORMAL;
+    }
   }
 }
 
@@ -190,7 +203,7 @@ static void trigger_single_angle_move()
 {
   current_time = DWT_GetTimeline_ms();
   // 判断两次发射时间间隔，避免双发
-  if (current_time - last_time > 1000)
+  if (current_time - last_time > shoot_delay)
   {
     last_time = DWT_GetTimeline_ms();
     trigger.target_angle = motor_bottom[4].total_angle - TRIGGER_SINGLE_ANGLE;
