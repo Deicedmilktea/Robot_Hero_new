@@ -15,7 +15,7 @@
 #include "Robot.h"
 
 #define TRIGGER_SINGLE_ANGLE 1140 // 19*360/6+95
-#define TRIGGER_ROTATE_SPEED 250
+#define TRIGGER_ROTATE_SPEED 350
 
 static trigger_t trigger; // 拨盘can1，id = 5
 static bool is_angle_control = false;
@@ -76,8 +76,16 @@ void Shoot_task(void const *argument)
         {
           if (is_friction_on)
           {
-            is_angle_control = true;
-            trigger_single_angle_move();
+            if (rc_ctrl[TEMP].key[KEY_PRESS].ctrl)
+            {
+              is_angle_control = false;
+              shoot_start();
+            }
+            else
+            {
+              is_angle_control = true;
+              trigger_single_angle_move();
+            }
           }
         }
 
@@ -108,8 +116,16 @@ void Shoot_task(void const *argument)
       {
         if (is_friction_on)
         {
-          is_angle_control = true;
-          trigger_single_angle_move();
+          if (video_ctrl[TEMP].key[KEY_PRESS].ctrl)
+          {
+            is_angle_control = false;
+            shoot_start();
+          }
+          else
+          {
+            is_angle_control = true;
+            trigger_single_angle_move();
+          }
         }
       }
 
@@ -134,7 +150,7 @@ void Shoot_task(void const *argument)
 /***************初始化***************/
 static void shoot_loop_init()
 {
-  trigger.pid_value[0] = 30;
+  trigger.pid_value[0] = 40;
   trigger.pid_value[1] = 0.3;
   trigger.pid_value[2] = 0;
 
@@ -179,6 +195,8 @@ static void read_keyboard()
       trigger_flag = 0;
       shoot_delay = SHOOT_DELAY_NORMAL;
     }
+
+    // R键切换发射模式，速度环和位置环
   }
 
   // 图传链路

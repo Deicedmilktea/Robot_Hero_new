@@ -27,8 +27,9 @@ static float rx = 0.2, ry = 0.2;
 static float relative_yaw = 0;                                                        // yaw值校正标志
 static int16_t key_x_fast, key_y_fast, key_x_slow, key_y_slow, key_Wz_acw, key_Wz_cw; // 键盘控制变量
 static int16_t chassis_speed_max = 0;                                                 // 底盘速度，不同等级对应不同速度
-static referee_info_t *referee_data;                                                  // 用于获取裁判系统的数据
-static Referee_Interactive_info_t ui_data;                                            // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
+static int16_t chassis_wz_max = 0;
+static referee_info_t *referee_data;       // 用于获取裁判系统的数据
+static Referee_Interactive_info_t ui_data; // UI数据，将底盘中的数据传入此结构体的对应变量中，UI会自动检测是否变化，对应显示UI
 
 extern RC_ctrl_t rc_ctrl[2];
 extern Video_ctrl_t video_ctrl[2];
@@ -218,7 +219,7 @@ static void chassis_mode_follow()
 
   else if (rc_ctrl[TEMP].rc.dial)
   {
-    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * CHASSIS_WZ_MAX; // rotate
+    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max; // rotate
   }
 
   else
@@ -234,10 +235,10 @@ static void chassis_mode_follow()
       detel_calc(&relative_yaw);
       Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-      if (Wz > CHASSIS_WZ_MAX)
-        Wz = CHASSIS_WZ_MAX;
-      if (Wz < -CHASSIS_WZ_MAX)
-        Wz = -CHASSIS_WZ_MAX;
+      if (Wz > chassis_wz_max)
+        Wz = chassis_wz_max;
+      if (Wz < -chassis_wz_max)
+        Wz = -chassis_wz_max;
     }
   }
 
@@ -518,8 +519,8 @@ static void key_control(void)
     key_y_slow = chassis_speed_max;
   if (key_y_slow < 0)
     key_y_slow = 0;
-  if (key_Wz_acw > CHASSIS_WZ_MAX)
-    key_Wz_acw = CHASSIS_WZ_MAX;
+  if (key_Wz_acw > chassis_wz_max)
+    key_Wz_acw = chassis_wz_max;
   if (key_Wz_acw < 0)
     key_Wz_acw = 0;
 }
@@ -548,39 +549,52 @@ static void level_judge()
     {
     case 1:
       chassis_speed_max = CHASSIS_SPEED_MAX_1;
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
       break;
     case 2:
       chassis_speed_max = CHASSIS_SPEED_MAX_2;
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
       break;
     case 3:
       chassis_speed_max = CHASSIS_SPEED_MAX_3;
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
       break;
     case 4:
       chassis_speed_max = CHASSIS_SPEED_MAX_4;
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
       break;
     case 5:
       chassis_speed_max = CHASSIS_SPEED_MAX_5;
+      chassis_wz_max = CHASSIS_WZ_MAX_1;
       break;
     case 6:
       chassis_speed_max = CHASSIS_SPEED_MAX_6;
+      chassis_wz_max = CHASSIS_WZ_MAX_2;
       break;
     case 7:
       chassis_speed_max = CHASSIS_SPEED_MAX_7;
+      chassis_wz_max = CHASSIS_WZ_MAX_2;
       break;
     case 8:
       chassis_speed_max = CHASSIS_SPEED_MAX_8;
+      chassis_wz_max = CHASSIS_WZ_MAX_2;
       break;
     case 9:
       chassis_speed_max = CHASSIS_SPEED_MAX_9;
+      chassis_wz_max = CHASSIS_WZ_MAX_2;
       break;
     case 10:
       chassis_speed_max = CHASSIS_SPEED_MAX_10;
+      chassis_wz_max = CHASSIS_WZ_MAX_2;
       break;
     }
   }
   else
+  {
     chassis_speed_max = CHASSIS_SPEED_MAX_1;
+    chassis_wz_max = CHASSIS_WZ_MAX_1;
+  }
 
   if (supercap_flag)
-    chassis_speed_max += 3000;
+    chassis_speed_max += 2000;
 }

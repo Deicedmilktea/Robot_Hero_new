@@ -74,7 +74,7 @@ void Shoot_task(void const *argument)
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
         {
           friction_speed = FRICTION_SPEED_NORMAL;
-          friction_up_speed = FRICTION_UP_SPEED;
+          friction_up_speed = -FRICTION_UP_SPEED;
           shoot_start_remote();
         }
         else

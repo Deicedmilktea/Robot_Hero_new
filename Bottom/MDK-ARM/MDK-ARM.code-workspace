@@ -40,7 +40,9 @@
             "stdint.h": "c",
             "rm_referee.h": "c",
             "task.h": "c",
-            "daemon.h": "c"
+            "daemon.h": "c",
+            "exchange.h": "c",
+            "stdbool.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },
