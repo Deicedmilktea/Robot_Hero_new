@@ -35,7 +35,8 @@ extern INS_t INS;
 static void shoot_loop_init();                                                            // 初始化
 static void read_keyboard();                                                              // 读取摩擦轮速度
 static void shoot_start_lr();                                                             // 左右摩擦轮开启模式
-static void shoot_start_all();                                                            // 三摩擦轮开启模式
+static void shoot_start_remote();                                                         // 遥控器三摩擦轮开启模式
+static void shoot_start_mouse();                                                          // 键鼠三摩擦轮开启模式
 static void shoot_stop();                                                                 // 摩擦轮关闭模式
 static void lens_judge();                                                                 // 判断开关镜
 static void shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int16_t v4); // can2发送电流
@@ -62,7 +63,7 @@ void Shoot_task(void const *argument)
       // 右拨杆中，键鼠控制
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
-        shoot_start_all();
+        shoot_start_mouse();
         lens_judge();
       }
 
@@ -74,7 +75,7 @@ void Shoot_task(void const *argument)
         {
           friction_speed = FRICTION_SPEED_NORMAL;
           friction_up_speed = FRICTION_UP_SPEED;
-          shoot_start_all();
+          shoot_start_remote();
         }
         else
         {
@@ -86,7 +87,7 @@ void Shoot_task(void const *argument)
     // 图传链路
     else
     {
-      shoot_start_all();
+      shoot_start_mouse();
       lens_judge();
     }
 
@@ -141,7 +142,7 @@ static void shoot_loop_init()
   // 初始化PID
   pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
-  pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, FRICTION_MAX_SPEED); // friction_up
+  pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, 4000);               // friction_up
 
   pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 4000, 8000); // lens_up
   pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 4000, 8000); // lens_down
@@ -220,15 +221,26 @@ static void shoot_start_lr()
   shoot_motor[2].target_speed = 0;
 }
 
-/**************** 三摩擦轮开启模式 *****************/
-static void shoot_start_all()
+/**************** 键鼠三摩擦轮开启模式 *****************/
+static void shoot_start_mouse()
+{
+  shoot_motor[0].target_speed = -friction_speed;
+  shoot_motor[1].target_speed = friction_speed;
+  if (rc_ctrl[TEMP].mouse.press_l || video_ctrl[TEMP].key_data.left_button_down)
+    shoot_motor[2].target_speed = -friction_up_speed;
+  else
+    shoot_motor[2].target_speed = 4 * friction_up_speed;
+}
+
+/**************** 遥控器三摩擦轮开启模式 *****************/
+static void shoot_start_remote()
 {
   shoot_motor[0].target_speed = -friction_speed;
   shoot_motor[1].target_speed = friction_speed;
   if (!friction_speed)
-    shoot_motor[2].target_speed = friction_up_speed;
-  else
     shoot_motor[2].target_speed = -friction_up_speed;
+  else
+    shoot_motor[2].target_speed = friction_up_speed;
 }
 
 /*************** 摩擦轮关闭模式 **************/
@@ -246,7 +258,7 @@ static void lens_judge()
   if (is_remote_online)
   {
     if (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
-      lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_ANGLE;
+      lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_MOVE_ANGLE;
     else
       lens_motor[0].target_angle = lens_motor[0].init_angle;
 
@@ -260,7 +272,7 @@ static void lens_judge()
   else
   {
     if (video_ctrl[TEMP].key_count[KEY_PRESS][Key_G] % 2 == 1)
-      lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_ANGLE;
+      lens_motor[0].target_angle = lens_motor[0].init_angle + LENS_UP_MOVE_ANGLE;
     else
       lens_motor[0].target_angle = lens_motor[0].init_angle;
 
@@ -341,7 +353,6 @@ static void shoot_can2_cmd(uint8_t mode, int16_t v1, int16_t v2, int16_t v3, int
 /********************************PID计算速度并发送电流****************************/
 static void shoot_current_give()
 {
-
   motor_top[0].set_current = pid_calc(&shoot_motor[0].pid, shoot_motor[0].target_speed, motor_top[0].rotor_speed);
   motor_top[1].set_current = pid_calc(&shoot_motor[1].pid, shoot_motor[1].target_speed, motor_top[1].rotor_speed);
   motor_top[2].set_current = pid_calc(&shoot_motor[2].pid, shoot_motor[2].target_speed, motor_top[2].rotor_speed);

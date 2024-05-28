@@ -14,7 +14,7 @@
 #include "video_control.h"
 #include "Robot.h"
 
-#define TRIGGER_SINGLE_ANGLE 1300 // 19*360/6+95
+#define TRIGGER_SINGLE_ANGLE 1140 // 19*360/6+95
 #define TRIGGER_ROTATE_SPEED 250
 
 static trigger_t trigger; // 拨盘can1，id = 5

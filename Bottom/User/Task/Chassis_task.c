@@ -547,39 +547,39 @@ static void level_judge()
     switch (referee_hero.robot_level)
     {
     case 1:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_1;
       break;
     case 2:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_2;
       break;
     case 3:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_3;
       break;
     case 4:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_4;
       break;
     case 5:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_5;
       break;
     case 6:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_6;
       break;
     case 7:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_7;
       break;
     case 8:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_8;
       break;
     case 9:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_9;
       break;
     case 10:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_10;
       break;
     }
   }
   else
-    chassis_speed_max = CHASSIS_SPEED_MAX_13;
+    chassis_speed_max = CHASSIS_SPEED_MAX_1;
 
   if (supercap_flag)
     chassis_speed_max += 3000;
