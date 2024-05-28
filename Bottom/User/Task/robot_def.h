@@ -133,7 +133,7 @@ typedef struct
 
 typedef enum
 {
-    SUPCAP_OFF = 0,
+    SUPCAP_OFF = 2,
     SUPCAP_ON,
 } supcap_mode_e;
 

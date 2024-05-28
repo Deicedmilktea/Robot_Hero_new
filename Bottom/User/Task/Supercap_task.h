@@ -19,8 +19,8 @@ typedef struct
 
 typedef enum
 {
-    SUPERCAP_STATE_AUTO = 1,
-    SUPERCAP_STATE_OFF,
+    SUPERCAP_STATE_OFF = 2,
+    SUPERCAP_STATE_ON,
 } supercap_state_e;
 
 #endif

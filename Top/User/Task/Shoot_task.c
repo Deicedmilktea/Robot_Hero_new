@@ -56,6 +56,7 @@ void Shoot_task(void const *argument)
     read_friction_on();
     lens_prepare();
     video_adaptive();
+    lens_judge();
 
     // 遥控器链路
     if (is_remote_online)
@@ -64,7 +65,6 @@ void Shoot_task(void const *argument)
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
         shoot_start_mouse();
-        lens_judge();
       }
 
       // 右拨杆下，遥控器控制
@@ -88,7 +88,6 @@ void Shoot_task(void const *argument)
     else
     {
       shoot_start_mouse();
-      lens_judge();
     }
 
     shoot_current_give();

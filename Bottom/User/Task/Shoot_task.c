@@ -15,7 +15,7 @@
 #include "Robot.h"
 
 #define TRIGGER_SINGLE_ANGLE 1140 // 19*360/6+95
-#define TRIGGER_ROTATE_SPEED 350
+#define TRIGGER_ROTATE_SPEED 650
 
 static trigger_t trigger; // 拨盘can1，id = 5
 static bool is_angle_control = false;
