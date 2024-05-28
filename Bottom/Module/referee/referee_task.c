@@ -70,7 +70,7 @@ referee_info_t *UITaskInit(UART_HandleTypeDef *referee_usart_handle, Referee_Int
 
 void UITask()
 {
-    // 按下V键，重新初始化UI
+    // 按下X键，重新初始化UI
     if (rc_ctrl[TEMP].key[KEY_PRESS].x || video_ctrl[TEMP].key[KEY_PRESS].x)
         MyUIInit();
     MyUIRefresh(referee_recv_info, Interactive_data);
@@ -132,7 +132,7 @@ void MyUIInit()
     // 由于初始化时xxx_last_mode默认为0，所以此处对应UI也应该设为0时对应的UI，防止模式不变的情况下无法置位flag，导致UI无法刷新
     UICharDraw(&UI_State_dyn[0], "sd0", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 390, 750, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[0]);
-    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "auto_on");
+    UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 360, 700, "off");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
     UICharDraw(&UI_State_dyn[2], "sd2", UI_Graph_ADD, 8, UI_Color_Yellow, 25, 4, 340, 650, "stop");
     UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[2]);
@@ -192,10 +192,7 @@ static void MyUIRefresh(referee_info_t *referee_recv_info, Referee_Interactive_i
     // supercap
     if (_Interactive_data->Referee_Interactive_Flag.supcap_flag == 1)
     {
-        if (supercap_mode == SUPERCAP_STATE_AUTO)
-            UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "auto_off" : "auto_on ");
-        else
-            UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off     " : "on      ");
+        UICharDraw(&UI_State_dyn[1], "sd1", UI_Graph_Change, 8, UI_Color_Yellow, 25, 4, 360, 700, _Interactive_data->supcap_mode == SUPCAP_OFF ? "off" : "on ");
         UICharRefresh(&referee_recv_info->referee_id, UI_State_dyn[1]);
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 0;
     }
@@ -289,11 +286,11 @@ static void UIChangeCheck(Referee_Interactive_info_t *_Interactive_data)
     }
 
     // supercap开关
-    if (_Interactive_data->supcap_mode != _Interactive_data->supcap_last_mode || supercap_mode != supercap_last_mode)
+    _Interactive_data->supcap_mode = supercap_mode;
+    if (_Interactive_data->supcap_mode != _Interactive_data->supcap_last_mode)
     {
         _Interactive_data->Referee_Interactive_Flag.supcap_flag = 1;
         _Interactive_data->supcap_last_mode = _Interactive_data->supcap_mode;
-        supercap_last_mode = supercap_mode;
     }
 
     // friction_mode转速

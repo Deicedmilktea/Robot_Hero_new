@@ -66,14 +66,11 @@ static void read_keyboard()
 	{
 		switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2)
 		{
-		case 0:
-			supercap_mode = SUPERCAP_STATE_AUTO;
-			break;
 		case 1:
-			supercap_mode = SUPERCAP_STATE_OFF;
+			supercap_mode = SUPERCAP_STATE_ON;
 			break;
 		default:
-			supercap_mode = SUPERCAP_STATE_AUTO;
+			supercap_mode = SUPERCAP_STATE_OFF;
 			break;
 		}
 	}
@@ -82,14 +79,11 @@ static void read_keyboard()
 	{
 		switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_C] % 2)
 		{
-		case 0:
-			supercap_mode = SUPERCAP_STATE_AUTO;
-			break;
 		case 1:
-			supercap_mode = SUPERCAP_STATE_OFF;
+			supercap_mode = SUPERCAP_STATE_ON;
 			break;
 		default:
-			supercap_mode = SUPERCAP_STATE_AUTO;
+			supercap_mode = SUPERCAP_STATE_OFF;
 			break;
 		}
 	}

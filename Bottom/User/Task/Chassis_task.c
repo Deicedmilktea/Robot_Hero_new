@@ -136,18 +136,18 @@ static void read_keyboard()
       break;
     }
 
-    // R键控制底盘小陀螺速度
-    switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
-    {
-    case 1:
-      chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
-      ui_data.top_mode = TOP_HIGH;
-      break;
-    default:
-      chassis_wz_max = CHASSIS_WZ_MAX_1;
-      ui_data.top_mode = TOP_LOW;
-      break;
-    }
+    // // R键控制底盘小陀螺速度
+    // switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
+    // {
+    // case 1:
+    //   chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
+    //   ui_data.top_mode = TOP_HIGH;
+    //   break;
+    // default:
+    //   chassis_wz_max = CHASSIS_WZ_MAX_1;
+    //   ui_data.top_mode = TOP_LOW;
+    //   break;
+    // }
 
     // Q键切换发射模式，单发和爆破
     switch (rc_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2)
@@ -178,18 +178,18 @@ static void read_keyboard()
       break;
     }
 
-    // R键控制底盘小陀螺速度
-    switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
-    {
-    case 1:
-      chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
-      ui_data.top_mode = TOP_HIGH;
-      break;
-    default:
-      chassis_wz_max = CHASSIS_WZ_MAX_1;
-      ui_data.top_mode = TOP_LOW;
-      break;
-    }
+    // // R键控制底盘小陀螺速度
+    // switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_R] % 2)
+    // {
+    // case 1:
+    //   chassis_wz_max = CHASSIS_WZ_MAX_2; // 因为默认为1，这里保证第一次按下就能切换
+    //   ui_data.top_mode = TOP_HIGH;
+    //   break;
+    // default:
+    //   chassis_wz_max = CHASSIS_WZ_MAX_1;
+    //   ui_data.top_mode = TOP_LOW;
+    //   break;
+    // }
 
     // Q键切换发射模式，单发和爆破
     switch (video_ctrl[TEMP].key_count[KEY_PRESS][Key_Q] % 2)
@@ -208,10 +208,12 @@ static void read_keyboard()
   {
   case 3:
     supercap_flag = 1;
+    chassis_wz_max = CHASSIS_WZ_MAX_2;
     ui_data.supcap_mode = SUPCAP_ON;
     break;
   default:
     supercap_flag = 0;
+    chassis_wz_max = CHASSIS_WZ_MAX_1;
     ui_data.supcap_mode = SUPCAP_OFF;
     break;
   }
@@ -300,7 +302,12 @@ static void chassis_mode_follow()
   // 便于小陀螺操作
   if (key_Wz_acw)
   {
-    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max + key_Wz_acw; // rotate
+    Wz = key_Wz_acw; // rotate
+  }
+
+  else if (rc_ctrl[TEMP].rc.dial)
+  {
+    Wz = rc_ctrl[TEMP].rc.dial / 660.0f * chassis_wz_max; // rotate
   }
 
   else
@@ -315,10 +322,10 @@ static void chassis_mode_follow()
       detel_calc(&relative_yaw);
       Wz = -relative_yaw * FOLLOW_WEIGHT;
 
-      if (Wz > 2 * chassis_wz_max)
-        Wz = 2 * chassis_wz_max;
-      if (Wz < -2 * chassis_wz_max)
-        Wz = -2 * chassis_wz_max;
+      if (Wz > chassis_wz_max)
+        Wz = chassis_wz_max;
+      if (Wz < -chassis_wz_max)
+        Wz = -chassis_wz_max;
     }
   }
 
@@ -349,7 +356,7 @@ void rc_mode_choose()
   // 右拨杆下，遥控操作
   if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
   {
-    chassis_mode_normal();
+    chassis_mode_follow();
   }
 
   // 右拨杆中，键鼠操作
@@ -387,7 +394,7 @@ void rc_mode_choose()
   else if (switch_is_up(rc_ctrl[TEMP].rc.switch_right))
   {
     manual_yaw_correct(); // 手动校正yaw值，头对正
-    chassis_mode_stop();
+    chassis_mode_normal();
   }
 }
 
@@ -496,11 +503,11 @@ static void yaw_correct()
 /***************** 手动yaw值校正（仅在正常运动模式生效） ******************/
 static void manual_yaw_correct()
 {
-  if (rc_ctrl[TEMP].key[KEY_PRESS].v || video_ctrl[TEMP].key[KEY_PRESS].v)
-  {
-    float manual_err_yaw = INS.yaw_update - INS_top.Yaw;
-    imu_err_yaw -= manual_err_yaw;
-  }
+  // if (rc_ctrl[TEMP].key[KEY_PRESS].v || video_ctrl[TEMP].key[KEY_PRESS].v)
+  // {
+  float manual_err_yaw = INS.yaw_update - INS_top.Yaw;
+  imu_err_yaw -= manual_err_yaw;
+  // }
 }
 
 static void Chassis_Power_Limit(double Chassis_pidout_target_limit)
@@ -703,40 +710,40 @@ static void level_judge()
     switch (referee_hero.robot_level)
     {
     case 1:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_1;
       break;
     case 2:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_2;
       break;
     case 3:
-      chassis_speed_max = CHASSIS_SPEED_MAX_13;
+      chassis_speed_max = CHASSIS_SPEED_MAX_3;
       break;
     case 4:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_4;
       break;
     case 5:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_5;
       break;
     case 6:
-      chassis_speed_max = CHASSIS_SPEED_MAX_46;
+      chassis_speed_max = CHASSIS_SPEED_MAX_6;
       break;
     case 7:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_7;
       break;
     case 8:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_8;
       break;
     case 9:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_9;
       break;
     case 10:
-      chassis_speed_max = CHASSIS_SPEED_MAX_710;
+      chassis_speed_max = CHASSIS_SPEED_MAX_10;
       break;
     }
   }
   else
-    chassis_speed_max = CHASSIS_SPEED_MAX_13;
+    chassis_speed_max = CHASSIS_SPEED_MAX_1;
 
   if (supercap_flag)
-    chassis_speed_max += 3000;
+    chassis_speed_max += 2000;
 }

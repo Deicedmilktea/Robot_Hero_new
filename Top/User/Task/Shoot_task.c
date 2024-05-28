@@ -16,7 +16,7 @@
 #define FRICTION_MAX_SPEED 20000
 #define FRICTION_SPEED_NORMAL 6200
 #define FRICTION_SPEED_LOW 6000
-#define FRICTION_SPEED_HIGH 6500
+#define FRICTION_SPEED_HIGH 6400
 #define FRICTION_SPEED_STOP 0
 
 motor_info_t motor_top[4];     //[0]-[1]:left, [2]:pitch, [3]:yaw

@@ -83,11 +83,11 @@ void Gimbal_task(void const *pvParameters)
 
 static void Gimbal_loop_init()
 {
-	gimbal_gyro.pid_angle_value[0] = 40;
+	gimbal_gyro.pid_angle_value[0] = 15;
 	gimbal_gyro.pid_angle_value[1] = 0;
 	gimbal_gyro.pid_angle_value[2] = 0;
 
-	gimbal_gyro.pid_speed_value[0] = 100;
+	gimbal_gyro.pid_speed_value[0] = 200;
 	gimbal_gyro.pid_speed_value[1] = 0;
 	gimbal_gyro.pid_speed_value[2] = 0;
 
