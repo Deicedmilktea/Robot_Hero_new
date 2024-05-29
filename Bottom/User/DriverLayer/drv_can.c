@@ -114,7 +114,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 接受中断�
       memcpy(video_buf + 8, rx_data, 4);
       VideoRead(video_buf);
       INS_top.Pitch = (int16_t)((rx_data[4] << 8) | rx_data[5]) / 50.0f;
-      INS_top.Yaw = (int16_t)((rx_data[6] << 8) | rx_data[7]) / 50.0f;
+      top_yaw = (int16_t)((rx_data[6] << 8) | rx_data[7]);
     }
 
     if (rx_header.StdId == 0x39) // 接收上C传来的图传数据
