@@ -69,7 +69,7 @@ Branch: pitch_6020
 |   G   |           开镜(off/on)           |
 |   Z   |             拨盘反转             |
 |   X   |       刷新UI(仅在开局使用)       |
-|   C   |           超电(on/off)           |
+|   C   |           超电(off/on)           |
 |   V   |                                  |
 |   B   |    图传模式(normal/adaptive)     |
 
@@ -92,4 +92,4 @@ Branch: pitch_6020
 * **发射模式**\
   默认`normal`单发模式，按下`Q`切换模式`normal/buff`，`buff`为爆破模式，解除对单发的`1s`间隔限制
 * **超电模式**\
-  默认`on`模式，按下`C`切换模式`on/off`，一般不用管，他会自己做功率限制，相信`Supercap`
+  默认`off`模式，按下`C`切换模式`off/on`，一般不用管，他会自己做功率限制，相信`Supercap`
