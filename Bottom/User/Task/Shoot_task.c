@@ -53,7 +53,7 @@ void Shoot_task(void const *argument)
     if (is_remote_online)
     {
       // 右拨杆下，遥控器控制
-      if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
+      if (switch_is_down(rc_ctrl[TEMP].rc.switch_right) || switch_is_up(rc_ctrl[TEMP].rc.switch_right))
       {
         // 遥控器左边拨到上，电机启动
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_left))

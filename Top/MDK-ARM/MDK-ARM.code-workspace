@@ -49,7 +49,8 @@
             "pid.h": "c",
             "cmath": "c",
             "cinttypes": "c",
-            "cstdlib": "c"
+            "cstdlib": "c",
+            "bsp_usb.h": "c"
         },
         "cortex-debug.variableUseNaturalFormat": true
     },
