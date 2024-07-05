@@ -2,9 +2,7 @@
   "name": "Bottom",
   "type": "ARM",
   "dependenceList": [],
-  "srcDirs": [
-    ".eide/deps"
-  ],
+  "srcDirs": [],
   "virtualFolder": {
     "name": "<virtual_root>",
     "files": [],
@@ -521,7 +519,6 @@
           "../Module/referee"
         ],
         "libList": [],
-        "sourceDirList": [],
         "defineList": [
           "USE_HAL_DRIVER",
           "STM32F407xx",
@@ -537,5 +534,5 @@
       }
     }
   },
-  "version": "3.3"
+  "version": "3.4"
 }
