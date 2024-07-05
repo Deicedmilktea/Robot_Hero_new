@@ -64,7 +64,7 @@ void Shoot_task(void const *argument)
       // 右拨杆中，键鼠控制
       if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
       {
-        shoot_start_mouse();
+        // shoot_start_mouse();
       }
 
       // 右拨杆下，遥控器控制
@@ -74,7 +74,7 @@ void Shoot_task(void const *argument)
         if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
         {
           friction_speed = FRICTION_SPEED_NORMAL;
-          friction_up_speed = -FRICTION_UP_SPEED;
+          friction_up_speed = -FRICTION_SPEED_NORMAL;
           shoot_start_remote();
         }
         else
@@ -87,7 +87,7 @@ void Shoot_task(void const *argument)
     // 图传链路
     else
     {
-      shoot_start_mouse();
+      // shoot_start_mouse();
     }
 
     shoot_current_give();
@@ -141,7 +141,7 @@ static void shoot_loop_init()
   // 初始化PID
   pid_init(&shoot_motor[0].pid, shoot_motor[0].pid_value, 1000, FRICTION_MAX_SPEED); // friction_right
   pid_init(&shoot_motor[1].pid, shoot_motor[1].pid_value, 1000, FRICTION_MAX_SPEED); // friction_left
-  pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, 4000);               // friction_up
+  pid_init(&shoot_motor[2].pid, shoot_motor[2].pid_value, 1000, FRICTION_MAX_SPEED); // friction_up
 
   pid_init(&lens_motor[0].pid, lens_motor[0].pid_value, 4000, 8000); // lens_up
   pid_init(&lens_motor[1].pid, lens_motor[1].pid_value, 4000, 8000); // lens_down
