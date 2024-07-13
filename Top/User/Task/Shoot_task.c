@@ -205,7 +205,8 @@ static void read_keyboard()
       break;
     default:
       friction_speed = FRICTION_SPEED_STOP;
-      friction_up_speed = FRICTION_UP_SPEED;
+      // friction_up_speed = FRICTION_UP_SPEED;
+      friction_up_speed = FRICTION_SPEED_STOP;
       friction_flag = FRICTION_STOP;
       break;
     }
@@ -225,10 +226,10 @@ static void shoot_start_mouse()
 {
   shoot_motor[0].target_speed = -friction_speed;
   shoot_motor[1].target_speed = friction_speed;
-  if (rc_ctrl[TEMP].mouse.press_l || video_ctrl[TEMP].key_data.left_button_down)
-    shoot_motor[2].target_speed = -friction_up_speed;
-  else
-    shoot_motor[2].target_speed = 4 * friction_up_speed;
+  // if (rc_ctrl[TEMP].mouse.press_l || video_ctrl[TEMP].key_data.left_button_down)
+  shoot_motor[2].target_speed = -friction_up_speed;
+  // else
+  // shoot_motor[2].target_speed = 4 * friction_up_speed;
 }
 
 /**************** 遥控器三摩擦轮开启模式 *****************/
