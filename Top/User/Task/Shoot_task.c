@@ -61,27 +61,41 @@ void Shoot_task(void const *argument)
     // 遥控器链路
     if (is_remote_online)
     {
-      // 右拨杆中，键鼠控制
-      if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
-      {
-        // shoot_start_mouse();
-      }
+      // // 右拨杆中，键鼠控制
+      // if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
+      // {
+      //   // shoot_start_mouse();
+      // }
 
-      // 右拨杆下，遥控器控制
-      else
+      // // 右拨杆下，遥控器控制
+      // else
+      // {
+      // 遥控器左边拨到上和中，电机启动
+      if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
       {
-        // 遥控器左边拨到上和中，电机启动
-        if (switch_is_up(rc_ctrl[TEMP].rc.switch_left) || switch_is_mid(rc_ctrl[TEMP].rc.switch_left))
+        if (switch_is_down(rc_ctrl[TEMP].rc.switch_right))
+        {
+          friction_speed = FRICTION_SPEED_LOW;
+          friction_up_speed = -FRICTION_SPEED_LOW;
+        }
+        if (switch_is_mid(rc_ctrl[TEMP].rc.switch_right))
         {
           friction_speed = FRICTION_SPEED_NORMAL;
           friction_up_speed = -FRICTION_SPEED_NORMAL;
-          shoot_start_remote();
         }
-        else
+        if (switch_is_up(rc_ctrl[TEMP].rc.switch_right))
         {
-          shoot_stop();
+          friction_speed = FRICTION_SPEED_HIGH;
+          friction_up_speed = -FRICTION_SPEED_HIGH;
         }
+
+        shoot_start_remote();
       }
+      else
+      {
+        shoot_stop();
+      }
+      // }
     }
 
     // 图传链路
