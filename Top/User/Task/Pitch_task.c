@@ -14,8 +14,8 @@
 #include "video_control.h"
 #include "stdbool.h"
 
-#define PITCH_MAX 40
-#define PITCH_MIN 0
+#define PITCH_MAX 44
+#define PITCH_MIN -11
 
 static pitch_t pitch;
 
