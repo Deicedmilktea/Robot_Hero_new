@@ -2,22 +2,43 @@
  ******************************************************************************
  * @file	bsp_dwt.c
  * @author  Wang Hongxi
+ * @author modified by Neo with annotation
  * @version V1.1.0
  * @date    2022/3/8
  * @brief
- ******************************************************************************
- * @attention
- *
- ******************************************************************************
  */
-#include "bsp_dwt.h"
 
-DWT_Time_t SysTime;
+#include "bsp_dwt.h"
+#include "cmsis_os.h"
+
+static DWT_Time_t SysTime;
 static uint32_t CPU_FREQ_Hz, CPU_FREQ_Hz_ms, CPU_FREQ_Hz_us;
 static uint32_t CYCCNT_RountCount;
 static uint32_t CYCCNT_LAST;
-uint64_t CYCCNT64;
-static void DWT_CNT_Update(void);
+static uint64_t CYCCNT64;
+
+/**
+ * @brief 私有函数,用于检查DWT CYCCNT寄存器是否溢出,并更新CYCCNT_RountCount
+ * @attention 此函数假设两次调用之间的时间间隔不超过一次溢出
+ *
+ * @todo 更好的方案是为dwt的时间更新单独设置一个任务?
+ *       不过,使用dwt的初衷是定时不被中断/任务等因素影响,因此该实现仍然有其存在的意义
+ *
+ */
+static void DWT_CNT_Update(void)
+{
+    static volatile uint8_t bit_locker = 0;
+    if (!bit_locker)
+    {
+        bit_locker = 1;
+        volatile uint32_t cnt_now = DWT->CYCCNT;
+        if (cnt_now < CYCCNT_LAST)
+            CYCCNT_RountCount++;
+
+        CYCCNT_LAST = DWT->CYCCNT;
+        bit_locker = 0;
+    }
+}
 
 void DWT_Init(uint32_t CPU_Freq_mHz)
 {
@@ -34,6 +55,8 @@ void DWT_Init(uint32_t CPU_Freq_mHz)
     CPU_FREQ_Hz_ms = CPU_FREQ_Hz / 1000;
     CPU_FREQ_Hz_us = CPU_FREQ_Hz / 1000000;
     CYCCNT_RountCount = 0;
+
+    DWT_CNT_Update();
 }
 
 float DWT_GetDeltaT(uint32_t *cnt_last)
@@ -101,22 +124,11 @@ uint64_t DWT_GetTimeline_us(void)
     return DWT_Timelinef32;
 }
 
-static void DWT_CNT_Update(void)
-{
-    volatile uint32_t cnt_now = DWT->CYCCNT;
-
-    if (cnt_now < CYCCNT_LAST)
-        CYCCNT_RountCount++;
-
-    CYCCNT_LAST = cnt_now;
-}
-
 void DWT_Delay(float Delay)
 {
     uint32_t tickstart = DWT->CYCCNT;
     float wait = Delay;
 
     while ((DWT->CYCCNT - tickstart) < wait * (float)CPU_FREQ_Hz)
-    {
-    }
+        ;
 }
